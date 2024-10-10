@@ -6,6 +6,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse text-dark" id="navbarNav">
+        <SearchBar v-if="showSearchBar" class="me-auto" />
         <ul class="navbar-nav ms-auto">
           <li class="nav-item m-2">
             <a class="nav-link" href="#"><i class="bi bi-currency-dollar"></i> Finances</a>
@@ -31,19 +32,30 @@
 </template>
 
 <script>
+import SearchBar from './SearchBar.vue'
+
 export default {
-  name: 'Navbar'
+  name: 'Navbar',
+  components: {
+    SearchBar
+  },
+  props: {
+    showSearchBar: {
+      type: Boolean,
+      default: false
+    }
+  }
 }
 </script>
 
 <style scoped>
-    .logo {
-        max-width:150px;
-    }
-    .teach {
-        background-color:#5a7dee;
-    }
-    .teach:hover {
-        background-color: #4e6dd2
-    }
+.logo {
+    max-width:150px;
+}
+.teach {
+    background-color:#5a7dee;
+}
+.teach:hover {
+    background-color: #4e6dd2
+}
 </style>

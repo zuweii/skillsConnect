@@ -103,8 +103,12 @@
                       placeholder="DD/MM/YYYY" id="date">
                   </div>
                   <div class="col">
-                    <label for="time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.time" class="form-control p-2 text-placeholder" id="time">
+                    <label for="start_time" class="form-label">Start Time</label>
+                    <input type="time" v-model="formData.startTime" class="form-control p-2 text-placeholder" id="start_time">
+                  </div>
+                  <div class="col">
+                    <label for="end_time" class="form-label">End Time</label>
+                    <input type="time" v-model="formData.endTimetime" class="form-control p-2 text-placeholder" id="end_time">
                   </div>
                 </div>
               </div>
@@ -145,7 +149,8 @@
           modeOfLesson: '',
           location: '',
           date: '',
-          time: '',
+          startTime: '',
+          endTime: '',
           additionalNotes: '',
           description: ''
         },
@@ -184,7 +189,11 @@
         console.log(this.formData)
         console.log('Preview Image:', this.previewImage)
       }
-    }
+    },
+  // ADD THIS TO OMIT SEARCH BAR
+  created() {
+    this.$emit('update:showSearchBar', false)
+  }
   }
 </script>
 

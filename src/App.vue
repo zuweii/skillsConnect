@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <Navbar />
-    <router-view></router-view>
+    <Navbar :showSearchBar="showSearchBar" />
+    <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
     <br>
     <Footer />
   </div>
@@ -16,6 +16,16 @@ export default {
   components: {
     Navbar,
     Footer
+  },
+  data() {
+    return {
+      showSearchBar: false
+    }
+  },
+  methods: {
+    updateShowSearchBar(value) {
+      this.showSearchBar = value
+    }
   }
 }
 </script>
