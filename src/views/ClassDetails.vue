@@ -2,8 +2,8 @@
   <div class="container mt-4">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item">{{ classData.category }}</li>
-        <li class="breadcrumb-item active" aria-current="page">{{ classData.subcategory }}</li>
+        <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{ classData.subcategory }}</a></li>
       </ol>
     </nav>
 
@@ -39,6 +39,8 @@
             {{ classData.details.schedule }}
             <br>
             {{ classData.details.time }}
+            <br>
+            {{ classData.details.additonalInfo }}
         </p>
       </div>
       <div class="col-md">
@@ -122,6 +124,7 @@ export default {
         details: {
           schedule: '10 Nov 2024',
           time: '1pm - 6pm',
+          additonalInfo: '',
           numberOfLessons: 1,
           modeOfLessons: 'Physical',
           skillLevel: 'Beginner',

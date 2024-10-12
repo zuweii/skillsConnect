@@ -1,6 +1,6 @@
 <template>
   <div class="container mt-4">
-    <h3 class="mb-4">List your own class</h3>
+    <h2 class="mb-4">List your own class</h2>
     <div class="row">
       <div class="col-md-4 mb-4">
         <div class="card shadow">
