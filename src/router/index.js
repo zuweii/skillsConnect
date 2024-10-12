@@ -1,20 +1,30 @@
 // have to change this: routes that requires authentication and routes that doesn't require authentication
+
 import { createRouter, createWebHistory } from 'vue-router'
 // import views
+import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 
+
 const routes = [
-// routes to the files
+  // routes to the files
+  {
+    path: '/login-page',
+    name: 'LoginPage',
+    component: LoginPage
+  },
   {
     path: '/list-class',
     name: 'ListClass',
-    component: ListClass
+    component: ListClass,
+    meta: { requiresAuth: true }
   },
   {
     path: '/class-details',
     name: 'ClassDetails',
-    component: ClassDetails
+    component: ClassDetails,
+    meta: { requiresAuth: true }
   }
 ]
 
@@ -23,7 +33,9 @@ const router = createRouter({
   routes
 })
 
+
 export default router
+
 
 // import { createRouter, createWebHistory } from 'vue-router'
 // // import views

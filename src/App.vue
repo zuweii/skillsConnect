@@ -1,14 +1,13 @@
 <template>
   <div id="app">
-    <Navbar :showSearchBar="showSearchBar" />
+    <Navbar v-if="!isLoginPage" />
     <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
-    <br>
-    <Footer />
+    <Footer v-if="!isLoginPage" />
   </div>
 </template>
 
 <script>
-import Navbar from './components/Navbar.vue'
+import Navbar from './components/NavBar.vue'
 import Footer from './components/Footer.vue'
 
 export default {
@@ -22,10 +21,21 @@ export default {
       showSearchBar: false
     }
   },
+  computed: {
+    isLoginPage() {
+      return this.$route.name === 'LoginPage'
+    }
+  },
   methods: {
     updateShowSearchBar(value) {
       this.showSearchBar = value
-    }
+    },
   }
 }
 </script>
+
+<style>
+#app {
+  font-family: Arial, sans-serif;
+}
+</style>
