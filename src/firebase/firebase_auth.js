@@ -1,13 +1,10 @@
-import {
-	getAuth,
-	signInWithEmailAndPassword,
-	signOut,
-} from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from './firebase_config';  // Import initialized auth from firebase_config.js
 
 class FirebaseAuthentication {
-	getAuth() {
-		return getAuth();
-	}
+    getAuth() {
+        return auth;  // Use the initialized auth instance
+    }
 
     async login(auth, email, password) {
         let errorCode = null;
@@ -22,16 +19,15 @@ class FirebaseAuthentication {
         return { data, errorCode };
     }
 
-	// handle logout
-	logout = function (auth) {
-		signOut(auth)
-			.then(() => {
-				console.log("logout success");
-			})
-			.catch((error) => {
-				console.error("logout error", error);
-			});
-	};
+    logout() {
+        signOut(auth)
+            .then(() => {
+                console.log("logout success");
+            })
+            .catch((error) => {
+                console.error("logout error", error);
+            });
+    }
 }
 
 const FBInstanceAuth = new FirebaseAuthentication();

@@ -2,35 +2,19 @@
   <div class="login-container">
     <div class="login-card">
       <div class="logo-container">
-        <img src="../assets/logo.png" alt="SkillsConnect Logo" class="logo">
+        <img src="../assets/logo.png" alt="SkillsConnect Logo" class="logo" />
       </div>
       <p class="login-instruction">Log in. Connect. Share your skills!</p>
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <input 
-            type="email" 
-            v-model="email" 
-            placeholder="Email" 
-            required
-            class="form-control"
-          />
+          <input type="email" v-model="email" placeholder="Email" required class="form-control" />
         </div>
         <div class="form-group">
-          <input 
-            :type="showPassword ? 'text' : 'password'" 
-            v-model="password" 
-            placeholder="Password" 
-            required
-            class="form-control"
-          />
+          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required
+            class="form-control" />
         </div>
         <div class="form-check">
-          <input 
-            type="checkbox" 
-            id="showPassword" 
-            v-model="showPassword" 
-            class="form-check-input"
-          />
+          <input type="checkbox" id="showPassword" v-model="showPassword" class="form-check-input" />
           <label for="showPassword" class="form-check-label">Show Password</label>
         </div>
         <button type="submit" class="btn btn-primary btn-block">Login</button>
@@ -41,51 +25,61 @@
 </template>
 
 <script>
-import FBInstanceAuth from '../firebase/firebase_auth';
-import { signInWithEmailAndPassword, getIdToken } from 'firebase/auth';
-
-
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/firebase_config"; // Import initialized auth
 
 export default {
-  name: 'LoginPage',
+  name: "LoginPage",
   data() {
     return {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       showPassword: false,
-      error: null
+      error: null,
     };
   },
   methods: {
     async handleLogin() {
-      const auth = FBInstanceAuth.getAuth();
-      const router = this.$router;
-      this.error = null;
+      const router = this.$router; // Use router for navigation
+      this.error = null; // Clear previous errors
 
       try {
+        // Try to sign in the user
         const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
         const user = userCredential.user;
 
         if (user) {
-          console.log('Login successful');
+          console.log("Login successful");
 
-          // Get and store user token
-          const token = await getIdToken(user);
-          localStorage.setItem('userToken', token);
+          // Store user ID
+          localStorage.setItem("userID", user.uid);
+          console.log("User ID:", localStorage.getItem('userID'));
 
-          // Redirect to home page
-          router.push('/class-details');  
-        
+          // Redirect to the home page after login
+          router.push("/class-details");
         }
       } catch (error) {
-        this.error = `Login failed: ${error.message}`;
+        // Check the Firebase error code and set specific error messages
+        if (error.code === "auth/user-not-found") {
+          this.error = "Invalid email. Please check your email address.";
+        } else if (error.code === "auth/wrong-password") {
+          this.error = "Wrong password. Please check your password.";
+        } else if (error.code === "auth/invalid-email") {
+          this.error = "Invalid email format. Please enter a valid email address.";
+        } else {
+          this.error = "Login failed. Please try again.";
+        }
+
+        // Log full error details for debugging
+        console.error("Login failed:", error);
       }
     }
-  }
+  },
 };
 </script>
 
 <style scoped>
+/* Styling is the same */
 .login-container {
   display: flex;
   justify-content: center;
@@ -117,7 +111,7 @@ export default {
   text-align: center;
   margin-bottom: 2rem;
   color: #666;
-  font-size: 1.0rem;
+  font-size: 1rem;
 }
 
 .form-group {
@@ -129,12 +123,12 @@ export default {
   padding: 0.7rem;
   border: 1px solid #ced4da;
   border-radius: 6px;
-  font-size: 1.0rem;
+  font-size: 1rem;
 }
 
 .form-check {
   margin-bottom: 1.5rem;
-  font-size: 1.0rem;
+  font-size: 1rem;
 }
 
 .btn-primary {
