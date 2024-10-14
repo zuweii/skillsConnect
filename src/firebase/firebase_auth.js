@@ -1,32 +1,48 @@
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { auth } from './firebase_config';  // Import initialized auth from firebase_config.js
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
+import { auth } from './firebase_config';
 
 class FirebaseAuthentication {
-    getAuth() {
-        return auth;  // Use the initialized auth instance
+    constructor() {
+        this.user = null;
+        this.authStateChanged = new Promise((resolve) => {
+            onAuthStateChanged(auth, (user) => {
+                this.user = user;
+                resolve(user);
+            });
+        });
     }
 
-    async login(auth, email, password) {
-        let errorCode = null;
-        let data = null;
+    getAuth() {
+        return auth;
+    }
+
+    async login(email, password) {
         try {
-            data = await signInWithEmailAndPassword(auth, email, password);
-            console.log("login success", data);
+            const userCredential = await signInWithEmailAndPassword(auth, email, password);
+            this.user = userCredential.user;
+            return { data: userCredential, errorCode: null };
         } catch (error) {
             console.error("login error", error);
-            errorCode = 1001;
+            return { data: null, errorCode: error.code };
         }
-        return { data, errorCode };
     }
 
-    logout() {
-        signOut(auth)
-            .then(() => {
-                console.log("logout success");
-            })
-            .catch((error) => {
-                console.error("logout error", error);
-            });
+    async logout() {
+        try {
+            await signOut(auth);
+            this.user = null;
+            console.log("logout success");
+        } catch (error) {
+            console.error("logout error", error);
+        }
+    }
+
+    getCurrentUser() {
+        return this.user;
+    }
+
+    async waitForAuthReady() {
+        return this.authStateChanged;
     }
 }
 

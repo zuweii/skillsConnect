@@ -25,8 +25,9 @@
 </template>
 
 <script>
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/firebase_config"; // Import initialized auth
+import FBInstanceAuth from "../firebase/firebase_auth";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase_config";
 
 export default {
   name: "LoginPage",
@@ -40,38 +41,59 @@ export default {
   },
   methods: {
     async handleLogin() {
-      const router = this.$router; // Use router for navigation
-      this.error = null; // Clear previous errors
+      this.error = null;
 
       try {
-        // Try to sign in the user
-        const userCredential = await signInWithEmailAndPassword(auth, this.email, this.password);
-        const user = userCredential.user;
+        const { data, errorCode } = await FBInstanceAuth.login(this.email, this.password);
 
-        if (user) {
-          console.log("Login successful");
-
-          // Store user ID
-          localStorage.setItem("userID", user.uid);
-          console.log("User ID:", localStorage.getItem('userID'));
-
-          // Redirect to the home page after login
-          router.push("/class-details");
+        if (errorCode) {
+          if (errorCode === "auth/user-not-found") {
+            this.error = "Invalid email. Please check your email address.";
+          } else if (errorCode === "auth/wrong-password") {
+            this.error = "Wrong password. Please check your password.";
+          } else if (errorCode === "auth/invalid-email") {
+            this.error = "Invalid email format. Please enter a valid email address.";
+          } else {
+            this.error = "Login failed. Please try again.";
+          }
+          return;
         }
-      } catch (error) {
-        // Check the Firebase error code and set specific error messages
-        if (error.code === "auth/user-not-found") {
-          this.error = "Invalid email. Please check your email address.";
-        } else if (error.code === "auth/wrong-password") {
-          this.error = "Wrong password. Please check your password.";
-        } else if (error.code === "auth/invalid-email") {
-          this.error = "Invalid email format. Please enter a valid email address.";
+
+        const user = data.user;
+        console.log("Login successful");
+
+        // Check if user document exists in Firestore
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+
+        if (!userDocSnap.exists()) {
+          // If user document doesn't exist, create it
+          await setDoc(userDocRef, {
+            email: user.email,
+            username: user.email.split("@")[0],
+            upcoming_classes_as_student: [],
+            upcoming_classes_as_teacher: [],
+            posted_classes: [],
+            finances: [],
+            chats: [],
+            reviews_as_teacher: [],
+            portfolio: {
+              youtube_links: [],
+              project_images: []
+            },
+            completed_classes: [],
+            pending_reviews: []
+          });
+          console.log("New user document created in Firestore");
         } else {
-          this.error = "Login failed. Please try again.";
+          console.log("Existing user document found in Firestore");
         }
 
-        // Log full error details for debugging
+        // Redirect to the home page after login (CHANGE)
+        this.$router.push("/class-details");
+      } catch (error) {
         console.error("Login failed:", error);
+        this.error = "An unexpected error occurred. Please try again.";
       }
     }
   },
@@ -79,7 +101,6 @@ export default {
 </script>
 
 <style scoped>
-/* Styling is the same */
 .login-container {
   display: flex;
   justify-content: center;

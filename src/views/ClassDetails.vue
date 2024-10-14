@@ -158,13 +158,14 @@ export default {
       return key.split(/(?=[A-Z])/).join(' ')
     }
   },
-  // ADD THIS FOR SEARCH BAR 
+  // ADD THIS FOR SEARCH BAR (START)
   created() {
     this.$emit('update:showSearchBar', true)
   },
   beforeDestroy() {
     this.$emit('update:showSearchBar', false)
   }
+  // ADD THIS FOR SEARCH BAR (END)
 }
 </script>
 

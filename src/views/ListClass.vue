@@ -1,7 +1,15 @@
 <template>
   <div class="container mt-4">
     <h2 class="mb-4">List your own class</h2>
-    <div class="row">
+    <div v-if="error" class="alert alert-danger" role="alert">
+      {{ error }}
+    </div>
+    <div v-if="loading" class="text-center">
+      <div class="spinner-border" role="status">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+    <div v-else class="row">
       <div class="col-md-4 mb-4">
         <div class="card shadow">
           <div class="card-body">
@@ -35,11 +43,11 @@
                 <select id="category" v-model="formData.mainCategory" @change="updateSubcategories"
                   class="form-select p-2 mb-2">
                   <option value="" disabled selected>Select a category</option>
-                  <option v-for="category in categories" :key="category.name" :value="category.name">
-                    {{ category.name }}
+                  <option v-for="category in categories" :key="category.category_name" :value="category.category_name">
+                    {{ category.category_name }}
                   </option>
                 </select>
-                <select v-if="subcategories.length" v-model="formData.subcategory" class="form-select p-2">
+                <select v-if="subcategories.length > 0" v-model="formData.subcategory" class="form-select p-2">
                   <option value="" disabled selected>Select a subcategory</option>
                   <option v-for="subcategory in subcategories" :key="subcategory" :value="subcategory">
                     {{ subcategory }}
@@ -104,11 +112,13 @@
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.startTime" class="form-control p-2 text-placeholder" id="start_time">
+                    <input type="time" v-model="formData.startTime" class="form-control p-2 text-placeholder"
+                      id="start_time">
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
-                    <input type="time" v-model="formData.endTimetime" class="form-control p-2 text-placeholder" id="end_time">
+                    <input type="time" v-model="formData.endTime" class="form-control p-2 text-placeholder"
+                      id="end_time">
                   </div>
                 </div>
               </div>
@@ -122,11 +132,10 @@
                 <textarea id="description" v-model="formData.description" class="form-control p-2" rows="5"></textarea>
               </div>
               <div class="text-end">
-                <button type="submit" class="list btn btn-primary">List Class</button>
+                <button type="submit" class="list btn btn-primary" :disabled="!isFormValid">List Class</button>
               </div>
             </div>
           </div>
-
         </form>
       </div>
     </div>
@@ -134,105 +143,238 @@
 </template>
 
 <script>
-  export default {
-    name: 'ListClass',
-    data() {
-      return {
-        formData: {
-          mainCategory: '',
-          subcategory: '',
-          classTitle: '',
-          price: null,
-          maxCapacity: null,
-          skillLevel: '',
-          numberOfLessons: null,
-          modeOfLesson: '',
-          location: '',
-          date: '',
-          startTime: '',
-          endTime: '',
-          additionalNotes: '',
-          description: ''
-        },
-        categories: [
-          { name: 'Art', subcategories: ['Painting', 'Sculpture', 'Photography'] },
-          { name: 'Music', subcategories: ['Guitar', 'Piano', 'Singing'] },
-          { name: 'Cooking', subcategories: ['Baking', 'Grilling', 'Pastry'] },
-          { name: 'Technology', subcategories: ['Web Development', 'Mobile Apps', 'Data Science'] },
-          { name: 'Language', subcategories: ['English', 'Spanish', 'Mandarin'] },
-        ],
-        subcategories: [],
-        previewImage: null
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { collection, addDoc, updateDoc, doc, getDocs, arrayUnion, query, where } from 'firebase/firestore';
+import { db, storage, auth } from '../firebase/firebase_config';
+
+export default {
+  name: 'ListClass',
+  data() {
+    return {
+      formData: {
+        mainCategory: '',
+        subcategory: '',
+        classTitle: '',
+        price: null,
+        maxCapacity: null,
+        skillLevel: '',
+        numberOfLessons: null,
+        modeOfLesson: '',
+        location: '',
+        date: '',
+        startTime: '',
+        endTime: '',
+        additionalNotes: '',
+        description: ''
+      },
+      categories: [],
+      subcategories: [],
+      previewImage: null,
+      imageFile: null,
+      error: null,
+      loading: true
+    }
+  },
+  computed: {
+    isFormValid() {
+      return this.formData.mainCategory &&
+        this.formData.subcategory &&
+        this.formData.classTitle &&
+        this.formData.price &&
+        this.formData.maxCapacity &&
+        this.formData.skillLevel &&
+        this.formData.numberOfLessons &&
+        this.formData.modeOfLesson &&
+        this.formData.location &&
+        this.formData.date &&
+        this.formData.startTime &&
+        this.formData.endTime &&
+        this.formData.description &&
+        this.imageFile;
+    }
+  },
+  methods: {
+    async fetchCategories() {
+      try {
+        this.loading = true;
+        const categoriesSnapshot = await getDocs(collection(db, 'categories'));
+        this.categories = categoriesSnapshot.docs.map(doc => ({
+          category_name: doc.id,
+          ...doc.data()
+        }));
+        this.loading = false;
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+        this.error = 'Failed to load categories. Please try again later.';
+        this.loading = false;
       }
     },
-    methods: {
-      updateSubcategories() {
-        const selectedCategory = this.categories.find(cat => cat.name === this.formData.mainCategory);
-        this.subcategories = selectedCategory ? selectedCategory.subcategories : [];
-        this.formData.subcategory = ''; // Reset subcategory when main category changes
-      },
-      handleFileUpload(event) {
-        const file = event.target.files[0]
-        if (file) {
-          this.previewImage = URL.createObjectURL(file)
-        }
-      },
-      removePhoto() {
-        this.previewImage = null
-        const fileInput = document.getElementById('photo-upload')
-        if (fileInput) {
-          fileInput.value = ''
-        }
-      },
-      submitForm() {
-        // Handle form submission
-        console.log(this.formData)
-        console.log('Preview Image:', this.previewImage)
+    updateSubcategories() {
+      const selectedCategory = this.categories.find(cat => cat.category_name === this.formData.mainCategory);
+      this.subcategories = selectedCategory && selectedCategory.sub_categories ? selectedCategory.sub_categories : [];
+      this.formData.subcategory = '';
+    },
+    handleFileUpload(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.previewImage = URL.createObjectURL(file)
+        this.imageFile = file
       }
     },
-  // ADD THIS TO OMIT SEARCH BAR
+    removePhoto() {
+      this.previewImage = null
+      this.imageFile = null
+      const fileInput = document.getElementById('photo-upload')
+      if (fileInput) {
+        fileInput.value = ''
+      }
+    },
+    async submitForm() {
+      if (!this.isFormValid) {
+        alert('Please fill in all required fields and upload an image.')
+        return
+      }
+
+      try {
+        const user = auth.currentUser
+        if (!user) {
+          alert('You must be logged in to list a class.')
+          return
+        }
+
+        // Upload image to Firebase Storage
+        const storageRef = ref(storage, `class-images/${Date.now()}_${this.imageFile.name}`);
+        await uploadBytes(storageRef, this.imageFile)
+        const imageUrl = await getDownloadURL(storageRef)
+
+        // Prepare class data
+        const classData = {
+          teacher_username: user.uid,
+          image: imageUrl,
+          category: this.formData.mainCategory,
+          subcategory: this.formData.subcategory,
+          title: this.formData.classTitle,
+          price: parseFloat(this.formData.price),
+          max_capacity: parseInt(this.formData.maxCapacity),
+          current_enrollment: 0,
+          skill_level: this.formData.skillLevel,
+          number_of_lessons: parseInt(this.formData.numberOfLessons),
+          mode: this.formData.modeOfLesson,
+          location: this.formData.location,
+          start_date: new Date(this.formData.date),
+          start_time: new Date(`${this.formData.date}T${this.formData.startTime}`),
+          end_time: new Date(`${this.formData.date}T${this.formData.endTime}`),
+          schedule: this.formData.additionalNotes,
+          description: this.formData.description,
+          reviews: [],
+          ratings_average: 0
+        }
+
+        // Add class to Firestore
+        const classRef = await addDoc(collection(db, 'classes'), classData)
+        const classId = classRef.id
+
+        // Update user's posted_classes
+        const userRef = doc(db, 'users', user.uid)
+        await updateDoc(userRef, {
+          posted_classes: arrayUnion({
+            class_id: classId,
+            image: imageUrl,
+            category: classData.category,
+            subcategory: classData.subcategory,
+            title: classData.title,
+            price: classData.price,
+            max_capacity: classData.max_capacity,
+            skill_level: classData.skill_level,
+            number_of_lessons: classData.number_of_lessons,
+            mode: classData.mode,
+            location: classData.location,
+            start_date: classData.start_date,
+            start_time: classData.start_time,
+            end_time: classData.end_time,
+            additional_schedule_info: classData.schedule,
+            description: classData.description
+          })
+        })
+
+        // Update categories collection
+        const categoriesRef = collection(db, 'categories')
+        const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category))
+        const categoryQuerySnapshot = await getDocs(categoryQuery)
+
+        if (!categoryQuerySnapshot.empty) {
+          // Category exists, update it
+          const categoryDoc = categoryQuerySnapshot.docs[0]
+          await updateDoc(doc(db, 'categories', categoryDoc.id), {
+            class_ids: arrayUnion(classId),
+            sub_categories: arrayUnion(classData.subcategory)
+          })
+        } else {
+          // Category doesn't exist, create it
+          await addDoc(categoriesRef, {
+            category_name: classData.category,
+            sub_categories: [classData.subcategory],
+            class_ids: [classId]
+          })
+        }
+
+        alert('Class listed successfully!')
+        // Reset form or redirect to a success page
+        this.$router.push('/class-details')
+      } catch (error) {
+        console.error('Error submitting form:', error)
+        this.error = 'An error occurred while listing the class. Please try again.'
+      }
+    }
+  },
   created() {
     this.$emit('update:showSearchBar', false)
+    this.fetchCategories()
   }
-  }
+}
 </script>
 
 <style scoped>
-  .card {
-    border-radius: 8px;
-    border: 0.5px solid lightgray;
-  }
+.card {
+  border-radius: 8px;
+  border: 0.5px solid lightgray;
+}
 
-  .photo-upload-area {
-    border: 2px dashed #2240a4;
-    border-radius: 5px;
-    height: 300px;
-    overflow: hidden;
-  }
+.photo-upload-area {
+  border: 2px dashed #2240a4;
+  border-radius: 5px;
+  height: 300px;
+  overflow: hidden;
+}
 
-  .photo-upload-label {
-    cursor: pointer;
-    height: 100%;
-    width: 100%;
-    background-color: #eaeffd;
-    color: #2240a4;
-  }
+.photo-upload-label {
+  cursor: pointer;
+  height: 100%;
+  width: 100%;
+  background-color: #eaeffd;
+  color: #2240a4;
+}
 
-  .object-fit-cover {
-    object-fit: cover;
-  }
+.object-fit-cover {
+  object-fit: cover;
+}
 
-  .list {
-    background-color: #5a7dee;
-  }
+.list {
+  background-color: #5a7dee;
+}
 
-  .list:hover {
-    background-color: #4e6dd2;
-  }
+.list:hover {
+  background-color: #4e6dd2;
+}
 
-  .form-control,
-  .form-select {
-    border-radius: 4px;
-    border: 1.5px solid #ced4da;
-  }
+.list:disabled {
+  background-color: #b0b0b0;
+  border: 1px solid #b0b0b0;
+}
+
+.form-control,
+.form-select {
+  border-radius: 4px;
+  border: 1.5px solid #ced4da;
+}
 </style>
