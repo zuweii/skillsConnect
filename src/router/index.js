@@ -5,8 +5,8 @@ import FBInstanceAuth from '../firebase/firebase_auth'
 import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
+import Chat from '../views/Chat.vue';  // Import the Chat view
 
-// Define the routes
 const routes = [
   {
     path: '/login-page',
@@ -26,10 +26,16 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/chat',
+    name: 'Chat',
+    component: Chat,  // Chat route
+    meta: { requiresAuth: true }  // Require authentication for chat
+  },
+  {
     path: '/:catchAll(.*)',
     redirect: '/login-page'
   }
-]
+];
 
 // Create the router
 const router = createRouter({
