@@ -3,7 +3,8 @@
     <div class="chat-app">
       <!-- Left: Chat List -->
       <div class="chat-list">
-        <div v-for="chat in chatList" :key="chat.id" @click="selectChat(chat)" class="chat-item" :class="{ 'selected': selectedChat && selectedChat.id === chat.id }">
+        <div v-for="chat in chatList" :key="chat.id" @click="selectChat(chat)" class="chat-item"
+          :class="{ 'selected': selectedChat && selectedChat.id === chat.id }">
           <img :src="chat.avatar" alt="Avatar" class="avatar" />
           <div class="chat-info">
             <h5>{{ chat.name }}</h5>
@@ -18,8 +19,9 @@
         <div v-if="selectedChat" class="chat-header">
           <h4>{{ selectedChat.name }}</h4>
         </div>
-        <div class="chat-messages">
-          <div v-for="message in messages" :key="message.id" class="message" :class="{ 'from-me': message.sender === currentUser.name }">
+        <div v-if="selectedChat" class="chat-messages">
+          <div v-for="message in messages" :key="message.id" class="message"
+            :class="{ 'from-me': message.sender === currentUser.name }">
             <img :src="message.senderAvatar" alt="Avatar" class="avatar" />
             <div class="message-content">
               <p>{{ message.text }}</p>
@@ -27,7 +29,9 @@
             </div>
           </div>
         </div>
-        <div class="chat-input">
+
+        <!-- Conditionally render chat input box -->
+        <div v-if="selectedChat" class="chat-input">
           <input v-model="newMessage" @keyup.enter="sendMessage" placeholder="Type a message..." class="form-control" />
           <button @click="sendMessage" class="btn btn-primary">Send</button>
         </div>
@@ -37,8 +41,12 @@
 </template>
 
 
+// import ChatEngine from 'chat-engine'; // Assuming ChatEngine setup is already configured
 <script>
-import ChatEngine from 'chat-engine';  // Assuming ChatEngine setup is already configured
+import { db } from '../firebase/firebase_config';  // Import Firebase setup
+import { collection, doc, onSnapshot, query, orderBy, addDoc, serverTimestamp } from 'firebase/firestore';
+import { getStorage, ref, getDownloadURL } from "firebase/storage";
+
 
 export default {
   data() {
@@ -53,96 +61,98 @@ export default {
       }
     };
   },
-  mounted() {
-    this.loadChats();
+  async mounted() {
+    this.subscribeToChats();  // Subscribe to real-time chat updates
   },
   methods: {
-  async loadChats() {
-    // Replace with ChatEngine's method to load chats for the current user
-    this.chatList = [
-      {
-        id: 'chat1',
-        name: 'Matilda Leow',
-        avatar: 'src/assets/instructor.jpg',
-        title: 'Sourdough Bread Baking Class',
-        lastMessage: 'I am good, thanks!'
-      },
-      {
-        id: 'chat2',
-        name: 'Sabrina Carpenter',
-        avatar: 'src/assets/instructor2.jpg',
-        title: 'Music Production 101',
-        lastMessage: 'Yes! Feel free to drop by if you can.'
-      }
-    ];
-  },
-  selectChat(chat) {
-    this.selectedChat = chat;
-    this.loadMessages(chat.id);
-  },
-  loadMessages(chatId) {
-    // Check if the selected chat is Sabrina Carpenter's chat
-    if (chatId === 'chat2') {
-      this.messages = [
-        {
-          id: 1,
-          sender: 'You',
-          senderAvatar: 'src/assets/user.jpg',
-          text: 'Hi, are there still slots available for the Saturday 1PM class?',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          sender: 'Sabrina Carpenter',
-          senderAvatar: 'src/assets/instructor2.jpg',
-          text: 'Yes! Feel free to drop by if you can.',
-          createdAt: new Date().toISOString()
-        }
-      ];
-    } else {
-      // Placeholder for other chat messages (e.g., Matilda Leow's chat)
-      this.messages = [
-        {
-          id: 1,
-          sender: 'Sabrina Carpenter',
-          senderAvatar: 'src/assets/instructor2.jpg',
-          text: 'Hello, how are you?',
-          createdAt: new Date().toISOString()
-        },
-        {
-          id: 2,
-          sender: 'You',
-          senderAvatar: 'src/assets/user.jpg',
-          text: 'I am good, thanks!',
-          createdAt: new Date().toISOString()
-        }
-      ];
-    }
-  },
-  sendMessage() {
-    if (this.newMessage.trim() !== '') {
-      // Add message to UI
-      this.messages.push({
-        id: this.messages.length + 1,
+    // Subscribe to real-time chat updates
+    subscribeToChats() {
+      const chatsCollection = collection(db, 'chats');
+      onSnapshot(chatsCollection, (snapshot) => {
+        this.chatList = [];  // Clear current chat list
+
+        const storage = getStorage();  // Initialize Firebase Storage
+
+        snapshot.forEach(async (doc) => {
+          const chatData = doc.data();
+          const avatarRef = ref(storage, chatData.avatar);  // Reference to the avatar in Firebase Storage
+
+          try {
+            const avatarUrl = await getDownloadURL(avatarRef);  // Get download URL for the avatar
+            this.chatList.push({
+              id: doc.id,
+              ...chatData,
+              avatar: avatarUrl  // Use the download URL as the avatar image
+            });
+          } catch (error) {
+            console.error('Error fetching avatar image:', error);
+          }
+        });
+      });
+    },
+
+
+    // Select a chat and subscribe to its messages
+    selectChat(chat) {
+      this.selectedChat = chat;
+      this.subscribeToMessages(chat.id);
+    },
+
+    // Subscribe to real-time messages for the selected chat
+    subscribeToMessages(chatId) {
+      const messagesCollection = collection(db, 'chats', chatId, 'messages');
+      const messagesQuery = query(messagesCollection, orderBy('createdAt', 'asc'));
+
+      const storage = getStorage();  // Initialize Firebase Storage
+
+      onSnapshot(messagesQuery, async (snapshot) => {
+        this.messages = [];
+
+        snapshot.forEach(async (doc) => {
+          const messageData = doc.data();
+          const avatarRef = ref(storage, messageData.senderAvatar);  // Reference to the sender's avatar
+
+          try {
+            const avatarUrl = await getDownloadURL(avatarRef);  // Get download URL for the sender's avatar
+            this.messages.push({
+              id: doc.id,
+              ...messageData,
+              senderAvatar: avatarUrl  // Use the download URL for the sender's avatar
+            });
+          } catch (error) {
+            console.error('Error fetching sender avatar image:', error);
+          }
+        });
+      });
+    },
+
+
+    // Send a message and store it in Firestore
+    async sendMessage() {
+      if (this.newMessage.trim() === '') return;
+
+      const messagesCollection = collection(db, 'chats', this.selectedChat.id, 'messages');
+
+      const newMsg = {
         sender: this.currentUser.name,
         senderAvatar: this.currentUser.avatar,
         text: this.newMessage,
-        createdAt: new Date().toISOString()
-      });
+        createdAt: serverTimestamp()
+      };
 
-      // Clear input field
+      await addDoc(messagesCollection, newMsg);
+
       this.newMessage = '';
+    },
 
-      // Send message using ChatEngine (this will be replaced with actual ChatEngine sending logic)
-      ChatEngine.sendMessage(this.selectedChat.id, this.newMessage);
+    // Format the timestamp for display
+    formatTimestamp(timestamp) {
+      return new Date(timestamp?.seconds * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
-  },
-  formatTimestamp(timestamp) {
-    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
-}
 };
 </script>
+
 
 <style scoped>
 /* Chat container to restrict to 70% of screen width */
@@ -151,14 +161,16 @@ export default {
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background-color: white;
+  background-color: #f0f0f0;
 }
 
 /* Chat app styles */
 .chat-app {
   display: flex;
-  width: 70%;  /* 70% of the screen width */
-  height: 80vh; /* Set height to 80% of the screen height */
+  width: 70%;
+  /* 70% of the screen width */
+  height: 80vh;
+  /* Set height to 80% of the screen height */
   background-color: #fff;
   box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.1);
   border-radius: 8px;
