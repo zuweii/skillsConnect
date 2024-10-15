@@ -6,6 +6,7 @@ import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Chat from '../views/Chat.vue';  // Import the Chat view
+import Payment from '../views/Payment.vue'
 
 const routes = [
   {
@@ -23,7 +24,6 @@ const routes = [
     path: '/class-details',
     name: 'ClassDetails',
     component: ClassDetails,
-    meta: { requiresAuth: true }
   },
   {
     path: '/chat',
@@ -32,10 +32,16 @@ const routes = [
     meta: { requiresAuth: true }  // Require authentication for chat
   },
   {
+    path: '/payment/:classId',
+    name: 'Payment',
+    component: Payment,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/:catchAll(.*)',
     redirect: '/login-page'
   }
-];
+]
 
 // Create the router
 const router = createRouter({
@@ -52,7 +58,10 @@ router.beforeEach(async (to, from, next) => {
     if (user) {
       next();
     } else {
-      next({ path: '/login-page' });
+      next({
+        path: '/login-page',
+        query: { redirect: to.fullPath }
+      });
     }
   } else {
     next();

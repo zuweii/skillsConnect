@@ -25,36 +25,38 @@
 </template>
 
 <script>
+import { ref } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import FBInstanceAuth from "../firebase/firebase_auth";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase_config";
 
 export default {
   name: "LoginPage",
-  data() {
-    return {
-      email: "",
-      password: "",
-      showPassword: false,
-      error: null,
-    };
-  },
-  methods: {
-    async handleLogin() {
-      this.error = null;
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+
+    const email = ref("");
+    const password = ref("");
+    const showPassword = ref(false);
+    const error = ref(null);
+
+    const handleLogin = async () => {
+      error.value = null;
 
       try {
-        const { data, errorCode } = await FBInstanceAuth.login(this.email, this.password);
+        const { data, errorCode } = await FBInstanceAuth.login(email.value, password.value);
 
         if (errorCode) {
           if (errorCode === "auth/user-not-found") {
-            this.error = "Invalid email. Please check your email address.";
+            error.value = "Invalid email. Please check your email address.";
           } else if (errorCode === "auth/wrong-password") {
-            this.error = "Wrong password. Please check your password.";
+            error.value = "Wrong password. Please check your password.";
           } else if (errorCode === "auth/invalid-email") {
-            this.error = "Invalid email format. Please enter a valid email address.";
+            error.value = "Invalid email format. Please enter a valid email address.";
           } else {
-            this.error = "Login failed. Please try again.";
+            error.value = "Login failed. Please try again.";
           }
           return;
         }
@@ -71,12 +73,12 @@ export default {
           await setDoc(userDocRef, {
             email: user.email,
             username: user.email.split("@")[0],
+            profile_photo: "",
             upcoming_classes_as_student: [],
             upcoming_classes_as_teacher: [],
             posted_classes: [],
             finances: [],
             chats: [],
-            reviews_as_teacher: [],
             portfolio: {
               youtube_links: [],
               project_images: []
@@ -89,14 +91,23 @@ export default {
           console.log("Existing user document found in Firestore");
         }
 
-        // Redirect to the home page after login (CHANGE)
-        this.$router.push("/class-details");
+        // Check if there's a redirect query parameter (CHANGE TO HOMEPAGE PLEASE)
+        const redirectPath = route.query.redirect || '/class-details';
+        router.push(redirectPath);
       } catch (error) {
         console.error("Login failed:", error);
-        this.error = "An unexpected error occurred. Please try again.";
+        error.value = "An unexpected error occurred. Please try again.";
       }
-    }
-  },
+    };
+
+    return {
+      email,
+      password,
+      showPassword,
+      error,
+      handleLogin
+    };
+  }
 };
 </script>
 
