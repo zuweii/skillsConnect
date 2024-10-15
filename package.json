@@ -11,6 +11,7 @@
   "dependencies": {
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
+    "chat-engine": "^0.9.21",
     "firebase": "^10.14.1",
     "pinia": "^2.2.4",
     "vue": "^3.5.11",
