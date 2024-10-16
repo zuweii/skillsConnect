@@ -6,6 +6,7 @@
     <template v-else>
       <Navbar v-if="!isLoginPage" :showSearchBar="showSearchBar" />
       <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
+      <br><br><br><br>
       <Footer v-if="!isLoginPage" />
     </template>
   </div>

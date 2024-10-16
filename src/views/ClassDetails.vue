@@ -12,8 +12,10 @@
   <div v-else class="container mt-4">
     <nav aria-label="breadcrumb">
       <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a></li>
-        <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{ classData.subcategory }}</a></li>
+        <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a>
+        </li>
+        <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{
+          classData.subcategory }}</a></li>
       </ol>
     </nav>
 
@@ -29,11 +31,13 @@
           <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
           <StarRating :rating="classData.ratings_average" />
           <span class="text-muted ms-2">({{ classData.reviews.length > 0 ? classData.reviews.length : 0 }} Reviews)</span>
-          <span class="ms-3 text-colour">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{ classData.max_capacity }}</span>
+          <span class="ms-3 text-colour">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{
+            classData.max_capacity }}</span>
         </div>
         <h2 class="h3 mb-3">${{ classData.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classData.description }}</p>
-        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom">Enrol Now</button>
+        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom">Enrol
+          Now</button>
       </div>
     </div>
 
@@ -63,7 +67,7 @@
           </div>
           <div class="col-md">
             <p class="text-colour"><strong>Skill Level:</strong></p>
-            <p>{{ classData.skill_level }}</p>
+            <p>{{ capitalizeLevel(classData.skill_level) }}</p>
           </div>
           <div class="col-md">
             <p class="text-colour"><strong>Location:</strong></p>
@@ -86,24 +90,31 @@
               </div>
               <h4 class="h5 mb-1 fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
               <!-- <div class="d-flex align-items-center"> -->
-                <!-- <span class="me-2">{{ instructorData.rating }}</span>
+              <!-- <span class="me-2">{{ instructorData.rating }}</span>
                 <StarRating :rating="instructorData.rating" />
                 <span class="ms-2 text-muted">({{ instructorData.reviews }} Reviews)</span> -->
               <!-- </div> -->
             </div>
           </div>
           <div class="col-md-8">
-            <div v-for="review in classData.reviews.slice(0, 2)" :key="review.id" class="card mb-3 shadow-sm" style="border:1px solid lightgray">
-              <div class="card-body">
-                <h5 class="card-title">{{ review.name }}</h5>
-                <div class="d-flex align-items-center mb-2">
-                  <StarRating :rating="review.rating" />
-                  <small class="text-muted ms-2">{{ formatDate(review.date) }}</small>
-                </div>
-                <p class="card-text">{{ review.comment }}</p>
-              </div>
+            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
+              style="height: 200px;">
+              No reviews yet
             </div>
-            <!-- <a href="#" class="text-decoration-none text-colour">Read all reviews »</a> -->
+            <div v-else>
+              <div v-for="review in classData.reviews.slice(0, 2)" :key="review.id" class="card mb-3 shadow-sm"
+                style="border:1px solid lightgray">
+                <div class="card-body">
+                  <h5 class="card-title">{{ review.name }}</h5>
+                  <div class="d-flex align-items-center mb-2">
+                    <StarRating :rating="review.rating" />
+                    <small class="text-muted ms-2">{{ formatDate(review.date) }}</small>
+                  </div>
+                  <p class="card-text">{{ review.comment }}</p>
+                </div>
+              </div>
+              <!-- <a href="#" class="text-decoration-none text-colour">Read all reviews »</a> -->
+            </div>
           </div>
         </div>
       </div>
@@ -136,7 +147,7 @@ export default {
       try {
         const classId = '1W6q8dHtbMGqjsr2h8L8'; // route.params.id; (CHANGE THIS TO route.params.id & change routing)
         const classDoc = await getDoc(doc(db, 'classes', classId));
-        
+
         if (classDoc.exists()) {
           classData.value = { id: classDoc.id, ...classDoc.data() };
           // Ensure reviews show 0 if the array is empty
@@ -175,6 +186,13 @@ export default {
       return mode;
     };
 
+    const capitalizeLevel = (level) => {
+      if (level) {
+        return level.charAt(0).toUpperCase() + level.slice(1).toLowerCase();
+      }
+      return level;
+    };
+
     const formatDate = (date) => {
       return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
         year: 'numeric',
@@ -195,8 +213,8 @@ export default {
       if (user) {
         router.push({ name: 'Payment', params: { classId: classData.value.id } });
       } else {
-        router.push({ 
-          name: 'LoginPage', 
+        router.push({
+          name: 'LoginPage',
           query: { redirect: `/payment/${classData.value.id}` }
         });
       }
@@ -214,15 +232,18 @@ export default {
       formatDate,
       formatTime,
       handleEnrolClick,
-      capitalizeMode
+      capitalizeMode,
+      capitalizeLevel
     };
   },
+  // ADD THIS FPR SEARCH BAR (START)
   created() {
     this.$emit('update:showSearchBar', true);
   },
   beforeUnmount() {
     this.$emit('update:showSearchBar', false);
   }
+  // ADD THIS FPR SEARCH BAR (END)
 };
 </script>
 

@@ -93,7 +93,7 @@
                   <select id="modeOfLesson" v-model="formData.modeOfLesson" class="form-select">
                     <option value="" disabled selected>Mode of Lesson</option>
                     <option value="online">Online</option>
-                    <option value="in-person">Physical</option>
+                    <option value="physical">Physical</option>
                     <option value="hybrid">Hybrid</option>
                   </select>
                 </div>
@@ -117,8 +117,7 @@
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
-                    <input type="time" v-model="formData.endTime" class="form-control p-2 text-placeholder"
-                      id="end_time">
+                    <input type="time" v-model="formData.endTime" class="form-control p-2 text-placeholder" id="end_time">
                   </div>
                 </div>
               </div>
@@ -139,143 +138,162 @@
         </form>
       </div>
     </div>
+
+
+    <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header border-bottom-0">
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body text-center">
+            Your class has been successfully listed!
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, updateDoc, doc, getDocs, arrayUnion, query, where } from 'firebase/firestore';
 import { db, storage, auth } from '../firebase/firebase_config';
+import { Modal } from 'bootstrap';
 
 export default {
   name: 'ListClass',
-  data() {
-    return {
-      formData: {
-        mainCategory: '',
-        subcategory: '',
-        classTitle: '',
-        price: null,
-        maxCapacity: null,
-        skillLevel: '',
-        numberOfLessons: null,
-        modeOfLesson: '',
-        location: '',
-        date: '',
-        startTime: '',
-        endTime: '',
-        additionalNotes: '',
-        description: ''
-      },
-      categories: [],
-      subcategories: [],
-      previewImage: null,
-      imageFile: null,
-      error: null,
-      loading: true
-    }
-  },
-  computed: {
-    isFormValid() {
-      return this.formData.mainCategory &&
-        this.formData.subcategory &&
-        this.formData.classTitle &&
-        this.formData.price &&
-        this.formData.maxCapacity &&
-        this.formData.skillLevel &&
-        this.formData.numberOfLessons &&
-        this.formData.modeOfLesson &&
-        this.formData.location &&
-        this.formData.date &&
-        this.formData.startTime &&
-        this.formData.endTime &&
-        this.formData.description &&
-        this.imageFile;
-    }
-  },
-  methods: {
-    async fetchCategories() {
+  setup() {
+    const router = useRouter();
+    const formData = ref({
+      mainCategory: '',
+      subcategory: '',
+      classTitle: '',
+      price: null,
+      maxCapacity: null,
+      skillLevel: '',
+      numberOfLessons: null,
+      modeOfLesson: '',
+      location: '',
+      date: '',
+      startTime: '',
+      endTime: '',
+      additionalNotes: '',
+      description: ''
+    });
+    const categories = ref([]);
+    const subcategories = ref([]);
+    const previewImage = ref(null);
+    const imageFile = ref(null);
+    const error = ref(null);
+    const loading = ref(true);
+    const successModal = ref(null);
+
+    const isFormValid = computed(() => {
+      return formData.value.mainCategory &&
+        formData.value.subcategory &&
+        formData.value.classTitle &&
+        formData.value.price &&
+        formData.value.maxCapacity &&
+        formData.value.skillLevel &&
+        formData.value.numberOfLessons &&
+        formData.value.modeOfLesson &&
+        formData.value.location &&
+        formData.value.date &&
+        formData.value.startTime &&
+        formData.value.endTime &&
+        formData.value.description &&
+        imageFile.value;
+    });
+
+    const fetchCategories = async () => {
       try {
-        this.loading = true;
+        loading.value = true;
         const categoriesSnapshot = await getDocs(collection(db, 'categories'));
-        this.categories = categoriesSnapshot.docs.map(doc => ({
+        categories.value = categoriesSnapshot.docs.map(doc => ({
           category_name: doc.id,
           ...doc.data()
         }));
-        this.loading = false;
-      } catch (error) {
-        console.error('Error fetching categories:', error);
-        this.error = 'Failed to load categories. Please try again later.';
-        this.loading = false;
+        loading.value = false;
+      } catch (err) {
+        console.error('Error fetching categories:', err);
+        error.value = 'Failed to load categories. Please try again later.';
+        loading.value = false;
       }
-    },
-    updateSubcategories() {
-      const selectedCategory = this.categories.find(cat => cat.category_name === this.formData.mainCategory);
-      this.subcategories = selectedCategory && selectedCategory.sub_categories ? selectedCategory.sub_categories : [];
-      this.formData.subcategory = '';
-    },
-    handleFileUpload(event) {
-      const file = event.target.files[0]
+    };
+
+    const updateSubcategories = () => {
+      const selectedCategory = categories.value.find(cat => cat.category_name === formData.value.mainCategory);
+      subcategories.value = selectedCategory && selectedCategory.sub_categories ? selectedCategory.sub_categories : [];
+      formData.value.subcategory = '';
+    };
+
+    const handleFileUpload = (event) => {
+      const file = event.target.files[0];
       if (file) {
-        this.previewImage = URL.createObjectURL(file)
-        this.imageFile = file
+        previewImage.value = URL.createObjectURL(file);
+        imageFile.value = file;
       }
-    },
-    removePhoto() {
-      this.previewImage = null
-      this.imageFile = null
-      const fileInput = document.getElementById('photo-upload')
+    };
+
+    const removePhoto = () => {
+      previewImage.value = null;
+      imageFile.value = null;
+      const fileInput = document.getElementById('photo-upload');
       if (fileInput) {
-        fileInput.value = ''
+        fileInput.value = '';
       }
-    },
-    async submitForm() {
-      if (!this.isFormValid) {
-        alert('Please fill in all required fields and upload an image.')
-        return
+    };
+
+    const submitForm = async () => {
+      if (!isFormValid.value) {
+        alert('Please fill in all required fields and upload an image.');
+        return;
       }
 
       try {
-        const user = auth.currentUser
+        const user = auth.currentUser;
         if (!user) {
-          alert('You must be logged in to list a class.')
-          return
+          alert('You must be logged in to list a class.');
+          return;
         }
 
         // Upload image to Firebase Storage
-        const storageRef = ref(storage, `class-images/${Date.now()}_${this.imageFile.name}`);
-        await uploadBytes(storageRef, this.imageFile)
-        const imageUrl = await getDownloadURL(storageRef)
+        const imageRef = storageRef(storage, `class-images/${Date.now()}_${imageFile.value.name}`);
+        await uploadBytes(imageRef, imageFile.value);
+        const imageUrl = await getDownloadURL(imageRef);
 
         // Prepare class data
         const classData = {
           teacher_username: user.uid,
           image: imageUrl,
-          category: this.formData.mainCategory,
-          subcategory: this.formData.subcategory,
-          title: this.formData.classTitle,
-          price: parseFloat(this.formData.price),
-          max_capacity: parseInt(this.formData.maxCapacity),
+          category: formData.value.mainCategory,
+          subcategory: formData.value.subcategory,
+          title: formData.value.classTitle,
+          price: parseFloat(formData.value.price),
+          max_capacity: parseInt(formData.value.maxCapacity),
           current_enrollment: 0,
-          skill_level: this.formData.skillLevel,
-          number_of_lessons: parseInt(this.formData.numberOfLessons),
-          mode: this.formData.modeOfLesson,
-          location: this.formData.location,
-          start_date: new Date(this.formData.date),
-          start_time: new Date(`${this.formData.date}T${this.formData.startTime}`),
-          end_time: new Date(`${this.formData.date}T${this.formData.endTime}`),
-          schedule: this.formData.additionalNotes,
-          description: this.formData.description,
+          skill_level: formData.value.skillLevel,
+          number_of_lessons: parseInt(formData.value.numberOfLessons),
+          mode: formData.value.modeOfLesson,
+          location: formData.value.location,
+          start_date: new Date(formData.value.date),
+          start_time: new Date(`${formData.value.date}T${formData.value.startTime}`),
+          end_time: new Date(`${formData.value.date}T${formData.value.endTime}`),
+          schedule: formData.value.additionalNotes,
+          description: formData.value.description,
           reviews: [],
           ratings_average: 0
-        }
+        };
 
         // Add class to Firestore
-        const classRef = await addDoc(collection(db, 'classes'), classData)
-        const classId = classRef.id
+        const classRef = await addDoc(collection(db, 'classes'), classData);
+        const classId = classRef.id;
 
         // Update user's posted_classes
-        const userRef = doc(db, 'users', user.uid)
+        const userRef = doc(db, 'users', user.uid);
         await updateDoc(userRef, {
           posted_classes: arrayUnion({
             class_id: classId,
@@ -295,43 +313,63 @@ export default {
             additional_schedule_info: classData.schedule,
             description: classData.description
           })
-        })
+        });
 
         // Update categories collection
-        const categoriesRef = collection(db, 'categories')
-        const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category))
-        const categoryQuerySnapshot = await getDocs(categoryQuery)
+        const categoriesRef = collection(db, 'categories');
+        const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category));
+        const categoryQuerySnapshot = await getDocs(categoryQuery);
 
         if (!categoryQuerySnapshot.empty) {
           // Category exists, update it
-          const categoryDoc = categoryQuerySnapshot.docs[0]
+          const categoryDoc = categoryQuerySnapshot.docs[0];
           await updateDoc(doc(db, 'categories', categoryDoc.id), {
             class_ids: arrayUnion(classId),
             sub_categories: arrayUnion(classData.subcategory)
-          })
+          });
         } else {
           // Category doesn't exist, create it
           await addDoc(categoriesRef, {
             category_name: classData.category,
             sub_categories: [classData.subcategory],
             class_ids: [classId]
-          })
+          });
         }
 
-        alert('Class listed successfully!')
-        // Reset form or redirect to a success page
-        this.$router.push('/class-details')
-      } catch (error) {
-        console.error('Error submitting form:', error)
-        this.error = 'An error occurred while listing the class. Please try again.'
+        successModal.value.show();
+      } catch (err) {
+        console.error('Error submitting form:', err);
+        error.value = 'An error occurred while listing the class. Please try again.';
       }
-    }
-  },
-  created() {
-    this.$emit('update:showSearchBar', false)
-    this.fetchCategories()
+    };
+
+    const redirectToClassDetails = () => {
+      router.push('/class-details');
+    };
+
+    onMounted(() => {
+      successModal.value = new Modal(document.getElementById('successModal'));
+      successModal.value._element.addEventListener('hidden.bs.modal', redirectToClassDetails);
+      fetchCategories();
+    });
+
+    return {
+      formData,
+      categories,
+      subcategories,
+      previewImage,
+      imageFile,
+      error,
+      loading,
+      isFormValid,
+      updateSubcategories,
+      handleFileUpload,
+      removePhoto,
+      submitForm,
+      redirectToClassDetails
+    };
   }
-}
+};
 </script>
 
 <style scoped>
