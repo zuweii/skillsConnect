@@ -4,26 +4,24 @@ import { auth } from './firebase_config';
 class FirebaseAuthentication {
     constructor() {
         this.user = null;
+        this.authReady = false;
         this.authStateChanged = new Promise((resolve) => {
             onAuthStateChanged(auth, (user) => {
                 this.user = user;
+                this.authReady = true;
                 resolve(user);
             });
         });
-    }
-
-    getAuth() {
-        return auth;
     }
 
     async login(email, password) {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             this.user = userCredential.user;
-            return { data: userCredential, errorCode: null };
+            return { user: userCredential.user, error: null };
         } catch (error) {
-            console.error("login error", error);
-            return { data: null, errorCode: error.code };
+            console.error("Login error", error);
+            return { user: null, error: error.code };
         }
     }
 
@@ -31,9 +29,8 @@ class FirebaseAuthentication {
         try {
             await signOut(auth);
             this.user = null;
-            console.log("logout success");
         } catch (error) {
-            console.error("logout error", error);
+            console.error("Logout error", error);
         }
     }
 
@@ -41,7 +38,12 @@ class FirebaseAuthentication {
         return this.user;
     }
 
+    isAuthReady() {
+        return this.authReady;
+    }
+
     async waitForAuthReady() {
+        if (this.authReady) return this.user;
         return this.authStateChanged;
     }
 }

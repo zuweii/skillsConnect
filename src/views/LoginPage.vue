@@ -17,7 +17,9 @@
           <input type="checkbox" id="showPassword" v-model="showPassword" class="form-check-input" />
           <label for="showPassword" class="form-check-label">Show Password</label>
         </div>
-        <button type="submit" class="btn btn-primary btn-block">Login</button>
+        <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
+          {{ isLoading ? 'Logging in...' : 'Login' }}
+        </button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </form>
     </div>
@@ -25,10 +27,10 @@
 </template>
 
 <script>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import FBInstanceAuth from "../firebase/firebase_auth";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase_config";
 
 export default {
@@ -41,63 +43,78 @@ export default {
     const password = ref("");
     const showPassword = ref(false);
     const error = ref(null);
+    const isLoading = ref(false);
+
+    onMounted(async () => {
+      if (!FBInstanceAuth.isAuthReady()) {
+        await FBInstanceAuth.waitForAuthReady();
+      }
+      
+      const currentUser = FBInstanceAuth.getCurrentUser();
+      if (currentUser) {
+        const redirectPath = route.query.redirect || '/class-details';
+        router.push(redirectPath);
+      }
+    });
 
     const handleLogin = async () => {
       error.value = null;
+      isLoading.value = true;
 
       try {
-        const { data, errorCode } = await FBInstanceAuth.login(email.value, password.value);
+        const { user, error: loginError } = await FBInstanceAuth.login(email.value, password.value);
 
-        if (errorCode) {
-          if (errorCode === "auth/user-not-found") {
-            error.value = "Invalid email. Please check your email address.";
-          } else if (errorCode === "auth/wrong-password") {
-            error.value = "Wrong password. Please check your password.";
-          } else if (errorCode === "auth/invalid-email") {
-            error.value = "Invalid email format. Please enter a valid email address.";
-          } else {
-            error.value = "Login failed. Please try again.";
-          }
+        if (loginError) {
+          handleLoginError(loginError);
           return;
         }
 
-        const user = data.user;
-        console.log("Login successful");
+        await ensureUserDocument(user);
 
-        // Check if user document exists in Firestore
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-
-        if (!userDocSnap.exists()) {
-          // If user document doesn't exist, create it
-          await setDoc(userDocRef, {
-            email: user.email,
-            username: user.email.split("@")[0],
-            profile_photo: "",
-            upcoming_classes_as_student: [],
-            upcoming_classes_as_teacher: [],
-            posted_classes: [],
-            finances: [],
-            chats: [],
-            portfolio: {
-              youtube_links: [],
-              project_images: []
-            },
-            completed_classes: [],
-            pending_reviews: []
-          });
-          console.log("New user document created in Firestore");
-        } else {
-          console.log("Existing user document found in Firestore");
-        }
-
-        // Check if there's a redirect query parameter (CHANGE TO HOMEPAGE PLEASE)
         const redirectPath = route.query.redirect || '/class-details';
         router.push(redirectPath);
-      } catch (error) {
-        console.error("Login failed:", error);
+      } catch (err) {
+        console.error("Login failed:", err);
         error.value = "An unexpected error occurred. Please try again.";
+      } finally {
+        isLoading.value = false;
       }
+    };
+
+    const handleLoginError = (errorCode) => {
+      switch (errorCode) {
+        case "auth/user-not-found":
+          error.value = "Invalid email. Please check your email address.";
+          break;
+        case "auth/wrong-password":
+          error.value = "Wrong password. Please check your password.";
+          break;
+        case "auth/invalid-email":
+          error.value = "Invalid email format. Please enter a valid email address.";
+          break;
+        default:
+          error.value = "Login failed. Please try again.";
+      }
+    };
+
+    const ensureUserDocument = async (user) => {
+      const userDocRef = doc(db, "users", user.uid);
+      await setDoc(userDocRef, {
+        email: user.email,
+        username: user.email.split("@")[0],
+        profile_photo: "",
+        upcoming_classes_as_student: [],
+        upcoming_classes_as_teacher: [],
+        posted_classes: [],
+        finances: [],
+        chats: [],
+        portfolio: {
+          youtube_links: [],
+          project_images: []
+        },
+        completed_classes: [],
+        pending_reviews: []
+      }, { merge: true });
     };
 
     return {
@@ -105,6 +122,7 @@ export default {
       password,
       showPassword,
       error,
+      isLoading,
       handleLogin
     };
   }
@@ -118,6 +136,12 @@ export default {
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(to right, #adbef7, #5a7dee, #315cea, #2a4ec7);
+  overflow: hidden; /* Prevent scrolling */
+  position: fixed; /* Fix the container to viewport */
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 
 .login-card {
@@ -127,6 +151,8 @@ export default {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 450px;
+  max-height: 90vh; /* Limit height to prevent overflow */
+  overflow-y: auto; /* Allow scrolling within the card if content is too long */
 }
 
 .logo-container {
