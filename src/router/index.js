@@ -5,7 +5,6 @@ import FBInstanceAuth from '../firebase/firebase_auth'
 import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
-import Chat from '../views/Chat.vue';  // Import the Chat view
 import Payment from '../views/Payment.vue'
 
 const routes = [
@@ -24,12 +23,6 @@ const routes = [
     path: '/class-details',
     name: 'ClassDetails',
     component: ClassDetails,
-  },
-  {
-    path: '/chat',
-    name: 'Chat',
-    component: Chat,  // Chat route
-    meta: { requiresAuth: true }  // Require authentication for chat
   },
   {
     path: '/payment/:classId',
