@@ -71,7 +71,7 @@ export default {
 
         await ensureUserDocument(user);
 
-        const redirectPath = route.query.redirect || '/class-details';
+        const redirectPath = route.query.redirect || '/landing-page';
         router.push(redirectPath);
       } catch (err) {
         console.error("Login failed:", err);

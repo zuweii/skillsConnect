@@ -14,6 +14,11 @@ const routes = [
     component: LoginPage
   },
   {
+    path: '/landing-page',
+    name:'LandingPage',
+    component: LandingPage
+  },
+  {
     path: '/list-class',
     name: 'ListClass',
     component: ListClass,
