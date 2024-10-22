@@ -6,6 +6,8 @@ import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
+import EnrollmentSuccess from '../views/EnrollmentSuccess.vue'
+
 
 const routes = [
   {
@@ -28,6 +30,12 @@ const routes = [
     path: '/payment/:classId',
     name: 'Payment',
     component: Payment,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/enrollment-success/:classId',
+    name: 'EnrollmentSuccess',
+    component: EnrollmentSuccess,
     meta: { requiresAuth: true }
   },
   {
