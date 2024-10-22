@@ -143,7 +143,6 @@ export default {
     const loading = ref(true);
     const error = ref(null);
 
-
     const fetchClassData = async () => {
       try {
         const classId = 'vjVrlyZzgBDLkGYDTDA4'; // route.params.id; (CHANGE THIS TO route.params.id & change routing)
@@ -234,7 +233,7 @@ export default {
       formatTime,
       handleEnrolClick,
       capitalizeMode,
-      capitalizeLevel,
+      capitalizeLevel
     };
   },
   // ADD THIS FPR SEARCH BAR (START)
