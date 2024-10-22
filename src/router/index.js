@@ -6,6 +6,7 @@ import LoginPage from '../views/LoginPage.vue'
 import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
+import LandingPage from '../views/LandingPage'
 
 const routes = [
   {
@@ -14,7 +15,7 @@ const routes = [
     component: LoginPage
   },
   {
-    path: '/landing-page',
+    path: '/',
     name:'LandingPage',
     component: LandingPage
   },
