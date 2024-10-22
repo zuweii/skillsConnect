@@ -7,6 +7,7 @@ import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
+import ProfilePage from '../views/ProfilePage.vue'
 
 const routes = [
   {
@@ -39,6 +40,10 @@ const routes = [
   {
     path: '/:catchAll(.*)',
     redirect: '/login-page'
+  },
+  {
+    path: '/profile-page',
+    name: 'Payment'
   }
 ]
 
