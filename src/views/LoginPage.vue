@@ -52,7 +52,7 @@ export default {
       
       const currentUser = FBInstanceAuth.getCurrentUser();
       if (currentUser) {
-        const redirectPath = route.query.redirect || '/class-details';
+        const redirectPath = route.query.redirect || '/landing-page';
         router.push(redirectPath);
       }
     });
