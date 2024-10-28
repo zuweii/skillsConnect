@@ -43,7 +43,8 @@ const routes = [
   },
   {
     path: '/profile-page',
-    name: 'Payment'
+    name: 'ProfilePage',
+    component: ProfilePage
   }
 ]
 
