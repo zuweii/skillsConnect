@@ -145,7 +145,7 @@ export default {
 
     const fetchClassData = async () => {
       try {
-        const classId = 'vjVrlyZzgBDLkGYDTDA4'; // route.params.id; (CHANGE THIS TO route.params.id & change routing)
+        const classId = 'BeISrw3ItXJisW0Lwga1'; // route.params.id; (CHANGE THIS TO route.params.id & change routing)
         const classDoc = await getDoc(doc(db, 'classes', classId));
 
         if (classDoc.exists()) {
