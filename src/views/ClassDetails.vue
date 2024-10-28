@@ -19,15 +19,15 @@
       </ol>
     </nav>
 
-    <div class="row">
+    <div class="row justify-content-center align-items-center">
       <div class="col-md-6 mb-4">
         <div class="class-image-container">
           <img :src="classData.image" :alt="classData.title" class="class-image">
         </div>
       </div>
       <div class="col-md-6">
-        <h1 class="h2 mb-3">{{ classData.title }}</h1>
-        <div class="d-flex align-items-center mb-2">
+        <h1 class="h2 mb-3 fw-bold">{{ classData.title }}</h1>
+        <div class="d-flex mb-2">
           <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
           <StarRating :rating="classData.ratings_average" />
           <span class="text-muted ms-2">({{ classData.reviews.length > 0 ? classData.reviews.length : 0 }} Reviews)</span>
@@ -41,54 +41,54 @@
       </div>
     </div>
 
+
     <div class="card mt-4 p-2 shadow">
-      <div class="card-body">
-        <h3 class="card-title mb-4">
-          Class Details
-        </h3>
-        <div class="row mt-3">
-          <div class="col-md">
-            <p class="text-colour"><strong>Class Schedule:</strong></p>
-            <p>
-              {{ formatDate(classData.start_date) }}
-              <br>
-              {{ formatTime(classData.start_time) }} - {{ formatTime(classData.end_time) }}
-              <br>
-              {{ classData.schedule }}
-            </p>
-          </div>
-          <div class="col-md">
-            <p class="text-colour"><strong>Number of Lessons:</strong></p>
-            <p>{{ classData.number_of_lessons }}</p>
-          </div>
-          <div class="col-md">
-            <p class="text-colour"><strong>Mode of Lessons:</strong></p>
-            <p>{{ capitalizeMode(classData.mode) }}</p>
-          </div>
-          <div class="col-md">
-            <p class="text-colour"><strong>Skill Level:</strong></p>
-            <p>{{ capitalizeLevel(classData.skill_level) }}</p>
-          </div>
-          <div class="col-md">
-            <p class="text-colour"><strong>Location:</strong></p>
-            <p>{{ classData.location }}</p>
-          </div>
-        </div>
+  <div class="card-body">
+    <h3 class="card-title mt-2">Class Details</h3>
+    <div class="row my-4 text-lg-center">
+      <div class="col-lg text-align-top">
+        <p class="text-colour font-size">Class Schedule:</p>
+        <p>
+          {{ formatDate(classData.start_date) }}
+          <br>
+          {{ formatTime(classData.start_time) }} - {{ formatTime(classData.end_time) }}
+          <br>
+          {{ classData.schedule }}
+        </p>
+      </div>
+      <div class="col-lg text-align-top">
+        <p class="text-colour font-size">Number of Lessons:</p>
+        <p>{{ classData.number_of_lessons }}</p>
+      </div>
+      <div class="col-lg text-align-top">
+        <p class="text-colour font-size">Mode of Lessons:</p>
+        <p>{{ capitalizeMode(classData.mode) }}</p>
+      </div>
+      <div class="col-lg text-align-top">
+        <p class="text-colour font-size">Skill Level:</p>
+        <p>{{ capitalizeLevel(classData.skill_level) }}</p>
+      </div>
+      <div class="col-lg text-align-top">
+        <p class="text-colour font-size ">Location:</p>
+        <p>{{ classData.location }}</p>
       </div>
     </div>
+  </div>
+</div>
+
 
     <div class="card mt-4 p-2 shadow">
       <div class="card-body">
-        <h3 class="card-title mb-4">
+        <h3 class="card-title fw-bold mt-2">
           Meet the Instructor
         </h3>
-        <div class="row mt-3">
+        <div class="row my-4">
           <div class="col-md-4">
             <div class="d-flex flex-column align-items-center">
               <div class="instructor-image-container mb-3">
                 <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
               </div>
-              <h4 class="h5 mb-1 fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+              <h4 class="h5 mb-1 text-colour">{{ instructorData.username.toUpperCase() }}</h4>
               <!-- <div class="d-flex align-items-center"> -->
               <!-- <span class="me-2">{{ instructorData.rating }}</span>
                 <StarRating :rating="instructorData.rating" />
@@ -145,7 +145,7 @@ export default {
 
     const fetchClassData = async () => {
       try {
-        const classId = 'vjVrlyZzgBDLkGYDTDA4'; // route.params.id; (CHANGE THIS TO route.params.id & change routing)
+        const classId = route.params.id;
         const classDoc = await getDoc(doc(db, 'classes', classId));
 
         if (classDoc.exists()) {
@@ -290,4 +290,27 @@ export default {
 .card {
   border: 0;
 }
+
+.font-size {
+  font-size: 18px;
+}
+
+.row {
+  display: flex;
+  justify-content: space-around;
+  align-items: start; /* Align items to the top */
+}
+
+.text-align-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.font-size {
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+
 </style>
