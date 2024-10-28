@@ -141,15 +141,13 @@
 
 
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-body">
-            <div>
-              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="text-center ">
-              Your class has been successfully listed!
-            </div>
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body position-relative p-4">
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mt-2">
+            Your class has been successfully listed!
+          </div>
             
           </div>
         </div>
@@ -420,12 +418,14 @@ export default {
   border: 1.5px solid #ced4da;
 }
 
-.modal-body {
-  padding: 2rem 1.5rem;
-  /* Adjust the top and bottom padding */
+.modal-content {
+  border-radius: 15px;
 }
 
-.modal-content {
-  padding: 1.5rem;
-  /* Adjust for the content padding */
+.modal-body {
+  padding: 2rem;
+}
+
+.btn-close:focus {
+  box-shadow: none;
 }</style>
