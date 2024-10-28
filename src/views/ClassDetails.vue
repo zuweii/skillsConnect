@@ -10,14 +10,19 @@
     </div>
   </div>
   <div v-else class="container mt-4">
-    <nav aria-label="breadcrumb">
-      <ol class="breadcrumb">
-        <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a>
-        </li>
-        <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{
-          classData.subcategory }}</a></li>
-      </ol>
-    </nav>
+    <div class="d-flex  align-items-center mb-3">
+      <button @click="goBack" class="btn btn-link text-decoration-none text-dark">
+        <i class="bi bi-arrow-left fs-5"></i>
+      </button>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-0">
+          <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{
+            classData.subcategory }}</a></li>
+        </ol>
+      </nav>
+    </div>
 
     <div class="row justify-content-center align-items-center">
       <div class="col-md-6 mb-4">
@@ -43,38 +48,38 @@
 
 
     <div class="card mt-4 p-2 shadow">
-  <div class="card-body">
-    <h3 class="card-title mt-2">Class Details</h3>
-    <div class="row my-4 text-lg-center">
-      <div class="col-lg text-align-top">
-        <p class="text-colour font-size">Class Schedule:</p>
-        <p>
-          {{ formatDate(classData.start_date) }}
-          <br>
-          {{ formatTime(classData.start_time) }} - {{ formatTime(classData.end_time) }}
-          <br>
-          {{ classData.schedule }}
-        </p>
-      </div>
-      <div class="col-lg text-align-top">
-        <p class="text-colour font-size">Number of Lessons:</p>
-        <p>{{ classData.number_of_lessons }}</p>
-      </div>
-      <div class="col-lg text-align-top">
-        <p class="text-colour font-size">Mode of Lessons:</p>
-        <p>{{ capitalizeMode(classData.mode) }}</p>
-      </div>
-      <div class="col-lg text-align-top">
-        <p class="text-colour font-size">Skill Level:</p>
-        <p>{{ capitalizeLevel(classData.skill_level) }}</p>
-      </div>
-      <div class="col-lg text-align-top">
-        <p class="text-colour font-size ">Location:</p>
-        <p>{{ classData.location }}</p>
+      <div class="card-body">
+        <h3 class="card-title mt-2 fw-bold">Class Details</h3>
+        <div class="row my-4 text-lg-center">
+          <div class="col-lg text-align-top">
+            <p class="text-colour font-size">Class Schedule:</p>
+            <p>
+              {{ formatDate(classData.start_date) }}
+              <br>
+              {{ formatTime(classData.start_time) }} - {{ formatTime(classData.end_time) }}
+              <br>
+              <em>{{ classData.schedule }}</em>
+            </p>
+          </div>
+          <div class="col-lg text-align-top">
+            <p class="text-colour font-size">Number of Lessons:</p>
+            <p>{{ classData.number_of_lessons }}</p>
+          </div>
+          <div class="col-lg text-align-top">
+            <p class="text-colour font-size">Mode of Lessons:</p>
+            <p>{{ capitalizeMode(classData.mode) }}</p>
+          </div>
+          <div class="col-lg text-align-top">
+            <p class="text-colour font-size">Skill Level:</p>
+            <p>{{ capitalizeLevel(classData.skill_level) }}</p>
+          </div>
+          <div class="col-lg text-align-top">
+            <p class="text-colour font-size ">Location:</p>
+            <p>{{ classData.location }}</p>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
 
     <div class="card mt-4 p-2 shadow">
@@ -224,6 +229,14 @@ export default {
       fetchClassData();
     });
 
+    const goBack = () => {
+      router.go(-1);
+    };
+
+    onMounted(() => {
+      fetchClassData();
+    });
+
     return {
       classData,
       instructorData,
@@ -233,7 +246,8 @@ export default {
       formatTime,
       handleEnrolClick,
       capitalizeMode,
-      capitalizeLevel
+      capitalizeLevel,
+      goBack 
     };
   },
   // ADD THIS FPR SEARCH BAR (START)
@@ -298,7 +312,8 @@ export default {
 .row {
   display: flex;
   justify-content: space-around;
-  align-items: start; /* Align items to the top */
+  align-items: start;
+  /* Align items to the top */
 }
 
 .text-align-top {
@@ -312,5 +327,7 @@ export default {
   margin-bottom: 5px;
 }
 
-
+.btn-link:hover {
+  opacity: 0.7;
+}
 </style>
