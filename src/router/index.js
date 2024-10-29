@@ -15,7 +15,7 @@ const routes = [
     component: LoginPage
   },
   {
-    path: '/landing-page',
+    path: '/',
     name:'LandingPage',
     component: LandingPage
   },
