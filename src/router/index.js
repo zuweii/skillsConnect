@@ -26,7 +26,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/class-details',
+    path: '/class-details/:id',
     name: 'ClassDetails',
     component: ClassDetails,
   },
