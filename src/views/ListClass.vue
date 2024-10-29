@@ -124,7 +124,7 @@
               <div class="mb-3">
                 <label for="additionalNotes" class="form-label">Additional Details</label>
                 <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2"
-                  placeholder="e.g. Class on every Thursday">
+                  placeholder="e.g. Classes on every Thursday">
               </div>
               <div class="mb-3">
                 <label class="form-label fs-5 mt-4"><b>Description</b></label>
@@ -141,13 +141,14 @@
 
 
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header border-bottom-0">
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body text-center">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body position-relative p-4">
+          <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="text-center mt-2">
             Your class has been successfully listed!
+          </div>
+            
           </div>
         </div>
       </div>
@@ -292,7 +293,7 @@ export default {
         const classRef = await addDoc(collection(db, 'classes'), classData);
         const classId = classRef.id;
 
-        // Update user's posted_classes
+        // Update user's posted_classes and upcoming_classes_as_teacher
         const userRef = doc(db, 'users', user.uid);
         await updateDoc(userRef, {
           posted_classes: arrayUnion({
@@ -312,7 +313,8 @@ export default {
             end_time: classData.end_time,
             additional_schedule_info: classData.schedule,
             description: classData.description
-          })
+          }),
+          upcoming_classes_as_teacher: arrayUnion(classId)
         });
 
         // Update categories collection
@@ -415,4 +417,15 @@ export default {
   border-radius: 4px;
   border: 1.5px solid #ced4da;
 }
-</style>
+
+.modal-content {
+  border-radius: 15px;
+}
+
+.modal-body {
+  padding: 2rem;
+}
+
+.btn-close:focus {
+  box-shadow: none;
+}</style>
