@@ -8,6 +8,7 @@ import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
+import ReviewsPage from '../views/ReviewsPage.vue'
 
 const routes = [
   {
@@ -45,6 +46,11 @@ const routes = [
     path: '/profile-page',
     name: 'ProfilePage',
     component: ProfilePage
+  },
+  {
+    path: '/reviews-page',
+    name: 'ReviewsPage',
+    component: ReviewsPage
   }
 ]
 

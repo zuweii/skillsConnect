@@ -28,98 +28,123 @@
               <div class="class-rating">
                 <h5>Class Rating: <StarRating :rating="cls.ratings_average"/></h5>
               </div>
-            </div> 
+            </div>
+            <!-- Display Reviews -->
+            <div class="card-body">
+              <h4>Reviews</h4>
+              <div v-if="cls.reviews && cls.reviews.length > 0">
+                <div v-for="(review, index) in cls.reviews.slice(0, 2)" :key="index">
+                  <p><strong>{{ review.name }}:</strong> {{ review.comment }}</p>
+                  <StarRating :rating="review.rating" />
+                  <small class="text-muted">{{ formatDate(review.date) }}</small>
+                </div>
+                <router-link :to="{ name: 'Reviews', params: { classId: cls.id } }" class="btn btn-outline-secondary btn-lg align-bottom mt-2">View All Reviews</router-link>
+              </div>
+              <div v-else>
+                <p>No reviews yet.</p>
+              </div>
+            </div>
           </div> 
           <!-- BS card: End --> 
         </div>
       </div>
     </div>
-  </template>
+</template>
 
 <script>
-  import { ref, onMounted } from 'vue';
-  import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';  // Add doc import
-  import { db } from '../firebase/firebase_config';  
-  import StarRating from '../components/StarRating.vue';
+import { ref, onMounted } from 'vue';
+import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+import { db } from '../firebase/firebase_config';
+import StarRating from '../components/StarRating.vue';
 
-  export default {
-    components: {
-      StarRating,
-    },
-    setup() {
-      const userClasses = ref([]);
-      const userProfile = ref(null);  // Store user profile data including profile picture
-      const loading = ref(true);
-      const error = ref(null);
-      const averageRating = ref(0);  // Store the average rating across all classes
+export default {
+  components: {
+    StarRating,
+  },
+  setup() {
+    const userClasses = ref([]);
+    const userProfile = ref(null);
+    const loading = ref(true);
+    const error = ref(null);
+    const averageRating = ref(0);
 
-      const fetchUserProfile = async (userID) => {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', userID));  // Ensure doc is imported
-          if (userDoc.exists()) {
-            userProfile.value = userDoc.data();
-          } else {
-            error.value = 'User profile not found.';
-          }
-        } catch (err) {
-          console.error('Error fetching user profile:', err.message);
-          error.value = `Error: ${err.message}`;
+    const fetchUserProfile = async (userID) => {
+      try {
+        const userDoc = await getDoc(doc(db, 'users', userID));
+        if (userDoc.exists()) {
+          userProfile.value = userDoc.data();
+        } else {
+          error.value = 'User profile not found.';
         }
-      };
+      } catch (err) {
+        console.error('Error fetching user profile:', err.message);
+        error.value = `Error: ${err.message}`;
+      }
+    };
 
-      const fetchClassesTaught = async (userID) => {
-        try {
-          const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
-          const querySnapshot = await getDocs(classesQuery);
+    const fetchClassesTaught = async (userID) => {
+      try {
+        const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
+        const querySnapshot = await getDocs(classesQuery);
 
-          const classes = [];
-          let totalRatings = 0;
-          let ratedClassesCount = 0;
+        const classes = [];
+        let totalRatings = 0;
+        let ratedClassesCount = 0;
 
-          querySnapshot.forEach((doc) => {
-            const classData = doc.data();
-            classes.push({ id: doc.id, ...classData });
+        querySnapshot.forEach((doc) => {
+          const classData = doc.data();
+          classes.push({ id: doc.id, ...classData });
 
-            // Calculate average rating for all classes
-            if (classData.ratings_average && classData.ratings_average > 0) {
-              totalRatings += classData.ratings_average;
-              ratedClassesCount++;
-            }
-          });
-
-          if (classes.length === 0) {
-            error.value = 'No classes found.';
-          } else {
-            userClasses.value = classes;
-            // Compute the overall average rating for the user’s classes
-            if (ratedClassesCount > 0) {
-              averageRating.value = totalRatings / ratedClassesCount;
-            } else {
-              averageRating.value = 0;  // No ratings, set average to 0
-            }
+          if (classData.ratings_average && classData.ratings_average > 0) {
+            totalRatings += classData.ratings_average;
+            ratedClassesCount++;
           }
-        } catch (err) {
-          console.error('Error fetching classes:', err.message);
-          error.value = `Error: ${err.message}`;
-        }
-      };
+        });
 
-      onMounted(async () => {
-        const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2';  // Hardcoded user ID for testing
-        await fetchUserProfile(userID);  // Fetch the user profile including profile picture
-        await fetchClassesTaught(userID);  // Fetch the classes taught by the user
-        loading.value = false;
+        if (classes.length === 0) {
+          error.value = 'No classes found.';
+        } else {
+          userClasses.value = classes;
+          if (ratedClassesCount > 0) {
+            averageRating.value = totalRatings / ratedClassesCount;
+          } else {
+            averageRating.value = 0;
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching classes:', err.message);
+        error.value = `Error: ${err.message}`;
+      }
+    };
+
+    onMounted(async () => {
+      const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2';
+    //   const userID = user.uid; // Use the actual user ID from authentication
+    //     await fetchUserProfile(userID);
+    //     await fetchClassesTaught(userID);
+      await fetchUserProfile(userID);
+      await fetchClassesTaught(userID);
+      loading.value = false;
+    });
+
+    const formatDate = (date) => {
+      return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
       });
+    };
 
-      return {
-        userClasses,
-        userProfile,
-        loading,
-        error,
-        averageRating,
-      };
-    },
-  };
+    return {
+      userClasses,
+      userProfile,
+      loading,
+      error,
+      averageRating,
+      formatDate,
+    };
+  },
+};
 </script>
 
 <style scoped>
