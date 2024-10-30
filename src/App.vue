@@ -4,64 +4,69 @@
       <div class="loading-spinner"></div>
     </div>
     <template v-else>
-      <Navbar v-if="!isLoginPage" :showSearchBar="showSearchBar" />
+      <LandingNavBar v-if="isLandingPage" />
+      <Navbar v-else-if="!isLoginPage" :showSearchBar="showSearchBar" />
       <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
-      <br><br><br><br>
-      <Footer v-if="!isLoginPage" />
+      <Footer v-if="!isLandingPage && !isLoginPage" />
     </template>
   </div>
 </template>
 
 <script>
-import Navbar from './components/NavBar.vue'
-import Footer from './components/Footer.vue'
-import FBInstanceAuth from './firebase/firebase_auth'
+import Navbar from './components/NavBar.vue';
+import LandingNavBar from './components/LandingNavBar.vue';
+import Footer from './components/Footer.vue';
+import FBInstanceAuth from './firebase/firebase_auth';
 
 export default {
   name: 'App',
   components: {
     Navbar,
-    Footer
+    LandingNavBar,
+    Footer,
   },
   data() {
     return {
       showSearchBar: false,
-      isLoading: true
-    }
+      isLoading: true,
+    };
   },
   computed: {
     isLoginPage() {
-      return this.$route.name === 'LoginPage'
-    }
+      return this.$route.name === 'LoginPage';
+    },
+    isLandingPage() {
+      return this.$route.name === 'LandingPage';
+    },
   },
   methods: {
     updateShowSearchBar(value) {
-      this.showSearchBar = value
+      this.showSearchBar = value;
     },
     async initializeApp() {
       try {
-        await FBInstanceAuth.waitForAuthReady()
-        this.isLoading = false
+        await FBInstanceAuth.waitForAuthReady();
+        this.isLoading = false;
       } catch (error) {
-        console.error('Error initializing app:', error)
-        this.isLoading = false
+        console.error('Error initializing app:', error);
+        this.isLoading = false;
       }
-    }
+    },
   },
   created() {
-    this.initializeApp()
+    this.initializeApp();
   },
   watch: {
     $route(to, from) {
-      // Reset loading state on route change
-      this.isLoading = true
+      this.isLoading = true;
       this.$nextTick(() => {
-        this.isLoading = false
-      })
-    }
-  }
-}
+        this.isLoading = false;
+      });
+    },
+  },
+};
 </script>
+
 
 <style>
 #app {
