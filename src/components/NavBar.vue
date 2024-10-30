@@ -1,9 +1,10 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/home-page">
+      <!-- Home Page link -->
+      <router-link class="navbar-brand" to="/home-page">
         <img src="../assets/logo.png" class="logo p-2 mx-5" alt="logo" />
-      </a>
+      </router-link>
       <button
         class="navbar-toggler"
         type="button"
@@ -18,11 +19,13 @@
       <div class="collapse navbar-collapse text-dark" id="navbarNav">
         <SearchBar v-if="showSearchBar" class="m-auto" />
         <ul class="navbar-nav ms-auto align-items-center">
+          <!-- Finances link -->
           <li class="nav-item m-2">
-            <a class="nav-link d-flex align-items-center" href="#">
+            <router-link class="nav-link d-flex align-items-center" to="/finances-page">
               <i class="bi bi-currency-dollar me-1"></i> Finances
-            </a>
+            </router-link>
           </li>
+          <!-- Profile link without dropdown toggle -->
           <li class="nav-item dropdown m-3 d-flex align-items-center">
             <img
               :src="userProfilePhoto"
@@ -31,15 +34,14 @@
               width="35"
               height="35"
             />
+            <router-link class="nav-link" to="/profile-page">Profile</router-link>
             <a
               class="nav-link dropdown-toggle"
-              href="/profile-page"
+              href="#"
               id="navbarDropdown"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-            >
-              Profile
-            </a>
+            ></a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               <li>
                 <button
@@ -51,6 +53,7 @@
               </li>
             </ul>
           </li>
+          <!-- Teach link -->
           <li class="nav-item me-5">
             <router-link class="teach btn btn-primary text-white" to="/list-class">Teach</router-link>
           </li>
@@ -67,7 +70,6 @@ import { auth } from "../firebase/firebase_config";
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import FBInstanceAuth from '../firebase/firebase_auth';
-
 
 export default {
   name: 'Navbar',
@@ -86,20 +88,18 @@ export default {
     };
   },
   async mounted() {
-    // Fetch the user profile picture URL (assuming firebase/firestore setup)
     const user = FBInstanceAuth.getCurrentUser();
     if (user) {
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists()) {
-            const currentUser = userDoc.data();
-            this.userProfilePhoto = currentUser.profile_photo || 'defaultProfilePhotoURL.jpg';
-          }
-        } catch (err) {
-          console.error('Error fetching current user data:', err);
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          const currentUser = userDoc.data();
+          this.userProfilePhoto = currentUser.profile_photo || 'defaultProfilePhotoURL.jpg';
         }
+      } catch (err) {
+        console.error('Error fetching current user data:', err);
       }
-    
+    }
   },
   methods: {
     async handleLogout() {
