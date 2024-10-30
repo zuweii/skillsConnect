@@ -33,7 +33,7 @@
             />
             <a
               class="nav-link dropdown-toggle"
-              href="#"
+              href="/profile-page"
               id="navbarDropdown"
               data-bs-toggle="dropdown"
               aria-expanded="false"
