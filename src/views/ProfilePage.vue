@@ -3,190 +3,204 @@
     <div v-else-if="error">{{ error }}</div>
     <div class="container-fluid" v-else>
       <div class="profile-header text-center">
-        <!-- Display profile photo -->
         <img :src="userProfile.profile_photo" alt="Profile Picture" class="profile-photo mb-3">
         <h2>{{ userProfile.username }}</h2>
         <div class="average-rating mt-3">
-          <h4>Average Class Rating: <StarRating :rating="averageRating"/></h4>
+          <h4>Average Class Rating: <StarRating :rating="averageRating" /></h4>
         </div>
       </div>
+  
+      <!-- Toggle Switch Section -->
+      <div class="toggle-switches text-center mt-4">
+        <div class="toggle-container">
+          <span>View Classes You're Teaching</span>
+          <label class="switch">
+            <input type="checkbox" v-model="showPastClasses">
+            <span class="slider round"></span>
+          </label>
+          <span>View Past Classes</span>
+        </div>
+      </div>
+  
+      <!-- Display Classes Section -->
       <div class="classes-offered">
-        <h1 style="text-align: center; margin: 10px;">Classes You're Teaching</h1>
-        
-        <div v-for="cls in userClasses" :key="cls.class_id" class="col-md-8 mx-auto">
-          <!-- BS card: Start --> 
-          <div class="card" style="width: 100%;"> 
-            <h3 class="card-header">{{ cls.title }}</h3>
-            <img :src="cls.image" :alt="cls.title" class="card-img-top">
-            <div class="card-body"> 
-              <p class="card-text">{{ cls.description }}</p>  
-            </div>
-            <div class="card-body"> 
-              <p class="card-text"><strong>Category:</strong> {{ cls.category }} - {{ cls.subcategory }}</p>
-              <p><strong>Location:</strong> {{ cls.location }}</p>
-              <p><strong>Start Date:</strong> {{ cls.start_date.toDate().toLocaleString() }}</p>
-              <div class="class-rating">
-                <h5>Class Rating: <StarRating :rating="cls.ratings_average"/></h5>
-              </div>
-            </div>
-            <!-- Display Reviews -->
-            <div class="card-body">
-              <h4>Reviews</h4>
-              <div v-if="cls.reviews && cls.reviews.length > 0">
-                <div v-for="(review, index) in cls.reviews.slice(0, 2)" :key="index">
-                  <p><strong>{{ review.name }}:</strong> {{ review.comment }}</p>
-                  <StarRating :rating="review.rating" />
-                  <small class="text-muted">{{ formatDate(review.date) }}</small>
-                </div>
-                <router-link :to="{ name: 'Reviews', params: { classId: cls.id } }" class="btn btn-outline-secondary btn-lg align-bottom mt-2">View All Reviews</router-link>
-              </div>
-              <div v-else>
-                <p>No reviews yet.</p>
-              </div>
-            </div>
-          </div> 
-          <!-- BS card: End --> 
+        <h1 style="text-align: center; margin: 10px;" v-if="!showPastClasses">Classes You're Teaching</h1>
+        <h1 style="text-align: center; margin: 10px;" v-else>Past Classes</h1>
+  
+        <!-- Classes You're Teaching Section -->
+        <div v-if="!showPastClasses">
+          <ClassCard v-for="cls in userClasses" :key="cls.class_id" :classData="cls" />
+        </div>
+  
+        <!-- Past Classes Section -->
+        <div v-else>
+          <ClassCard v-for="pastCls in pastClasses" :key="pastCls.class_id" :classData="pastCls" :showReviews="false" />
         </div>
       </div>
     </div>
-</template>
-
-<script>
-import { ref, onMounted } from 'vue';
-import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
-import { db } from '../firebase/firebase_config';
-import StarRating from '../components/StarRating.vue';
-
-export default {
-  components: {
-    StarRating,
-  },
-  setup() {
-    const userClasses = ref([]);
-    const userProfile = ref(null);
-    const loading = ref(true);
-    const error = ref(null);
-    const averageRating = ref(0);
-
-    const fetchUserProfile = async (userID) => {
-      try {
-        const userDoc = await getDoc(doc(db, 'users', userID));
-        if (userDoc.exists()) {
-          userProfile.value = userDoc.data();
-        } else {
-          error.value = 'User profile not found.';
-        }
-      } catch (err) {
-        console.error('Error fetching user profile:', err.message);
-        error.value = `Error: ${err.message}`;
-      }
-    };
-
-    const fetchClassesTaught = async (userID) => {
-      try {
-        const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
-        const querySnapshot = await getDocs(classesQuery);
-
-        const classes = [];
-        let totalRatings = 0;
-        let ratedClassesCount = 0;
-
-        querySnapshot.forEach((doc) => {
-          const classData = doc.data();
-          classes.push({ id: doc.id, ...classData });
-
-          if (classData.ratings_average && classData.ratings_average > 0) {
-            totalRatings += classData.ratings_average;
-            ratedClassesCount++;
+  </template>
+  
+  <script>
+  import ClassCard from '../components/ClassCard.vue';
+  import StarRating from '../components/StarRating.vue';
+  import { ref, onMounted } from 'vue';
+  import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+  import { db } from '../firebase/firebase_config';
+  
+  export default {
+    components: {
+      ClassCard,
+      StarRating,
+    },
+    setup() {
+      const userClasses = ref([]); 
+      const pastClasses = ref([]); 
+      const userProfile = ref(null);
+      const loading = ref(true);
+      const error = ref(null);
+      const averageRating = ref(0);
+      const showPastClasses = ref(false); 
+  
+      const fetchUserProfile = async (userID) => {
+        try {
+          const userDoc = await getDoc(doc(db, 'users', userID));
+          if (userDoc.exists()) {
+            userProfile.value = userDoc.data();
+            pastClasses.value = userProfile.value.pending_reviews || [];
+          } else {
+            error.value = 'User profile not found.';
           }
-        });
-
-        if (classes.length === 0) {
-          error.value = 'No classes found.';
-        } else {
+        } catch (err) {
+          error.value = `Error: ${err.message}`;
+        }
+      };
+  
+      const fetchClassesTaught = async (userID) => {
+        try {
+          const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
+          const querySnapshot = await getDocs(classesQuery);
+  
+          const classes = [];
+          let totalRatings = 0;
+          let ratedClassesCount = 0;
+  
+          querySnapshot.forEach((doc) => {
+            const classData = doc.data();
+            classes.push({ id: doc.id, ...classData });
+  
+            if (classData.ratings_average && classData.ratings_average > 0) {
+              totalRatings += classData.ratings_average;
+              ratedClassesCount++;
+            }
+          });
+  
           userClasses.value = classes;
           if (ratedClassesCount > 0) {
             averageRating.value = totalRatings / ratedClassesCount;
           } else {
             averageRating.value = 0;
           }
+  
+          if (classes.length === 0) {
+            error.value = 'No classes found.';
+          }
+        } catch (err) {
+          error.value = `Error: ${err.message}`;
         }
-      } catch (err) {
-        console.error('Error fetching classes:', err.message);
-        error.value = `Error: ${err.message}`;
-      }
-    };
-
-    onMounted(async () => {
-      const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2';
-    //   const userID = user.uid; // Use the actual user ID from authentication
-    //     await fetchUserProfile(userID);
-    //     await fetchClassesTaught(userID);
-      await fetchUserProfile(userID);
-      await fetchClassesTaught(userID);
-      loading.value = false;
-    });
-
-    const formatDate = (date) => {
-      return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
+      };
+  
+      onMounted(async () => {
+        const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2'; 
+        await fetchUserProfile(userID); 
+        await fetchClassesTaught(userID); 
+        loading.value = false;
       });
-    };
-
-    return {
-      userClasses,
-      userProfile,
-      loading,
-      error,
-      averageRating,
-      formatDate,
-    };
-  },
-};
-</script>
-
-<style scoped>
-.profile-header {
-  margin-bottom: 20px;
-}
-
-.profile-photo {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.class-image-container {
-  width: 100%;
-  height: 400px;
-  overflow: hidden;
-}
-
-.class-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-}
-
-.star-rating {
-  display: inline-flex;
-  font-size: 1.25rem;
-}
-
-.class-rating {
-  margin-top: 10px;
-}
-
-.text-colour {
-  color: #2240a4;
-}
-
-.card {
-  border: 0;
-  margin-bottom: 20px;
-}
-</style>
+  
+      return {
+        userClasses,
+        pastClasses,
+        userProfile,
+        loading,
+        error,
+        averageRating,
+        showPastClasses,
+      };
+    },
+  };
+  </script>
+  
+  <style scoped>
+  .container-fluid {
+    padding-top: 50px;
+  }
+  
+  .profile-header {
+    margin-bottom: 20px;
+  }
+  
+  .profile-photo {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  .card {
+    border: 0;
+    margin-bottom: 20px;
+  }
+  
+  .toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+  }
+  
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+  }
+  
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+  }
+  
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  
+  input:checked + .slider {
+    background-color: #4CAF50;
+  }
+  
+  input:checked + .slider:before {
+    transform: translateX(26px);
+  }
+  </style>
+  
