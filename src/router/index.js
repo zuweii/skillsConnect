@@ -52,12 +52,14 @@ const routes = [
   {
     path: '/profile-page',
     name: 'ProfilePage',
-    component: ProfilePage
+    component: ProfilePage,
+    meta: { requiresAuth: true }
   },
   {
     path: '/reviews-page',
     name: 'ReviewsPage',
-    component: ReviewsPage
+    component: ReviewsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
