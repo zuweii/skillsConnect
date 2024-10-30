@@ -449,7 +449,7 @@ export default {
 }
 
 .upcoming-list {
-    max-height: 400px;
+    max-height: 190px;
     overflow-y: auto;
 }
 
