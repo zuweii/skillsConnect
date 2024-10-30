@@ -13,13 +13,14 @@
             <a class="nav-link" href="#"><i class="bi bi-currency-dollar"></i> Finances</a>
           </li>
           <li class="nav-item m-2">
-            <!-- Use router-link for Chats button to navigate to the chat page -->
             <router-link class="nav-link" to="/chat"><i class="bi bi-chat"></i> Chats</router-link>
+          </li>
+          <li class="nav-item m-2">
+            <router-link class="nav-link" to="/profile-page"><i class="bi bi-person"></i> Profile</router-link>
           </li>
           <li class="nav-item dropdown m-2">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" data-bs-toggle="dropdown"
               aria-expanded="false">
-              <i class="bi bi-person"></i> Profile
             </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               <li><button class="dropdown-item text-danger" @click="handleLogout">Logout <i
