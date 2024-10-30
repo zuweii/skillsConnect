@@ -7,6 +7,7 @@ import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
+import ProfileView from '../views/ProfileView.vue'
 
 const routes = [
   {
@@ -18,6 +19,11 @@ const routes = [
     path: '/',
     name:'LandingPage',
     component: LandingPage
+  },
+  {
+    path: '/profile',
+    name: 'ProfileView',
+    component: ProfileView,
   },
   {
     path: '/list-class',
