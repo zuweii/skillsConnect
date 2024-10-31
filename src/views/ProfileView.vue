@@ -22,8 +22,8 @@
         </div>
       </div>
   
-      <div class="user-listings">
-        <h2>Listings</h2>
+      <div class="classes-offered">
+        <h2>Classes Available</h2>
         <div v-if="listings.length === 0">No listings available.</div>
         <div class="listing-grid">
           <div v-for="listing in listings" :key="listing.id" class="listing-card">
@@ -41,12 +41,10 @@
         <div class="analytics-charts">
           <div class="chart new-client-status">
             <!-- Placeholder for pie chart -->
-            <h3>New Client Status</h3>
             <div class="chart-placeholder">Chart Placeholder</div>
           </div>
           <div class="chart return-client-status">
             <!-- Placeholder for bar chart -->
-            <h3>Return Clients Status</h3>
             <div class="chart-placeholder">Chart Placeholder</div>
           </div>
         </div>
