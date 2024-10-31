@@ -120,9 +120,31 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Categories Section -->
+        <div class="mb-4">
+            <h1 class="h3 mb-4 fw-bold">What would you like to learn?</h1>
+            <div class="d-flex flex-wrap gap-2">
+                <button
+                    class="category-button"
+                    @click="clearCategorySelection"
+                >
+                    All
+                </button>
+                <button
+                    v-for="category in categories"
+                    :key="category.category_name"
+                    class="category-button"
+                    @click="filterClassesByCategory(category.category_name)"
+                >
+                    {{ category.category_name }}
+                </button>
+            </div>
+        </div>
 
+        
         <!-- Available Classes Section -->
-        <h1 class="h2 mb-4 fw-bold">Available Classes</h1>
+        <h1 class="h3 mb-4 fw-bold">Available Classes</h1>
         <div class="row mb-5">
             <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
                 <div class="card shadow-sm h-100 hover-card">
@@ -170,13 +192,27 @@ export default {
     name: 'HomePage',
     setup() {
         const classes = ref([]);
+        const categories = ref([]);
         const loading = ref(true);
         const error = ref(null);
         const currentUser = ref(null);
+        const selectedCategory = ref(null); // To track the selected category
 
+        // Computed property for filtered classes
+        const filteredClasses = computed(() => {
+            if (!selectedCategory.value) return classes.value; // Return all if no category selected
+            return classes.value.filter(classItem => 
+                classItem.category === selectedCategory.value
+            );
+        });
+        
         const availableClasses = computed(() => {
             const currentDate = new Date();
-            return classes.value.filter(classItem => {
+            const filteredClasses = selectedCategory.value
+                ? classes.value.filter(classItem => classItem.category === selectedCategory.value)
+                : classes.value; // Return all if no category selected
+
+            return filteredClasses.filter(classItem => {
                 const startDate = classItem.start_date.toDate();
                 const hasAvailability = classItem.max_capacity > classItem.current_enrollment;
 
@@ -187,6 +223,21 @@ export default {
             }).sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
         });
 
+        const filterClassesByCategory = (category) => {
+            selectedCategory.value = category;
+            selectedSubcategory.value = null; // Reset subcategory when a new category is selected
+            subcategories.value = category.subcategories || []; // Populate subcategories
+        };
+
+        const filterClassesBySubcategory = (subcategory) => {
+            selectedSubcategory.value = subcategory;
+        };
+
+        const clearCategorySelection = () => {
+            selectedCategory.value = null;
+            selectedSubcategory.value = null;
+            subcategories.value = [];
+        };
 
         const upcomingClassesAsStudent = computed(() => {
             if (!currentUser.value || !currentUser.value.upcoming_classes_as_student) return [];
@@ -247,7 +298,6 @@ export default {
             return Math.min(Math.max(weeksPassed + 2, 1), classItem.number_of_lessons);
         };
 
-
         const formatDate = (date) => {
             return date.toLocaleDateString('en-US', {
                 weekday: 'short',
@@ -267,7 +317,6 @@ export default {
             if (text.length <= length) return text;
             return text.substring(0, length) + '...';
         };
-
 
         const fetchData = async () => {
             try {
@@ -294,6 +343,9 @@ export default {
                     ...doc.data()
                 }));
 
+                // Fetch categories
+                await fetchCategories();
+
                 // Check for completed classes
                 await checkCompletedClasses();
 
@@ -302,6 +354,20 @@ export default {
                 error.value = 'Error loading data';
             } finally {
                 loading.value = false;
+            }
+        };
+
+        const fetchCategories = async () => {
+            try {
+                const categoryCollection = collection(db, 'categories'); // Ensure the correct path to your categories collection
+                const categorySnapshot = await getDocs(categoryCollection);
+                categories.value = categorySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (err) {
+                console.error('Error fetching categories:', err);
+                error.value = 'Error loading categories';
             }
         };
 
@@ -347,8 +413,13 @@ export default {
 
         return {
             availableClasses,
+            filteredClasses,
+            filterClassesByCategory,
+            filterClassesBySubcategory,
+            clearCategorySelection,
             upcomingClassesAsStudent,
             upcomingClassesAsTeacher,
+            categories,
             loading,
             error,
             calculateNextLessonDate,
@@ -368,7 +439,7 @@ export default {
     //SEARCH BAR (END)
 };
 </script>
-  
+
 <style scoped>
 .container-fluid {
     max-width: 1400px;
@@ -487,4 +558,41 @@ export default {
 .badge {
     font-weight: 500;
 }
+
+/* Category Button Styles (new) */
+.category-button {
+    background: linear-gradient(45deg, #6a89cc, #b8e994);
+    color: white;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    text-align: center;
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.category-button:hover {
+    background: linear-gradient(45deg, #b8e994, #6a89cc);
+    color: white;
+    transform: translateY(-2px);
+}
+
+.category-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(106, 137, 204, 0.4);
+}
+
+/* Optional - Adjust the spacing in the category container */
+.category-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+/* Update this if you want specific spacing between category buttons */
+.d-flex.gap-2 {
+    gap: 12px;
+}
+
 </style>
