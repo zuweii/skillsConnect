@@ -104,10 +104,7 @@ export default {
               const startDate = classItem.start_date.toDate();
               const hasAvailability = classItem.max_capacity > classItem.current_enrollment;
 
-              // Exclude classes where the user is the teacher
-              const isNotUserClass = !currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id);
-
-              return hasAvailability && startDate > currentDate && isNotUserClass;
+              return hasAvailability && startDate > currentDate;
           }).sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
       });
 
@@ -127,34 +124,6 @@ export default {
           subcategories.value = [];
       };
 
-      const upcomingClassesAsStudent = computed(() => {
-          if (!currentUser.value || !currentUser.value.upcoming_classes_as_student) return [];
-
-          return classes.value
-              .filter(classItem => {
-                  const completionDate = classItem.completion_date.toDate();
-                  const currentDate = new Date();
-                  // Check if the class ID exists in the user's upcoming_classes_as_student array
-                  return completionDate > currentDate &&
-                      currentUser.value.upcoming_classes_as_student.includes(classItem.id);
-              })
-              .sort((a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b));
-      });
-
-      const upcomingClassesAsTeacher = computed(() => {
-          if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher) return [];
-
-          return classes.value
-              .filter(classItem => {
-                  const completionDate = classItem.completion_date.toDate();
-                  const currentDate = new Date();
-                  // Check if the class ID exists in the user's upcoming_classes_as_teacher array
-                  return completionDate > currentDate &&
-                      currentUser.value.upcoming_classes_as_teacher.includes(classItem.id);
-              })
-              .sort((a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b));
-      });
-
       const calculateNextLessonDate = (classItem) => {
           const currentDate = new Date();
           const startDate = classItem.start_date.toDate();
@@ -168,22 +137,6 @@ export default {
               }
           }
           return startDate;
-      };
-
-      const getCurrentLessonNumber = (classItem) => {
-          const currentDate = new Date();
-          const startDate = classItem.start_date.toDate();
-
-          // If the class hasn't started yet, return 1
-          if (currentDate < startDate) {
-              return 1;
-          }
-
-          // Calculate weeks passed since start date
-          const weeksPassed = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
-
-          // Return current lesson number (minimum 1, maximum number_of_lessons)
-          return Math.min(Math.max(weeksPassed + 2, 1), classItem.number_of_lessons);
       };
 
       const formatDate = (date) => {
@@ -208,20 +161,6 @@ export default {
 
       const fetchData = async () => {
           try {
-              const user = FBInstanceAuth.getCurrentUser();
-              if (user) {
-                  // Get user document directly using the user's UID
-                  const userDocRef = doc(db, 'users', user.uid);
-                  const userDocSnapshot = await getDoc(userDocRef);
-
-                  if (userDocSnapshot.exists()) {
-                      // Store user data with ID
-                      currentUser.value = {
-                          id: userDocSnapshot.id,
-                          ...userDocSnapshot.data()
-                      };
-                  }
-              }
 
               // Fetch all classes
               const classCollection = collection(db, 'classes');
@@ -233,9 +172,6 @@ export default {
 
               // Fetch categories
               await fetchCategories();
-
-              // Check for completed classes
-              await checkCompletedClasses();
 
           } catch (err) {
               console.error('Error fetching data:', err);
@@ -259,42 +195,6 @@ export default {
           }
       };
 
-      const checkCompletedClasses = async () => {
-          if (!currentUser.value) return;
-
-          const currentDate = new Date();
-          const completedClasses = classes.value.filter(classItem => {
-              const completionDate = classItem.completion_date.toDate();
-              return completionDate < currentDate && (
-                  (currentUser.value.upcoming_classes_as_student?.includes(classItem.id)) ||
-                  (currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id))
-              );
-          });
-
-          if (completedClasses.length > 0) {
-              const userRef = doc(db, 'users', currentUser.value.id);
-
-              // Add completed classes to pending_reviews
-              for (const classItem of completedClasses) {
-                  await updateDoc(userRef, {
-                      pending_reviews: arrayUnion(classItem.id),
-                      // Remove from upcoming classes if completed
-                      upcoming_classes_as_student: currentUser.value.upcoming_classes_as_student?.filter(id => id !== classItem.id) || [],
-                      upcoming_classes_as_teacher: currentUser.value.upcoming_classes_as_teacher?.filter(id => id !== classItem.id) || []
-                  });
-              }
-
-              // Refresh user data after updates
-              const updatedUserDoc = await getDoc(userRef);
-              if (updatedUserDoc.exists()) {
-                  currentUser.value = {
-                      id: updatedUserDoc.id,
-                      ...updatedUserDoc.data()
-                  };
-              }
-          }
-      };
-
       onMounted(() => {
           fetchData();
       });
@@ -305,13 +205,10 @@ export default {
           filterClassesByCategory,
           filterClassesBySubcategory,
           clearCategorySelection,
-          upcomingClassesAsStudent,
-          upcomingClassesAsTeacher,
           categories,
           loading,
           error,
           calculateNextLessonDate,
-          getCurrentLessonNumber,
           formatDate,
           formatTime,
           truncateText
