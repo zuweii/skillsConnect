@@ -107,7 +107,7 @@
               No reviews yet
             </div>
             <div v-else>
-              <div v-for="review in classData.reviews.slice(0, 2)" :key="review.id" class="card mb-3 shadow-sm"
+              <div v-for="review in classData.reviews" :key="review.id" class="card mb-3 shadow-sm"
                 style="border:1px solid lightgray">
                 <div class="card-body">
                   <h5 class="card-title">{{ review.text }}</h5>
