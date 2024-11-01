@@ -7,6 +7,9 @@ import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
+import HomePage from '../views/HomePage.vue'
+import ProfilePage from '../views/ProfilePage.vue'
+import ReviewsPage from '../views/ReviewsPage.vue'
 
 const routes = [
   {
@@ -15,9 +18,15 @@ const routes = [
     component: LoginPage
   },
   {
-    path: '/landing-page',
+    path: '/',
     name:'LandingPage',
     component: LandingPage
+  },
+  {
+    path: '/home-page',
+    name: 'HomePage',
+    component: HomePage,
+    meta: { requiresAuth: true }
   },
   {
     path: '/list-class',
@@ -39,6 +48,18 @@ const routes = [
   {
     path: '/:catchAll(.*)',
     redirect: '/login-page'
+  },
+  {
+    path: '/profile-page',
+    name: 'ProfilePage',
+    component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/reviews-page',
+    name: 'ReviewsPage',
+    component: ReviewsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
