@@ -28,6 +28,7 @@
   
   <script>
   import { ref, onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
   import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
   import { db } from '../firebase/firebase_config';
   import StarRating from '../components/StarRating.vue';
@@ -38,6 +39,7 @@
       StarRating,
     },
     setup(props) {
+      const router = useRouter(); // Initialize router
       const classData = ref(null);
       const reviewText = ref('');
       const selectedRating = ref(0);
@@ -80,6 +82,9 @@
           alert('Review submitted successfully.');
           reviewText.value = ''; // Clear review after submission
           selectedRating.value = 0; // Reset rating
+  
+          // Redirect to Profile Page after successful submission
+          router.push({ name: 'ProfilePage' });
         } catch (err) {
           error.value = `Error submitting review: ${err.message}`;
         }
