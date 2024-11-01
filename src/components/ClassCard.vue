@@ -1,29 +1,25 @@
 <template>
-    <div class="card" style="width: 100%;">
+    <div class="card col-md-8 mx-auto">
       <h3 class="card-header">{{ classData.title }}</h3>
       <img :src="classData.image" :alt="classData.title" class="card-img-top">
       <div class="card-body">
         <p class="card-text">{{ classData.description }}</p>
-        <p class="card-text"><strong>Category:</strong> {{ classData.category }} - {{ classData.subcategory }}</p>
+        <p><strong>Category:</strong> {{ classData.category }} - {{ classData.subcategory }}</p>
         <p><strong>Location:</strong> {{ classData.location }}</p>
         <p><strong>Start Date:</strong> {{ classData.start_date.toDate().toLocaleString() }}</p>
         <div class="class-rating">
           <h5>Class Rating: <StarRating :rating="classData.ratings_average" /></h5>
         </div>
       </div>
-      <div v-if="showReviews" class="card-body">
-        <h4>Reviews</h4>
-        <div v-if="classData.reviews && classData.reviews.length > 0">
-          <div v-for="(review, index) in classData.reviews.slice(0, 2)" :key="index">
-            <p><strong>{{ review.name }}:</strong> {{ review.comment }}</p>
-            <StarRating :rating="review.rating" />
-            <small class="text-muted">{{ formatDate(review.date) }}</small>
-          </div>
-          <router-link :to="{ name: 'Reviews', params: { classId: classData.id } }" class="btn btn-outline-secondary btn-lg align-bottom mt-2">View All Reviews</router-link>
-        </div>
-        <div v-else>
-          <p>No reviews yet.</p>
-        </div>
+  
+      <!-- Render Review Class button using the actual class_id from document ID -->
+      <div class="card-body" v-if="showReviewButton && classData.class_id">
+        <router-link
+          :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
+          class="btn btn-primary btn-lg w-100 align-bottom mt-2"
+        >
+          Review Class
+        </router-link>
       </div>
     </div>
   </template>
@@ -32,27 +28,21 @@
   import StarRating from './StarRating.vue';
   
   export default {
-    components: {
-      StarRating,
-    },
     props: {
       classData: {
         type: Object,
-        required: true
+        required: true,
       },
-      showReviews: {
+      showReviewButton: {
         type: Boolean,
-        default: true
+        default: false,
       }
     },
-    methods: {
-      formatDate(date) {
-        return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
-      }
+    components: {
+      StarRating,
+    },
+    mounted() {
+      console.log("Class Data in ClassCard.vue:", this.classData);
     }
   };
   </script>

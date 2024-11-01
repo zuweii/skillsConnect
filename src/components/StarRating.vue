@@ -3,7 +3,8 @@
     <span
       v-for="index in 5"
       :key="index"
-      :class="['star', { 'filled': index <= Math.floor(rating), 'half-filled': index - 0.5 <= rating && index > Math.floor(rating) }]"
+      :class="['star', { 'filled': index <= rating }]"
+      @click="selectRating(index)"
     >
       ★
     </span>
@@ -19,6 +20,12 @@ export default {
       required: true,
       validator: (value) => value >= 0 && value <= 5
     }
+  },
+  emits: ['rating-selected'],
+  methods: {
+    selectRating(index) {
+      this.$emit('rating-selected', index); // Emit selected rating
+    }
   }
 }
 </script>
@@ -26,7 +33,8 @@ export default {
 <style scoped>
 .star-rating {
   display: inline-flex;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  cursor: pointer;
 }
 .star {
   color: #e0e0e0;
@@ -34,13 +42,5 @@ export default {
 }
 .star.filled {
   color: #ffc107;
-}
-.star.half-filled::before {
-  content: '★';
-  color: #ffc107;
-  position: absolute;
-  left: 0;
-  width: 50%;
-  overflow: hidden;
 }
 </style>

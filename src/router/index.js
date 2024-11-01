@@ -56,8 +56,10 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/reviews-page',
+    path: '/reviews-page/:classId',
     name: 'ReviewsPage',
+    component: ReviewsPage,
+    props: true,
     component: ReviewsPage,
     meta: { requiresAuth: true }
   }

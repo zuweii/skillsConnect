@@ -3,7 +3,7 @@
     <div v-else-if="error">{{ error }}</div>
     <div class="container-fluid" v-else>
       <div class="profile-header text-center">
-        <img :src="userProfile.profile_photo" alt="Profile Picture" class="profile-photo mb-3">
+        <img :src="userProfile.profile_photo" alt="Profile Picture" class="profile-photo mb-3" />
         <h2>{{ userProfile.username }}</h2>
         <div class="average-rating mt-3">
           <h4>Average Class Rating: <StarRating :rating="averageRating" /></h4>
@@ -15,7 +15,7 @@
         <div class="toggle-container">
           <span>View Classes You're Teaching</span>
           <label class="switch">
-            <input type="checkbox" v-model="showPastClasses">
+            <input type="checkbox" v-model="showPastClasses" />
             <span class="slider round"></span>
           </label>
           <span>View Past Classes</span>
@@ -29,12 +29,17 @@
   
         <!-- Classes You're Teaching Section -->
         <div v-if="!showPastClasses">
-          <ClassCard v-for="cls in userClasses" :key="cls.class_id" :classData="cls" />
+          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" />
         </div>
   
-        <!-- Past Classes Section -->
+        <!-- Past Classes Section with Review Button -->
         <div v-else>
-          <ClassCard v-for="pastCls in pastClasses" :key="pastCls.class_id" :classData="pastCls" :showReviews="false" />
+          <ClassCard
+            v-for="pastCls in pastClasses"
+            :key="pastCls.id"
+            :classData="pastCls"
+            :showReviewButton="true"
+          />
         </div>
       </div>
     </div>
@@ -44,8 +49,9 @@
   import ClassCard from '../components/ClassCard.vue';
   import StarRating from '../components/StarRating.vue';
   import { ref, onMounted } from 'vue';
-  import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
+  import { doc, getDoc } from 'firebase/firestore';
   import { db } from '../firebase/firebase_config';
+  import { getAuth } from 'firebase/auth';
   
   export default {
     components: {
@@ -53,73 +59,75 @@
       StarRating,
     },
     setup() {
-      const userClasses = ref([]); 
-      const pastClasses = ref([]); 
+      const auth = getAuth();
       const userProfile = ref(null);
+      const pastClasses = ref([]);
+      const teachingClasses = ref([]);
       const loading = ref(true);
       const error = ref(null);
       const averageRating = ref(0);
-      const showPastClasses = ref(false); 
+      const showPastClasses = ref(false);
   
       const fetchUserProfile = async (userID) => {
         try {
           const userDoc = await getDoc(doc(db, 'users', userID));
           if (userDoc.exists()) {
             userProfile.value = userDoc.data();
-            pastClasses.value = userProfile.value.pending_reviews || [];
+  
+            // Retrieve past classes from pending_reviews
+            pastClasses.value = (await Promise.all(
+              userProfile.value.pending_reviews.map(async (docId) => {
+                const classDoc = await getDoc(doc(db, 'classes', docId));
+                return classDoc.exists() ? { class_id: classDoc.id, ...classDoc.data() } : null;
+              })
+            )).filter(cls => cls !== null);
+
+
+  
+            console.log("Fetched past classes:", pastClasses.value); // Debugging
+  
+            // Retrieve classes you're teaching from upcoming_classes_as_teacher
+            teachingClasses.value = (await Promise.all(
+              userProfile.value.upcoming_classes_as_teacher.map(async (classId) => {
+                const classDoc = await getDoc(doc(db, 'classes', classId));
+                return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
+              })
+            )).filter(cls => cls !== null);
+  
+            // Calculate average rating based on teaching classes
+            let totalRatings = 0;
+            let ratedClassesCount = 0;
+            teachingClasses.value.forEach((cls) => {
+              if (cls && cls.ratings_average) {
+                totalRatings += cls.ratings_average;
+                ratedClassesCount++;
+              }
+            });
+            averageRating.value = ratedClassesCount > 0 ? totalRatings / ratedClassesCount : 0;
           } else {
             error.value = 'User profile not found.';
           }
         } catch (err) {
           error.value = `Error: ${err.message}`;
-        }
-      };
-  
-      const fetchClassesTaught = async (userID) => {
-        try {
-          const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
-          const querySnapshot = await getDocs(classesQuery);
-  
-          const classes = [];
-          let totalRatings = 0;
-          let ratedClassesCount = 0;
-  
-          querySnapshot.forEach((doc) => {
-            const classData = doc.data();
-            classes.push({ id: doc.id, ...classData });
-  
-            if (classData.ratings_average && classData.ratings_average > 0) {
-              totalRatings += classData.ratings_average;
-              ratedClassesCount++;
-            }
-          });
-  
-          userClasses.value = classes;
-          if (ratedClassesCount > 0) {
-            averageRating.value = totalRatings / ratedClassesCount;
-          } else {
-            averageRating.value = 0;
-          }
-  
-          if (classes.length === 0) {
-            error.value = 'No classes found.';
-          }
-        } catch (err) {
-          error.value = `Error: ${err.message}`;
+        } finally {
+          loading.value = false;
         }
       };
   
       onMounted(async () => {
-        const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2'; 
-        await fetchUserProfile(userID); 
-        await fetchClassesTaught(userID); 
-        loading.value = false;
+        const user = auth.currentUser;
+        if (user) {
+          await fetchUserProfile(user.uid);
+        } else {
+          error.value = "User not authenticated";
+          loading.value = false;
+        }
       });
   
       return {
-        userClasses,
-        pastClasses,
         userProfile,
+        pastClasses,
+        teachingClasses,
         loading,
         error,
         averageRating,
@@ -133,23 +141,15 @@
   .container-fluid {
     padding-top: 50px;
   }
-  
   .profile-header {
     margin-bottom: 20px;
   }
-  
   .profile-photo {
     width: 150px;
     height: 150px;
     border-radius: 50%;
     object-fit: cover;
   }
-  
-  .card {
-    border: 0;
-    margin-bottom: 20px;
-  }
-  
   .toggle-container {
     display: flex;
     align-items: center;
@@ -157,20 +157,17 @@
     gap: 10px;
     margin-top: 20px;
   }
-  
   .switch {
     position: relative;
     display: inline-block;
     width: 60px;
     height: 34px;
   }
-  
   .switch input {
     opacity: 0;
     width: 0;
     height: 0;
   }
-  
   .slider {
     position: absolute;
     cursor: pointer;
@@ -182,7 +179,6 @@
     transition: .4s;
     border-radius: 34px;
   }
-  
   .slider:before {
     position: absolute;
     content: "";
@@ -194,11 +190,9 @@
     transition: .4s;
     border-radius: 50%;
   }
-  
   input:checked + .slider {
     background-color: #4CAF50;
   }
-  
   input:checked + .slider:before {
     transform: translateX(26px);
   }
