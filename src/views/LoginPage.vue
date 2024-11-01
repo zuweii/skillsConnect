@@ -30,7 +30,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import FBInstanceAuth from "../firebase/firebase_auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "../firebase/firebase_config";
 
 export default {
@@ -52,7 +52,7 @@ export default {
       
       const currentUser = FBInstanceAuth.getCurrentUser();
       if (currentUser) {
-        const redirectPath = route.query.redirect || '/class-details';
+        const redirectPath = route.query.redirect || '/home-page';
         router.push(redirectPath);
       }
     });
@@ -71,7 +71,7 @@ export default {
 
         await ensureUserDocument(user);
 
-        const redirectPath = route.query.redirect || '/landing-page';
+        const redirectPath = route.query.redirect || '/home-page';
         router.push(redirectPath);
       } catch (err) {
         console.error("Login failed:", err);
@@ -99,22 +99,33 @@ export default {
 
     const ensureUserDocument = async (user) => {
       const userDocRef = doc(db, "users", user.uid);
-      await setDoc(userDocRef, {
-        email: user.email,
-        username: user.email.split("@")[0],
-        profile_photo: "",
-        upcoming_classes_as_student: [],
-        upcoming_classes_as_teacher: [],
-        posted_classes: [],
-        finances: [],
-        chats: [],
-        portfolio: {
-          youtube_links: [],
-          project_images: []
-        },
-        completed_classes: [],
-        pending_reviews: []
-      }, { merge: true });
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        // If the document exists, update it with the merge option to preserve existing data
+        await setDoc(userDocRef, {
+          email: user.email,
+          username: user.email.split("@")[0],
+        }, { merge: true });
+      } else {
+        // If the document doesn't exist, create it with default values
+        await setDoc(userDocRef, {
+          email: user.email,
+          username: user.email.split("@")[0],
+          profile_photo: "",
+          upcoming_classes_as_student: [],
+          upcoming_classes_as_teacher: [],
+          posted_classes: [],
+          finances: [],
+          chats: [],
+          portfolio: {
+            youtube_links: [],
+            project_images: []
+          },
+          completed_classes: [],
+          pending_reviews: []
+        });
+      }
     };
 
     return {

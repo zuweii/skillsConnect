@@ -64,16 +64,16 @@ export default {
 .search-bar-container {
   position: relative;
   width: 100%;
-  max-width: 500px;
+  max-width: 700px;
 }
 
 .search-input {
   width: 100%;
   padding: 10px 40px 10px 15px;
   border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border-radius:20px;
   font-size: 16px;
-  background-color: #f5f5f5;
+  background-color: rgb(250, 250, 250);
 }
 
 .search-button {

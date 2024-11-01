@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^4.9.0",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",
     "chat-engine": "^0.3.1",

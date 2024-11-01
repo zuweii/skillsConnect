@@ -8,6 +8,10 @@ import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
 import ProfileView from '../views/ProfileView.vue'
+import HomePage from '../views/HomePage.vue'
+import ProfilePage from '../views/ProfilePage.vue'
+import ReviewsPage from '../views/ReviewsPage.vue'
+
 
 const routes = [
   {
@@ -24,6 +28,13 @@ const routes = [
     path: '/profile',
     name: 'ProfileView',
     component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/home-page',
+    name: 'HomePage',
+    component: HomePage,
+    meta: { requiresAuth: true }
   },
   {
     path: '/list-class',
@@ -32,7 +43,7 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/class-details',
+    path: '/class-details/:id',
     name: 'ClassDetails',
     component: ClassDetails,
   },
@@ -45,6 +56,20 @@ const routes = [
   {
     path: '/:catchAll(.*)',
     redirect: '/login-page'
+  },
+  {
+    path: '/profile-page',
+    name: 'ProfilePage',
+    component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/reviews-page/:classId',
+    name: 'ReviewsPage',
+    component: ReviewsPage,
+    props: true,
+    component: ReviewsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
