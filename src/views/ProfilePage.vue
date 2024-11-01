@@ -9,7 +9,7 @@
           <h4>Average Class Rating: <StarRating :rating="averageRating" /></h4>
         </div>
       </div>
-  
+    
       <!-- Toggle Switch Section -->
       <div class="toggle-switches text-center mt-4">
         <div class="toggle-container">
@@ -21,20 +21,25 @@
           <span>View Past Classes</span>
         </div>
       </div>
-  
+    
       <!-- Display Classes Section -->
       <div class="classes-offered">
         <h1 style="text-align: center; margin: 10px;" v-if="!showPastClasses">Classes You're Teaching</h1>
         <h1 style="text-align: center; margin: 10px;" v-else>Past Classes</h1>
-  
+    
         <!-- Classes You're Teaching Section -->
         <div v-if="!showPastClasses">
           <ClassCard v-for="cls in userClasses" :key="cls.class_id" :classData="cls" />
         </div>
-  
-        <!-- Past Classes Section -->
+    
+        <!-- Past Classes Section with Review Button -->
         <div v-else>
-          <ClassCard v-for="pastCls in pastClasses" :key="pastCls.class_id" :classData="pastCls" :showReviews="false" />
+          <ClassCard
+            v-for="pastCls in pastClasses"
+            :key="pastCls.class_id"
+            :classData="pastCls"
+            :showReviewButton="true"
+          />
         </div>
       </div>
     </div>
@@ -60,7 +65,7 @@
       const error = ref(null);
       const averageRating = ref(0);
       const showPastClasses = ref(false); 
-  
+    
       const fetchUserProfile = async (userID) => {
         try {
           const userDoc = await getDoc(doc(db, 'users', userID));
@@ -74,33 +79,33 @@
           error.value = `Error: ${err.message}`;
         }
       };
-  
+    
       const fetchClassesTaught = async (userID) => {
         try {
           const classesQuery = query(collection(db, 'classes'), where('teacher_username', '==', userID));
           const querySnapshot = await getDocs(classesQuery);
-  
+    
           const classes = [];
           let totalRatings = 0;
           let ratedClassesCount = 0;
-  
+    
           querySnapshot.forEach((doc) => {
             const classData = doc.data();
             classes.push({ id: doc.id, ...classData });
-  
+    
             if (classData.ratings_average && classData.ratings_average > 0) {
               totalRatings += classData.ratings_average;
               ratedClassesCount++;
             }
           });
-  
+    
           userClasses.value = classes;
           if (ratedClassesCount > 0) {
             averageRating.value = totalRatings / ratedClassesCount;
           } else {
             averageRating.value = 0;
           }
-  
+    
           if (classes.length === 0) {
             error.value = 'No classes found.';
           }
@@ -108,14 +113,14 @@
           error.value = `Error: ${err.message}`;
         }
       };
-  
+    
       onMounted(async () => {
         const userID = 'PSw10xzHopgrEl4vfpDmHJLnGMw2'; 
         await fetchUserProfile(userID); 
         await fetchClassesTaught(userID); 
         loading.value = false;
       });
-  
+    
       return {
         userClasses,
         pastClasses,
