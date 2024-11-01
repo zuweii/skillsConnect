@@ -7,9 +7,11 @@ import ListClass from '../views/ListClass.vue'
 import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
+import ProfileView from '../views/ProfileView.vue'
 import HomePage from '../views/HomePage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
+
 
 const routes = [
   {
@@ -21,6 +23,12 @@ const routes = [
     path: '/',
     name:'LandingPage',
     component: LandingPage
+  },
+  {
+    path: '/profile',
+    name: 'ProfileView',
+    component: ProfileView,
+    meta: { requiresAuth: true }
   },
   {
     path: '/home-page',
