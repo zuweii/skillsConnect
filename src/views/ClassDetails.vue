@@ -16,8 +16,12 @@
       </button>
       <nav aria-label="breadcrumb">
         <ol class="breadcrumb mb-0">
-          <li class="breadcrumb-item"><a class="text-decoration-none text-secondary" href='#'>{{ classData.category }}</a></li>
-          <li class="breadcrumb-item active" aria-current="page"><a class="text-decoration-none text-dark" href='#'>{{ classData.subcategory }}</a></li>
+          <li class="breadcrumb-item">
+            <a class="text-decoration-none text-secondary" href="#">{{ classData.category }}</a>
+          </li>
+          <li class="breadcrumb-item active" aria-current="page">
+            <a class="text-decoration-none text-dark" href="#">{{ classData.subcategory }}</a>
+          </li>
         </ol>
       </nav>
     </div>
@@ -106,10 +110,10 @@
               <div v-for="review in classData.reviews.slice(0, 2)" :key="review.id" class="card mb-3 shadow-sm"
                 style="border:1px solid lightgray">
                 <div class="card-body">
-                  <h5 class="card-title">{{ review.name }}</h5>
+                  <h5 class="card-title">{{ review.text }}</h5>
                   <div class="d-flex align-items-center mb-2">
                     <StarRating :rating="review.rating" />
-                    <small class="text-muted ms-2">{{ formatDate(review.date) }}</small>
+                    <small class="text-muted ms-2">{{ formatDate(review.timestamp) }}</small>
                   </div>
                   <p class="card-text">{{ review.comment }}</p>
                 </div>
@@ -213,6 +217,9 @@ export default {
     };
 
     const formatDate = (date) => {
+      if (!date || !date.seconds) {
+        return 'Date not available';
+      }
       return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'long',
@@ -221,6 +228,9 @@ export default {
     };
 
     const formatTime = (time) => {
+      if (!time || !time.seconds) {
+        return 'Time not available';
+      }
       return new Date(time.seconds * 1000).toLocaleTimeString('en-US', {
         hour: '2-digit',
         minute: '2-digit'
@@ -229,7 +239,7 @@ export default {
 
     const handleEnrolClick = () => {
       if (isEnrolled.value) return;
-      
+
       const user = FBInstanceAuth.getCurrentUser();
       if (user) {
         router.push({ name: 'Payment', params: { classId: classData.value.id } });
