@@ -1,18 +1,26 @@
 <template>
-    <div>
-      <h1>Reviews for Class {{ classId }}</h1>
-      <div v-if="loading">Loading reviews...</div>
-      <div v-else-if="error">{{ error }}</div>
-      <div v-else>
-        <div v-if="reviews.length > 0">
-          <div v-for="review in reviews" :key="review.id">
-            <p><strong>{{ review.name }}</strong>: {{ review.comment }}</p>
-            <StarRating :rating="review.rating" />
-            <small class="text-muted">{{ formatDate(review.date) }}</small>
-          </div>
+    <div v-if="loading">Loading review page...</div>
+    <div v-else-if="error">{{ error }}</div>
+    <div class="container-fluid" v-else>
+      <h1 class="text-center">Review: {{ classData?.title }}</h1>
+      <div v-if="classData" class="card col-md-8 mx-auto">
+        <img :src="classData.image" :alt="classData.title" class="card-img-top">
+        <div class="card-body">
+          <p class="card-text">{{ classData.description }}</p>
+          <p><strong>Category:</strong> {{ classData.category }} - {{ classData.subcategory }}</p>
+          <p><strong>Location:</strong> {{ classData.location }}</p>
+          <p><strong>Start Date:</strong> {{ classData.start_date.toDate().toLocaleString() }}</p>
         </div>
-        <div v-else>
-          <p>No reviews found.</p>
+  
+        <!-- Review Form -->
+        <div class="card-body">
+          <h5>Leave a Review</h5>
+          <div>
+            <label>Select a Rating:</label>
+            <StarRating :rating="selectedRating" @rating-selected="setRating" />
+          </div>
+          <textarea v-model="reviewText" class="form-control mt-3" rows="4" placeholder="Write your review here..."></textarea>
+          <button @click="submitReview" class="btn btn-primary btn-lg w-100 mt-3">Submit Review</button>
         </div>
       </div>
     </div>
@@ -20,54 +28,73 @@
   
   <script>
   import { ref, onMounted } from 'vue';
-  import { doc, getDoc } from 'firebase/firestore';
+  import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
   import { db } from '../firebase/firebase_config';
   import StarRating from '../components/StarRating.vue';
   
   export default {
-    props: ['classId'], // Get the classId from the route
+    props: ['classId'],
     components: {
       StarRating,
     },
     setup(props) {
-      const reviews = ref([]);
+      const classData = ref(null);
+      const reviewText = ref('');
+      const selectedRating = ref(0);
       const loading = ref(true);
       const error = ref(null);
   
-      const fetchClassReviews = async () => {
+      const fetchClassData = async () => {
         try {
           const classDoc = await getDoc(doc(db, 'classes', props.classId));
           if (classDoc.exists()) {
-            const classData = classDoc.data();
-            reviews.value = classData.reviews || [];
+            classData.value = classDoc.data();
           } else {
-            error.value = 'Class not found';
+            error.value = 'Class data not found.';
           }
         } catch (err) {
-          console.error('Error fetching reviews:', err);
           error.value = `Error: ${err.message}`;
         } finally {
           loading.value = false;
         }
       };
   
-      const formatDate = (date) => {
-        return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-        });
+      const setRating = (rating) => {
+        selectedRating.value = rating;
       };
   
-      onMounted(() => {
-        fetchClassReviews();
-      });
+      const submitReview = async () => {
+        if (!reviewText.value || selectedRating.value === 0) {
+          alert('Please write a review and select a rating before submitting.');
+          return;
+        }
+        try {
+          const review = {
+            text: reviewText.value,
+            rating: selectedRating.value,
+            timestamp: new Date(),
+          };
+          await updateDoc(doc(db, 'classes', props.classId), {
+            reviews: arrayUnion(review),
+          });
+          alert('Review submitted successfully.');
+          reviewText.value = ''; // Clear review after submission
+          selectedRating.value = 0; // Reset rating
+        } catch (err) {
+          error.value = `Error submitting review: ${err.message}`;
+        }
+      };
+  
+      onMounted(fetchClassData);
   
       return {
-        reviews,
+        classData,
+        reviewText,
+        selectedRating,
         loading,
         error,
-        formatDate,
+        submitReview,
+        setRating,
       };
     },
   };

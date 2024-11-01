@@ -48,9 +48,10 @@ const routes = [
     component: ProfilePage
   },
   {
-    path: '/reviews-page',
+    path: '/reviews-page/:classId',
     name: 'ReviewsPage',
-    component: ReviewsPage
+    component: ReviewsPage,
+    props: true,
   }
 ]
 
