@@ -112,32 +112,20 @@ export default {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
       
-      // Always update the user document with the latest username to ensure changes are saved
       const username = user.email.split("@")[0]; // Default username derived from email
+      
+      // Only update `profile_photo` if not present in Firestore
+      const updatedData = {
+        email: user.email,
+        username: username,
+        profile_photo: userDoc.exists() && userDoc.data().profile_photo 
+          ? userDoc.data().profile_photo // Use existing profile photo if it exists
+          : user.photoURL || "" // Else use Firebase auth photoURL or empty string
+      };
 
-      if (userDoc.exists()) {
-        await setDoc(userDocRef, {
-          email: user.email,
-          username: username,
-          profile_photo: user.photoURL || "",
-        }, { merge: true });
-      } else {
-        await setDoc(userDocRef, {
-          email: user.email,
-          username: username,
-          profile_photo: user.photoURL || "",
-          upcoming_classes_as_student: [],
-          upcoming_classes_as_teacher: [],
-          posted_classes: [],
-          finances: [],
-          chats: [],
-          portfolio: {
-            youtube_links: [],
-            project_images: []
-          },
-          completed_classes: [],
-          pending_reviews: []
-        });
+      // Update Firestore only if document doesn't exist or missing critical fields
+      if (!userDoc.exists() || !userDoc.data().profile_photo || !userDoc.data().username) {
+        await setDoc(userDocRef, updatedData, { merge: true });
       }
     };
 
@@ -146,23 +134,21 @@ export default {
       isLoading.value = true;
 
       try {
-          const { user, error: googleLoginError } = await FBInstanceAuth.loginWithGoogle();
+        const result = await FBInstanceAuth.loginWithGoogle();
+        const user = result.user;
 
-          if (googleLoginError) {
-              error.value = "Google login failed. Please try again.";
-              return;
-          }
+        // Ensure user document is properly created/updated
+        await ensureUserDocument(user);
 
-          const redirectPath = route.query.redirect || '/home-page';
-          router.push(redirectPath);
+        const redirectPath = route.query.redirect || '/home-page';
+        router.push(redirectPath);
       } catch (err) {
-          console.error("Google login failed:", err);
-          error.value = "An unexpected error occurred with Google login. Please try again.";
+        console.error("Google login failed:", err);
+        error.value = "An unexpected error occurred with Google login. Please try again.";
       } finally {
-          isLoading.value = false;
+        isLoading.value = false;
       }
-  };
-
+    };
 
     return {
       email,
@@ -250,7 +236,7 @@ export default {
 }
 
 .btn-google {
-  background-color: #5a7dee; /* New color */
+  background-color: #5a7dee;
   border-color: #5a7dee;
   color: white;
   margin-bottom: 1rem;
@@ -258,7 +244,7 @@ export default {
 }
 
 .btn-google:hover {
-  background-color: #4e6dd2; /* New hover color */
+  background-color: #4e6dd2;
   border-color: #4e6dd2;
 }
 

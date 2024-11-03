@@ -1,9 +1,9 @@
 <template>
-  <div v-if="loading">Loading profile...</div>
-  <div v-else-if="error">{{ error }}</div>
+  <div v-if="loading" class="text-center">Loading profile...</div>
+  <div v-else-if="error" class="text-danger text-center">{{ error }}</div>
   <div class="container" v-else>
     <div class="profile-header text-center mb-5">
-      <img :src="userProfile.profile_photo" alt="Profile Picture" class="profile-photo mb-3" />
+      <img :src="userProfile.profile_photo || defaultPhoto" alt="Profile Picture" class="profile-photo mb-3" />
       <h2 class="fw-bold">{{ userProfile.username }}</h2>
       <div class="average-rating mt-3">
         <h4>Average Class Rating: <StarRating :rating="averageRating" :readOnly="true"/></h4>
@@ -27,17 +27,13 @@
       <h3 class="text-center mb-4" v-if="!showPastClasses">Classes You're Teaching</h3>
       <h3 class="text-center mb-4" v-else>Past Classes</h3>
 
-      <!-- Classes You're Teaching Section -->
       <div v-if="!showPastClasses">
         <div v-if="teachingClasses.length > 0" class="class-list">
           <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" class="mb-4" />
         </div>
-        <div v-else>
-          <p class="text-muted text-center">You have no classes that you're currently teaching.</p>
-        </div>
+        <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
 
-      <!-- Past Classes Section with Review Button -->
       <div v-else>
         <div v-if="pastClasses.length > 0" class="class-list">
           <ClassCard
@@ -48,9 +44,7 @@
             class="mb-4"
           />
         </div>
-        <div v-else>
-          <p class="text-muted text-center">You have no past classes.</p>
-        </div>
+        <div v-else class="text-muted text-center">You have no past classes.</div>
       </div>
     </div>
   </div>
@@ -78,6 +72,7 @@ export default {
     const error = ref(null);
     const averageRating = ref(0);
     const showPastClasses = ref(false);
+    const defaultPhoto = ref('../assets/default-profile.png'); // Default image path
 
     const fetchUserProfile = async (userID) => {
       try {
@@ -121,7 +116,8 @@ export default {
       }
     };
 
-    onMounted(async () => {
+    const refreshUserProfile = async () => {
+      loading.value = true;
       const user = auth.currentUser;
       if (user) {
         await fetchUserProfile(user.uid);
@@ -129,7 +125,9 @@ export default {
         error.value = "User not authenticated";
         loading.value = false;
       }
-    });
+    };
+
+    onMounted(refreshUserProfile);
 
     return {
       userProfile,
@@ -139,6 +137,7 @@ export default {
       error,
       averageRating,
       showPastClasses,
+      defaultPhoto,
     };
   },
 };
@@ -148,6 +147,7 @@ export default {
 .container {
   max-width: 800px;
   padding-top: 50px;
+  margin: 0 auto;
 }
 
 .profile-header {
@@ -219,7 +219,6 @@ input:checked + .slider:before {
   margin-top: 30px;
 }
 
-/* Responsive grid for class cards */
 .class-list {
   display: grid;
   grid-template-columns: 1fr;
