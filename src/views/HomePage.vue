@@ -170,6 +170,10 @@
                                     {{ classItem.max_capacity - classItem.current_enrollment }} spots left
                                 </span>
                             </div>
+                            <div class="d-flex align-items-center mb-2">
+                                <StarRating :rating="classItem.ratings_average" />
+                                <span class="text-muted ms-2">({{ classItem.reviews.length }} Reviews)</span>
+                            </div>
                             <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
                                 class="custom-button w-100">
                                 View Details
@@ -187,9 +191,13 @@ import { ref, computed, onMounted } from 'vue';
 import { collection, getDocs, query, where, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import FBInstanceAuth from '../firebase/firebase_auth';
+import StarRating from '../components/StarRating.vue';
 
 export default {
     name: 'HomePage',
+    components: {
+        StarRating
+    },
     setup() {
         const classes = ref([]);
         const categories = ref([]);
@@ -197,6 +205,7 @@ export default {
         const error = ref(null);
         const currentUser = ref(null);
         const selectedCategory = ref(null); // To track the selected category
+
 
         // Computed property for filtered classes
         const filteredClasses = computed(() => {
@@ -225,18 +234,10 @@ export default {
 
         const filterClassesByCategory = (category) => {
             selectedCategory.value = category;
-            selectedSubcategory.value = null; // Reset subcategory when a new category is selected
-            subcategories.value = category.subcategories || []; // Populate subcategories
-        };
-
-        const filterClassesBySubcategory = (subcategory) => {
-            selectedSubcategory.value = subcategory;
         };
 
         const clearCategorySelection = () => {
             selectedCategory.value = null;
-            selectedSubcategory.value = null;
-            subcategories.value = [];
         };
 
         const upcomingClassesAsStudent = computed(() => {
@@ -415,7 +416,6 @@ export default {
             availableClasses,
             filteredClasses,
             filterClassesByCategory,
-            filterClassesBySubcategory,
             clearCategorySelection,
             upcomingClassesAsStudent,
             upcomingClassesAsTeacher,
