@@ -11,6 +11,7 @@ import HomePage from '../views/HomePage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
 import SignupPage from '../views/SignupPage.vue'
+import Settings from '../views/Settings.vue'
 
 const routes = [
   {
@@ -68,6 +69,12 @@ const routes = [
     path: '/signup',
     name: 'SignupPage',
     component: SignupPage,
+  },
+  {
+    path: '/settings',
+    name: 'Settings',
+    component: Settings,
+    meta: { requiresAuth: true },
   }
 ]
 
