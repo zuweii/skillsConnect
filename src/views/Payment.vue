@@ -92,6 +92,8 @@ import { doc, getDoc, updateDoc, arrayUnion, onSnapshot } from 'firebase/firesto
 import { db } from '../firebase/firebase_config';
 import FBInstanceAuth from '../firebase/firebase_auth';
 import StarRating from '../components/StarRating.vue';
+import { Timestamp } from 'firebase/firestore';
+
 
 export default {
   name: 'Payment',
@@ -200,7 +202,7 @@ export default {
 
           const userRef = doc(db, 'users', user.uid);
           await updateDoc(userRef, {
-            upcoming_classes_as_student: arrayUnion(classDetails.value.id)
+            upcoming_classes_as_student: arrayUnion(classDetails.value.id),
           });
           console.log('User document updated with new class ID:', classDetails.value.id);
 
@@ -209,6 +211,14 @@ export default {
             current_enrollment: classDetails.value.current_enrollment + 1
           });
           console.log('Class document updated with new enrollment count');
+
+          const instructorRef = doc(db, 'users', classDetails.value.teacher_username);
+          await updateDoc(instructorRef, {
+            finances: arrayUnion({
+              date: Timestamp.now(),
+              amount: classDetails.value.price
+            })
+          });
 
           enrollmentSuccess.value = true;
         }

@@ -35,26 +35,126 @@
       <div class="col-md-6">
         <h1 class="h2 mb-3 fw-bold">{{ classData.title }}</h1>
         <div class="d-flex align-items-center mb-2">
-          <span class="me-2">{{ averageRating.toFixed(1) }}</span>
-          <StarRating :rating="averageRating" readOnly />
+          <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
+          <StarRating :rating="classData.ratings_average" readOnly />
           <span class="text-muted ms-2">({{ reviewCount }} Reviews)</span>
-          <span class="ms-3 text-colour fw-bold">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{ classData.max_capacity }}</span>
+          <span class="ms-3 badge bg-primary">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{ classData.max_capacity }}</span>
         </div>
-        <h2 class="h3 mb-3">${{ classData.price.toFixed(2) }}</h2>
+        <h2 class="h3 mb-3 text-colour">${{ classData.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classData.description }}</p>
-        <button 
-          @click="handleEnrolClick" 
-          class="enrol btn btn-primary btn-lg w-100 text-white align-bottom"
-          :disabled="isEnrolled"
-        >
+        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom" :disabled="isEnrolled">
           {{ isEnrolled ? 'Already Enrolled' : 'Enrol Now' }}
         </button>
         <p v-if="isEnrolled" class="text-success mt-2 text-center">You have already enrolled in this class!</p>
       </div>
     </div>
 
-    <!-- Class Details and Reviews Section -->
-    <!-- Instructor details and other parts of your template remain the same -->
+    <div class="card mt-4 shadow">
+      <div class="card-body">
+        <h3 class="card-title fw-bold">Class Details</h3>
+        <div class="row mt-4">
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-calendar3 text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Start Date</p>
+                <p class="mb-0">{{ formatDate(classData.start_date) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-clock text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Time</p>
+                <p class="mb-0">{{ formatTime(classData.start_time) }} - {{ formatTime(classData.end_time) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-book text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Number of Lessons</p>
+                <p class="mb-0">{{ classData.number_of_lessons }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-laptop text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Mode of Lessons</p>
+                <p class="mb-0">{{ capitalizeMode(classData.mode) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-graph-up text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Skill Level</p>
+                <p class="mb-0">{{ capitalizeLevel(classData.skill_level) }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-geo-alt text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Location</p>
+                <p class="mb-0">{{ classData.location }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4 p-2 shadow">
+      <div class="card-body">
+        <h3 class="card-title fw-bold mt-2">
+          Meet the Instructor
+        </h3>
+        <div class="row my-4">
+          <div class="col-md-4">
+            <div class="d-flex flex-column align-items-center">
+              <div class="instructor-image-container mb-3">
+                <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+              </div>
+              <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+            </div>
+          </div>
+          <div class="col-md-8">
+            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center" style="height: 200px;">
+              No reviews yet
+            </div>
+            <div v-else>
+              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm" style="border:1px solid lightgray">
+                <div class="card-body">
+                  <div class="d-flex align-items-center mb-2">
+                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    <div>
+                      <h5 class="card-title mb-0">{{ review.username }}</h5>
+                      <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <StarRating :rating="review.rating" />
+                  </div>
+                  <p class="card-text">{{ review.text }}</p>
+                </div>
+              </div>
+              <div v-if="classData.reviews.length > 3" class="text-end mt-3">
+                <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }" class="btn btn-outline-primary">
+                  Read All Reviews
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -85,16 +185,12 @@ export default {
       return currentUser.value.upcoming_classes_as_student.includes(classData.value.id);
     });
 
-    const averageRating = computed(() => {
-      if (!classData.value || !classData.value.reviews || classData.value.reviews.length === 0) {
-        return 0;
-      }
-      const totalRating = classData.value.reviews.reduce((sum, review) => sum + review.rating, 0);
-      return totalRating / classData.value.reviews.length;
-    });
-
     const reviewCount = computed(() => {
       return classData.value && classData.value.reviews ? classData.value.reviews.length : 0;
+    });
+
+    const limitedReviews = computed(() => {
+      return classData.value && classData.value.reviews ? classData.value.reviews.slice(0, 3) : [];
     });
 
     const fetchClassData = async () => {
@@ -103,10 +199,13 @@ export default {
         const classDoc = await getDoc(doc(db, 'classes', classId));
 
         if (classDoc.exists()) {
-          classData.value = { id: classDoc.id, ...classDoc.data() };
-          if (!classData.value.reviews) {
-            classData.value.reviews = [];
-          }
+          const data = classDoc.data();
+          classData.value = { 
+            id: classDoc.id, 
+            ...data,
+            average_rating: data.average_rating || 0,
+            reviews: data.reviews || []
+          };
           await fetchInstructorData(classData.value.teacher_username);
         } else {
           error.value = 'Class not found';
@@ -196,7 +295,7 @@ export default {
     };
 
     const goBack = () => {
-      router.go(-1);
+      router.push({ name: 'HomePage' });
     };
 
     onMounted(() => {
@@ -209,8 +308,8 @@ export default {
       instructorData,
       loading,
       error,
-      averageRating,
       reviewCount,
+      limitedReviews,
       formatDate,
       formatTime,
       handleEnrolClick,
@@ -258,7 +357,7 @@ export default {
 }
 
 .text-colour {
-  color: #2240a4;
+  color: #5a7dee;
 }
 
 .enrol {
@@ -279,29 +378,21 @@ export default {
   border: 0;
 }
 
-.font-size {
-  font-size: 18px;
-}
-
-.row {
-  display: flex;
-  justify-content: space-around;
-  align-items: start;
-}
-
-.text-align-top {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.font-size {
-  font-size: 18px;
-  margin-bottom: 5px;
-}
-
 .btn-link:hover {
   opacity: 0.7;
 }
-</style>
 
+.bg-primary {
+    background-color: #5a7dee !important;
+}
+
+.btn-outline-primary {
+  color: #5a7dee;
+  border-color:  #5a7dee;
+}
+
+.btn-outline-primary:hover {
+  background-color: #5a7dee;
+  color: white;
+}
+</style>

@@ -25,7 +25,7 @@
                         </h2>
                     </div>
                     <div class="card-body p-0">
-                        <div v-if="upcomingClassesAsStudent.length === 0" class="p-4 text-center text-muted">
+                        <div v-if="upcomingClassesAsStudent.length === 0" class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
                             No upcoming classes as student
                         </div>
                         <div v-else class="upcoming-list">
@@ -79,7 +79,7 @@
                         </h2>
                     </div>
                     <div class="card-body p-0">
-                        <div v-if="upcomingClassesAsTeacher.length === 0" class="p-4 text-center text-muted">
+                        <div v-if="upcomingClassesAsTeacher.length === 0" class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
                             No upcoming classes as teacher
                         </div>
                         <div v-else class="upcoming-list">
@@ -120,29 +120,22 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Categories Section -->
         <div class="mb-4">
             <h1 class="h3 mb-4 fw-bold">What would you like to learn?</h1>
             <div class="d-flex flex-wrap gap-2">
-                <button
-                    class="category-button"
-                    @click="clearCategorySelection"
-                >
+                <button class="category-button" @click="clearCategorySelection">
                     All
                 </button>
-                <button
-                    v-for="category in categories"
-                    :key="category.category_name"
-                    class="category-button"
-                    @click="filterClassesByCategory(category.category_name)"
-                >
+                <button v-for="category in categories" :key="category.category_name" class="category-button"
+                    @click="filterClassesByCategory(category.category_name)">
                     {{ category.category_name }}
                 </button>
             </div>
         </div>
 
-        
+
         <!-- Available Classes Section -->
         <h1 class="h3 mb-4 fw-bold">Available Classes</h1>
         <div class="row mb-5">
@@ -160,8 +153,7 @@
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
                         </div>
-                        <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}
-                        </p>
+                        <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}</p>
                         <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
@@ -171,8 +163,9 @@
                                 </span>
                             </div>
                             <div class="d-flex align-items-center mb-2">
+                                <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
                                 <StarRating :rating="classItem.ratings_average" />
-                                <span class="text-muted ms-2">({{ classItem.reviews.length }} Reviews)</span>
+                                <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
                             </div>
                             <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
                                 class="custom-button w-100">
@@ -185,7 +178,7 @@
         </div>
     </div>
 </template>
-  
+
 <script>
 import { ref, computed, onMounted } from 'vue';
 import { collection, getDocs, query, where, doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
@@ -210,23 +203,27 @@ export default {
         // Computed property for filtered classes
         const filteredClasses = computed(() => {
             if (!selectedCategory.value) return classes.value; // Return all if no category selected
-            return classes.value.filter(classItem => 
+            return classes.value.filter(classItem =>
                 classItem.category === selectedCategory.value
             );
         });
-        
+
         const availableClasses = computed(() => {
             const currentDate = new Date();
             const filteredClasses = selectedCategory.value
                 ? classes.value.filter(classItem => classItem.category === selectedCategory.value)
-                : classes.value; // Return all if no category selected
+                : classes.value;
 
             return filteredClasses.filter(classItem => {
                 const startDate = classItem.start_date.toDate();
                 const hasAvailability = classItem.max_capacity > classItem.current_enrollment;
-
-                // Exclude classes where the user is the teacher
                 const isNotUserClass = !currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id);
+
+                // Ensure ratings_average is a number
+                classItem.ratings_average = classItem.ratings_average || 0;
+
+                // Ensure reviews is an array
+                classItem.reviews = classItem.reviews || [];
 
                 return hasAvailability && startDate > currentDate && isNotUserClass;
             }).sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
@@ -520,7 +517,8 @@ export default {
 }
 
 .upcoming-list {
-    max-height: 190px;
+    height: 170px;
+    max-height: 170px;
     overflow-y: auto;
 }
 
@@ -595,4 +593,9 @@ export default {
     gap: 12px;
 }
 
+
+.rating-text {
+    font-size: 0.5rem;
+    color: #6c757d;
+}
 </style>

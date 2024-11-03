@@ -12,6 +12,7 @@ import HomePage from '../views/HomePage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
 import SignupPage from '../views/SignupPage.vue'
+import AllReviews from '../views/AllReviews.vue'
 
 
 const routes = [
@@ -76,6 +77,12 @@ const routes = [
     path: '/signup',
     name: 'SignupPage',
     component: SignupPage,
+  },
+  {
+    path: '/class/:classId/reviews',
+    name: 'AllReviews',
+    component: AllReviews,
+    meta: { requiresAuth: true }
   }
 ]
 
