@@ -50,7 +50,7 @@ class FirebaseAuthentication {
         try {
             await signOut(auth);
             this.user = null;
-            this.userData = null;
+            this.userData = null; // Clear userData on logout
         } catch (error) {
             console.error("Logout error", error);
         }
@@ -61,19 +61,18 @@ class FirebaseAuthentication {
             const userDocRef = doc(db, "users", uid);
             const userDoc = await getDoc(userDocRef);
 
-            // Default username based on email if user data doesn't exist
-            const defaultUsername = this.user.email.split("@")[0];
-            const userData = userDoc.exists() ? userDoc.data() : {};
+            let profilePhotoUrl = userDoc.exists() && userDoc.data().profile_photo 
+                ? userDoc.data().profile_photo  // Use existing profile photo if available
+                : this.user.photoURL || "";     // Fallback to Firebase photoURL or empty string
 
-            // Update user data in Firestore with username if it’s missing or needs updating
             const updatedData = {
-                ...userData,
                 email: this.user.email,
-                username: userData.username || defaultUsername,
-                profile_photo: this.user.photoURL || userData.profile_photo || ""
+                username: userDoc.exists() ? userDoc.data().username : this.user.email.split("@")[0],
+                profile_photo: profilePhotoUrl
             };
 
-            if (!userDoc.exists() || userData.username !== updatedData.username) {
+            // Only set the document if it doesn’t exist or fields are missing
+            if (!userDoc.exists() || !userDoc.data().profile_photo) {
                 await setDoc(userDocRef, updatedData, { merge: true });
             }
 
