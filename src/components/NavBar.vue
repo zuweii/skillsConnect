@@ -1,10 +1,12 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
     <div class="container-fluid">
-      <!-- Home Page link -->
+      <!-- Logo link to the home page -->
       <router-link class="navbar-brand" to="/home-page">
         <img src="../assets/logo.png" class="logo p-2 mx-5" alt="logo" />
       </router-link>
+      
+      <!-- Navbar toggler for mobile view -->
       <button
         class="navbar-toggler"
         type="button"
@@ -16,6 +18,8 @@
       >
         <span class="navbar-toggler-icon"></span>
       </button>
+
+      <!-- Navbar links -->
       <div class="collapse navbar-collapse text-dark" id="navbarNav">
         <SearchBar v-if="showSearchBar" class="m-auto" />
         <ul class="navbar-nav ms-auto align-items-center">
@@ -25,35 +29,36 @@
               <i class="bi bi-currency-dollar me-1"></i> Finances
             </router-link>
           </li>
-          <!-- Profile link without dropdown toggle -->
+
+          <!-- Profile dropdown menu -->
           <li class="nav-item dropdown m-3 d-flex align-items-center">
-            <img
-              :src="userProfilePhoto"
-              alt="Profile"
-              class="profile-photo rounded-circle me-2"
-              width="35"
-              height="35"
-            />
-            <router-link class="nav-link" to="/profile-page">Profile</router-link>
+            <img :src="userProfilePhoto" alt="Profile" class="profile-photo rounded-circle me-2" width="35" height="35" />
             <a
-              class="nav-link dropdown-toggle"
+              class="nav-link dropdown-toggle d-flex align-items-center"
               href="#"
               id="navbarDropdown"
+              role="button"
               data-bs-toggle="dropdown"
               aria-expanded="false"
-            ></a>
+            >
+              Profile
+            </a>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               <li>
-                <button
-                  class="dropdown-item text-danger"
-                  @click="handleLogout"
-                >
+                <router-link class="dropdown-item" to="/profile-page">View Profile</router-link>
+              </li>
+              <li>
+                <router-link class="dropdown-item" to="/settings">Settings</router-link>
+              </li>
+              <li>
+                <button class="dropdown-item text-danger" @click="handleLogout">
                   Logout <i class="bi bi-box-arrow-right text-danger"></i>
                 </button>
               </li>
             </ul>
           </li>
-          <!-- Teach link -->
+
+          <!-- Teach link button -->
           <li class="nav-item me-5">
             <router-link class="teach btn btn-primary text-white" to="/list-class">Teach</router-link>
           </li>

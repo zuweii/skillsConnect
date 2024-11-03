@@ -4,7 +4,7 @@
       <div class="loading-spinner"></div>
     </div>
     <template v-else>
-      <LandingNavBar v-if="isLandingPage" />
+      <LandingNavBar v-if="isLandingPage" @google-login="handleGoogleLogin" />
       <Navbar v-else-if="!isLoginPage && !isSignupPage" :showSearchBar="showSearchBar" />
       <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
       <Footer v-if="shouldShowFooter" />
@@ -16,6 +16,8 @@
 import Navbar from './components/NavBar.vue';
 import LandingNavBar from './components/LandingNavBar.vue';
 import Footer from './components/Footer.vue';
+import { auth, googleProvider } from './firebase/firebase_config';
+import { signInWithPopup } from 'firebase/auth';
 import FBInstanceAuth from './firebase/firebase_auth';
 
 export default {
@@ -59,6 +61,16 @@ export default {
         this.isLoading = false;
       }
     },
+    async handleGoogleLogin() {
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        console.log('User logged in:', user);
+        // Perform any additional actions, such as storing user data or redirecting
+      } catch (error) {
+        console.error("Google login error:", error);
+      }
+    },
   },
   created() {
     this.initializeApp();
@@ -74,3 +86,33 @@ export default {
   },
 };
 </script>
+
+<style>
+/* Loading Overlay Styling */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style>
