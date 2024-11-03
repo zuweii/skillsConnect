@@ -11,6 +11,7 @@ import ProfileView from '../views/ProfileView.vue'
 import HomePage from '../views/HomePage.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
+import SignupPage from '../views/SignupPage.vue'
 
 
 const routes = [
@@ -70,6 +71,11 @@ const routes = [
     props: true,
     component: ReviewsPage,
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/signup',
+    name: 'SignupPage',
+    component: SignupPage,
   }
 ]
 
