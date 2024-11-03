@@ -20,7 +20,7 @@
             <label for="showPassword" class="form-check-label">Show Password</label>
           </div>
           <div class="form-group">
-            <input type="url" v-model="profilePhotoUrl" placeholder="Profile Photo URL (optional)" class="form-control" />
+            <input type="file" @change="handleFileUpload" accept="image/*" class="form-control" />
           </div>
           <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
             {{ isLoading ? 'Creating Account...' : 'Sign Up' }}
@@ -34,13 +34,13 @@
     </div>
   </template>
   
-  
   <script>
   import { ref } from 'vue';
   import { useRouter } from 'vue-router';
   import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
   import { doc, setDoc } from 'firebase/firestore';
-  import { db } from '../firebase/firebase_config';
+  import { db, storage } from '../firebase/firebase_config';
+  import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
   
   export default {
     name: 'SignupPage',
@@ -51,22 +51,40 @@
       const username = ref('');
       const email = ref('');
       const password = ref('');
-      const profilePhotoUrl = ref('');
       const showPassword = ref(false);
       const error = ref(null);
       const isLoading = ref(false);
+      const profileImageFile = ref(null);
+  
+      const handleFileUpload = (event) => {
+        const file = event.target.files[0];
+        if (file) {
+          profileImageFile.value = file;
+        }
+      };
   
       const handleSignup = async () => {
         error.value = null;
         isLoading.value = true;
   
         try {
+          // Step 1: Create user with email and password
           const { user } = await createUserWithEmailAndPassword(auth, email.value, password.value);
   
+          // Step 2: Upload profile image to Firebase Storage if it exists
+          let profileImageUrl = '';
+          if (profileImageFile.value) {
+            const storagePath = `profile-photos/${user.uid}`;
+            const profileImageRef = storageRef(storage, storagePath);
+            await uploadBytes(profileImageRef, profileImageFile.value);
+            profileImageUrl = await getDownloadURL(profileImageRef);
+          }
+  
+          // Step 3: Save user data in Firestore
           await setDoc(doc(db, 'users', user.uid), {
             email: user.email,
             username: username.value,
-            profile_photo: profilePhotoUrl.value || '',
+            profile_photo: profileImageUrl,
             upcoming_classes_as_student: [],
             upcoming_classes_as_teacher: [],
             posted_classes: [],
@@ -80,7 +98,8 @@
             pending_reviews: [],
           });
   
-          router.push('/home-page'); // Redirect to the homepage after successful signup
+          // Step 4: Redirect to the homepage after successful signup
+          router.push('/home-page');
         } catch (err) {
           console.error('Signup failed:', err);
           error.value = handleSignupError(err.code);
@@ -106,11 +125,11 @@
         username,
         email,
         password,
-        profilePhotoUrl,
         showPassword,
         error,
         isLoading,
         handleSignup,
+        handleFileUpload,
       };
     },
   };
