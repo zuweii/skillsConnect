@@ -5,6 +5,7 @@
       :key="index"
       :class="['star', { 'filled': index <= rating }]"
       @click="selectRating(index)"
+      :style="{ cursor: readOnly ? 'default' : 'pointer' }"
     >
       ★
     </span>
@@ -19,12 +20,18 @@ export default {
       type: Number,
       required: true,
       validator: (value) => value >= 0 && value <= 5
+    },
+    readOnly: {
+      type: Boolean,
+      default: false
     }
   },
   emits: ['rating-selected'],
   methods: {
     selectRating(index) {
-      this.$emit('rating-selected', index); // Emit selected rating
+      if (!this.readOnly) {
+        this.$emit('rating-selected', index); // Emit selected rating if not in read-only mode
+      }
     }
   }
 }
@@ -34,11 +41,9 @@ export default {
 .star-rating {
   display: inline-flex;
   font-size: 1.5rem;
-  cursor: pointer;
 }
 .star {
   color: #e0e0e0;
-  position: relative;
 }
 .star.filled {
   color: #ffc107;
