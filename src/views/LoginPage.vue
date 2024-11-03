@@ -5,13 +5,20 @@
         <img src="../assets/logo.png" alt="SkillsConnect Logo" class="logo" />
       </div>
       <p class="login-instruction">Log in. Connect. Share your skills!</p>
+      
+      <!-- Google Login Button -->
+      <button @click="handleGoogleLogin" class="btn btn-google btn-block">
+        <i class="bi bi-google me-2"></i> Login with Google
+      </button>
+      
+      <div class="divider">or</div>
+
       <form @submit.prevent="handleLogin">
         <div class="form-group">
           <input type="email" v-model="email" placeholder="Email" required class="form-control" />
         </div>
         <div class="form-group">
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required
-            class="form-control" />
+          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required class="form-control" />
         </div>
         <div class="form-check">
           <input type="checkbox" id="showPassword" v-model="showPassword" class="form-check-input" />
@@ -22,6 +29,7 @@
         </button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </form>
+      
       <p class="signup-link">
         Don't have an account? <router-link to="/signup">Create one here</router-link>
       </p>
@@ -32,9 +40,10 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import FBInstanceAuth from "../firebase/firebase_auth";
+import { signInWithPopup } from "firebase/auth";
+import { auth, googleProvider, db } from "../firebase/firebase_config";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "../firebase/firebase_config";
+import FBInstanceAuth from "../firebase/firebase_auth";
 
 export default {
   name: "LoginPage",
@@ -105,17 +114,15 @@ export default {
       const userDoc = await getDoc(userDocRef);
       
       if (userDoc.exists()) {
-        // If the document exists, update it with the merge option to preserve existing data
         await setDoc(userDocRef, {
           email: user.email,
           username: user.email.split("@")[0],
         }, { merge: true });
       } else {
-        // If the document doesn't exist, create it with default values
         await setDoc(userDocRef, {
           email: user.email,
           username: user.email.split("@")[0],
-          profile_photo: "",
+          profile_photo: user.photoURL || "",
           upcoming_classes_as_student: [],
           upcoming_classes_as_teacher: [],
           posted_classes: [],
@@ -131,13 +138,34 @@ export default {
       }
     };
 
+    const handleGoogleLogin = async () => {
+      error.value = null;
+      isLoading.value = true;
+
+      try {
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        
+        await ensureUserDocument(user);
+
+        const redirectPath = route.query.redirect || '/home-page';
+        router.push(redirectPath);
+      } catch (err) {
+        console.error("Google login failed:", err);
+        error.value = "An unexpected error occurred with Google login. Please try again.";
+      } finally {
+        isLoading.value = false;
+      }
+    };
+
     return {
       email,
       password,
       showPassword,
       error,
       isLoading,
-      handleLogin
+      handleLogin,
+      handleGoogleLogin
     };
   }
 };
@@ -150,8 +178,8 @@ export default {
   align-items: center;
   min-height: 100vh;
   background: linear-gradient(to right, #adbef7, #5a7dee, #315cea, #2a4ec7);
-  overflow: hidden; /* Prevent scrolling */
-  position: fixed; /* Fix the container to viewport */
+  overflow: hidden;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
@@ -165,8 +193,8 @@ export default {
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
   max-width: 450px;
-  max-height: 90vh; /* Limit height to prevent overflow */
-  overflow-y: auto; /* Allow scrolling within the card if content is too long */
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
 .logo-container {
@@ -213,6 +241,26 @@ export default {
 .btn-block {
   display: block;
   width: 100%;
+}
+
+.btn-google {
+  background-color: #5a7dee; /* New color */
+  border-color: #5a7dee;
+  color: white;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+
+.btn-google:hover {
+  background-color: #4e6dd2; /* New hover color */
+  border-color: #4e6dd2;
+}
+
+.divider {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #666;
+  margin: 1rem 0;
 }
 
 .error-message {
