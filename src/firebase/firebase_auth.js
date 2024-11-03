@@ -1,6 +1,6 @@
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged } from "firebase/auth";
-import { auth } from './firebase_config';
-import { doc, getDoc } from "firebase/firestore";
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from './firebase_config';
+import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase_config";
 
 class FirebaseAuthentication {
@@ -12,7 +12,7 @@ class FirebaseAuthentication {
             onAuthStateChanged(auth, async (user) => {
                 this.user = user;
                 if (user) {
-                    await this.fetchUserData(user.uid);
+                    await this.fetchAndUpdateUserData(user.uid);
                 } else {
                     this.userData = null;
                 }
@@ -26,10 +26,22 @@ class FirebaseAuthentication {
         try {
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             this.user = userCredential.user;
-            await this.fetchUserData(userCredential.user.uid);
+            await this.fetchAndUpdateUserData(userCredential.user.uid);
             return { user: userCredential.user, error: null };
         } catch (error) {
             console.error("Login error", error);
+            return { user: null, error: error.code };
+        }
+    }
+
+    async loginWithGoogle() {
+        try {
+            const result = await signInWithPopup(auth, googleProvider);
+            this.user = result.user;
+            await this.fetchAndUpdateUserData(result.user.uid);
+            return { user: result.user, error: null };
+        } catch (error) {
+            console.error("Google login error", error);
             return { user: null, error: error.code };
         }
     }
@@ -44,18 +56,30 @@ class FirebaseAuthentication {
         }
     }
 
-    async fetchUserData(uid) {
+    async fetchAndUpdateUserData(uid) {
         try {
             const userDocRef = doc(db, "users", uid);
             const userDoc = await getDoc(userDocRef);
-            if (userDoc.exists()) {
-                this.userData = userDoc.data();
-            } else {
-                console.error("User document not found");
-                this.userData = null;
+
+            // Default username based on email if user data doesn't exist
+            const defaultUsername = this.user.email.split("@")[0];
+            const userData = userDoc.exists() ? userDoc.data() : {};
+
+            // Update user data in Firestore with username if it’s missing or needs updating
+            const updatedData = {
+                ...userData,
+                email: this.user.email,
+                username: userData.username || defaultUsername,
+                profile_photo: this.user.photoURL || userData.profile_photo || ""
+            };
+
+            if (!userDoc.exists() || userData.username !== updatedData.username) {
+                await setDoc(userDocRef, updatedData, { merge: true });
             }
+
+            this.userData = updatedData;
         } catch (error) {
-            console.error("Error fetching user data", error);
+            console.error("Error fetching/updating user data", error);
             this.userData = null;
         }
     }

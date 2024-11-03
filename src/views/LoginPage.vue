@@ -113,15 +113,19 @@ export default {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
       
+      // Always update the user document with the latest username to ensure changes are saved
+      const username = user.email.split("@")[0]; // Default username derived from email
+
       if (userDoc.exists()) {
         await setDoc(userDocRef, {
           email: user.email,
-          username: user.email.split("@")[0],
+          username: username,
+          profile_photo: user.photoURL || "",
         }, { merge: true });
       } else {
         await setDoc(userDocRef, {
           email: user.email,
-          username: user.email.split("@")[0],
+          username: username,
           profile_photo: user.photoURL || "",
           upcoming_classes_as_student: [],
           upcoming_classes_as_teacher: [],
@@ -143,20 +147,23 @@ export default {
       isLoading.value = true;
 
       try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        
-        await ensureUserDocument(user);
+          const { user, error: googleLoginError } = await FBInstanceAuth.loginWithGoogle();
 
-        const redirectPath = route.query.redirect || '/home-page';
-        router.push(redirectPath);
+          if (googleLoginError) {
+              error.value = "Google login failed. Please try again.";
+              return;
+          }
+
+          const redirectPath = route.query.redirect || '/home-page';
+          router.push(redirectPath);
       } catch (err) {
-        console.error("Google login failed:", err);
-        error.value = "An unexpected error occurred with Google login. Please try again.";
+          console.error("Google login failed:", err);
+          error.value = "An unexpected error occurred with Google login. Please try again.";
       } finally {
-        isLoading.value = false;
+          isLoading.value = false;
       }
-    };
+  };
+
 
     return {
       email,
