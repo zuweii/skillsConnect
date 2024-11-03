@@ -52,7 +52,7 @@ export default {
       
       const currentUser = FBInstanceAuth.getCurrentUser();
       if (currentUser) {
-        const redirectPath = route.query.redirect || '/';
+        const redirectPath = route.query.redirect || '/home-page';
         router.push(redirectPath);
       }
     });
@@ -71,7 +71,7 @@ export default {
 
         await ensureUserDocument(user);
 
-        const redirectPath = route.query.redirect || '/';
+        const redirectPath = route.query.redirect || '/home-page';
         router.push(redirectPath);
       } catch (err) {
         console.error("Login failed:", err);
@@ -82,7 +82,19 @@ export default {
     };
 
     const handleLoginError = (errorCode) => {
-      // Existing error handling code remains unchanged
+      switch (errorCode) {
+        case "auth/user-not-found":
+          error.value = "Invalid email. Please check your email address.";
+          break;
+        case "auth/wrong-password":
+          error.value = "Wrong password. Please check your password.";
+          break;
+        case "auth/invalid-email":
+          error.value = "Invalid email format. Please enter a valid email address.";
+          break;
+        default:
+          error.value = "Login failed. Please try again.";
+      }
     };
 
     const ensureUserDocument = async (user) => {

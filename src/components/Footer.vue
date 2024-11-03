@@ -51,7 +51,7 @@ export default {
 
 <style scoped>
 footer {
-  background-color: #e2e8f2;
+  background-color: #c4d1f9;
 }
 
 footer a {

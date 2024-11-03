@@ -8,8 +8,11 @@ import ClassDetails from '../views/ClassDetails.vue'
 import Payment from '../views/Payment.vue'
 import LandingPage from '../views/LandingPage.vue'
 import ProfileView from '../views/ProfileView.vue'
+import HomePage from '../views/HomePage.vue'
+import ProfileView from '../views/ProfileView.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
+
 
 const routes = [
   {
@@ -26,6 +29,13 @@ const routes = [
     path: '/profile',
     name: 'ProfileView',
     component: ProfileView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/home-page',
+    name: 'HomePage',
+    component: HomePage,
+    meta: { requiresAuth: true }
   },
   {
     path: '/list-class',
@@ -51,12 +61,16 @@ const routes = [
   {
     path: '/profile-page',
     name: 'ProfilePage',
-    component: ProfilePage
+    component: ProfilePage,
+    meta: { requiresAuth: true }
   },
   {
-    path: '/reviews-page',
+    path: '/reviews-page/:classId',
     name: 'ReviewsPage',
-    component: ReviewsPage
+    component: ReviewsPage,
+    props: true,
+    component: ReviewsPage,
+    meta: { requiresAuth: true }
   }
 ]
 
