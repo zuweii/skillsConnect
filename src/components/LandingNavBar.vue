@@ -1,35 +1,51 @@
-
 <template>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <a class="navbar-brand" href="#">
-        <img src="../assets/logo.png" class="logo p-2" alt="logo" />
-      </a>
-      <div class="container-fluid justify-content-end">
-        <router-link to="/login" class="btn btn-primary">Login</router-link>
-      </div>
-    </nav>
-  </template>
-  
-  <script>
-  export default {
-    name: 'LandingNavBar'
-  }
-  </script>
-  
-  <style scoped>
-  .navbar {
-    padding: 1rem 2rem;
-  }
-  .btn-primary {
-    background-color: #5a7dee;
-    border-color: #5a7dee;
-  }
-  .btn-primary:hover {
-    background-color: #4e6dd2;
-    border-color: #4e6dd2;
-  }
-  .logo {
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid d-flex justify-content-between align-items-center">
+      <!-- Logo Link (left-aligned) -->
+      <router-link to="/" class="navbar-brand d-flex align-items-center">
+        <img src="../assets/logo.png" class="logo p-2 mx-5" alt="SkillsConnect Logo" />
+      </router-link>
+
+      <!-- Login Button (right-aligned) -->
+      <router-link to="/login" class="btn btn-primary btn-login">Login</router-link>
+    </div>
+  </nav>
+</template>
+
+<script>
+export default {
+  name: 'LandingNavBar'
+}
+</script>
+
+<style scoped>
+/* Navbar styling */
+.navbar {
+  padding: 1rem 2rem;
+}
+
+/* Logo styling */
+.logo {
   max-width: 150px;
 }
-  </style>
-  
+
+/* Button styling */
+.btn-login {
+  background-color: #5a7dee;
+  border-color: #5a7dee;
+  white-space: nowrap; /* Prevents button from stretching */
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #4e6dd2;
+  border-color: #4e6dd2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0.5rem 1rem;
+  }
+}
+</style>
