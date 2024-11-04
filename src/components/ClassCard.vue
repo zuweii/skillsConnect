@@ -22,8 +22,8 @@
           </div>
           <!-- Edit, Review, and Details Buttons -->
           <router-link
-            v-if="showReviewButton && classData.id"
-            :to="{ name: 'ReviewsPage', params: { classId: classData.id } }"
+            v-if="showReviewButton && classData.class_id"
+            :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
             class="btn btn-primary btn-lg w-100 mb-2"
           >
             Review Class
