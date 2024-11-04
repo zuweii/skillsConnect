@@ -40,10 +40,11 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/list-class',
+    path: '/list-class/:classId?',
     name: 'ListClass',
     component: ListClass,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    props: true
   },
   {
     path: '/class-details/:id',

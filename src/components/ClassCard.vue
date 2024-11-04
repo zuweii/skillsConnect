@@ -5,20 +5,28 @@
     <div class="card-body">
       <p class="card-text">{{ classData.description }}</p>
       <p><strong>Category:</strong> {{ classData.category }} - {{ classData.subcategory }}</p>
-      <p><strong>Location:</strong> {{ classData.location }}</p>
+      <p><strong>Location:</strong> {{ classData.location === 'N.A.' ? 'Online' : classData.location }}</p>
       <p><strong>Start Date:</strong> {{ classData.start_date.toDate().toLocaleString() }}</p>
       <div class="class-rating">
-        <h5>Class Rating: <StarRating :rating="classData.ratings_average" :readOnly="true" /></h5>
+        <h5>Class Rating: <StarRating :rating="classData.ratings_average || 0" :readOnly="true" /></h5>
       </div>
     </div>
 
-    <!-- Render Review Class button using the actual class_id from document ID -->
-    <div class="card-body" v-if="showReviewButton && classData.class_id">
+    <!-- Edit and Review Buttons -->
+    <div class="card-footer">
       <router-link
-        :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
-        class="btn btn-primary btn-lg w-100 align-bottom mt-2"
+        v-if="showReviewButton && classData.id"
+        :to="{ name: 'ReviewsPage', params: { classId: classData.id } }"
+        class="btn btn-primary btn-lg w-100 mb-2"
       >
         Review Class
+      </router-link>
+      <router-link
+        v-if="classData.id"
+        :to="{ name: 'ListClass', params: { classId: classData.id } }"
+        class="btn btn-warning btn-lg w-100"
+      >
+        Edit Class Listing
       </router-link>
     </div>
   </div>
@@ -42,33 +50,62 @@ export default {
     StarRating,
   },
   mounted() {
-    console.log("Class Data in ClassCard.vue:", this.classData);
+    console.log("Class Data on mount:", this.classData);
   }
 };
 </script>
 
+
 <style scoped>
 .card {
-  margin: 20px 0;
+  width: 400px; /* Increased width for wider cards */
+  margin: 20px;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  font-weight: bold;
+  padding: 15px;
+  text-align: center;
+  font-size: 1.25rem;
 }
 
 .card-img-top {
+  width: 100%; /* Ensures image fills the card width */
+  height: 250px; /* Adjusted height for larger cards */
   object-fit: cover;
-  height: 350px;
+}
+
+.card-body {
+  padding: 20px;
+  font-size: 1rem;
+}
+
+.card-text {
+  color: #555;
+  margin-bottom: 15px;
+  line-height: 1.5;
 }
 
 .class-rating {
   display: flex;
   align-items: center;
+  gap: 5px;
   margin-top: 10px;
 }
 
 .btn-primary {
   background-color: #5a7dee;
   border: none;
+  transition: background-color 0.3s ease;
 }
 
 .btn-primary:hover {
@@ -76,15 +113,13 @@ export default {
 }
 
 .btn-lg {
-  font-size: 1.1rem;
+  font-size: 1rem;
+  padding: 12px;
 }
 
-.card-header {
+.card-footer {
+  padding: 15px;
   background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-.card-body {
-  padding: 20px;
+  border-top: 1px solid #e9ecef;
 }
 </style>

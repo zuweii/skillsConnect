@@ -10,16 +10,10 @@
       </div>
     </div>
 
-    <!-- Toggle Switch Section -->
-    <div class="toggle-switches text-center mb-5">
-      <div class="toggle-container">
-        <span>View Classes You're Teaching</span>
-        <label class="switch">
-          <input type="checkbox" v-model="showPastClasses" />
-          <span class="slider round"></span>
-        </label>
-        <span>View Past Classes</span>
-      </div>
+    <!-- Tabs Section -->
+    <div class="tabs text-center mb-5">
+      <button @click="showPastClasses = false" :class="{ active: !showPastClasses }" class="tab-button">Classes You're Teaching</button>
+      <button @click="showPastClasses = true" :class="{ active: showPastClasses }" class="tab-button">Past Classes</button>
     </div>
 
     <!-- Display Classes Section -->
@@ -29,7 +23,7 @@
 
       <div v-if="!showPastClasses">
         <div v-if="teachingClasses.length > 0" class="class-list">
-          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" class="row mb-5" />
+          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" />
         </div>
         <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
@@ -41,7 +35,6 @@
             :key="pastCls.class_id"
             :classData="pastCls"
             :showReviewButton="true"
-            class="mb-4"
           />
         </div>
         <div v-else class="text-muted text-center">You have no past classes.</div>
@@ -65,14 +58,14 @@ export default {
   },
   setup() {
     const auth = getAuth();
-    const userProfile = ref({}); // Initialize as an empty object
+    const userProfile = ref({});
     const pastClasses = ref([]);
     const teachingClasses = ref([]);
     const loading = ref(true);
     const error = ref(null);
     const averageRating = ref(0);
     const showPastClasses = ref(false);
-    const defaultPhoto = ref('../assets/default-profile.png'); // Default image path
+    const defaultPhoto = ref('../assets/default-profile.png');
 
     const fetchUserProfile = async (userID) => {
       try {
@@ -80,7 +73,6 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = userDoc.data();
 
-          // Retrieve past classes from pending_reviews
           pastClasses.value = (await Promise.all(
             (userProfile.value.pending_reviews || []).map(async (docId) => {
               const classDoc = await getDoc(doc(db, 'classes', docId));
@@ -88,7 +80,6 @@ export default {
             })
           )).filter(cls => cls !== null);
 
-          // Retrieve classes you're teaching from upcoming_classes_as_teacher
           teachingClasses.value = (await Promise.all(
             (userProfile.value.upcoming_classes_as_teacher || []).map(async (classId) => {
               const classDoc = await getDoc(doc(db, 'classes', classId));
@@ -96,7 +87,6 @@ export default {
             })
           )).filter(cls => cls !== null);
 
-          // Calculate average rating based on teaching classes
           let totalRatings = 0;
           let ratedClassesCount = 0;
           teachingClasses.value.forEach((cls) => {
@@ -162,57 +152,36 @@ export default {
   border: 2px solid #ddd;
 }
 
-.toggle-container {
+.average-rating {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 0.5rem;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
+  align-items: center;
 }
 
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.slider {
-  position: absolute;
+.tab-button {
+  background-color: #f0f4ff;
+  padding: 10px 20px;
+  border: none;
+  font-size: 1rem;
   cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
+  transition: background-color 0.3s;
+  border-radius: 5px;
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
-}
-
-input:checked + .slider {
-  background-color: #4CAF50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
+.tab-button.active,
+.tab-button:hover {
+  background-color: #5a7dee;
+  color: white;
 }
 
 .classes-offered {
@@ -235,6 +204,48 @@ input:checked + .slider:before {
   .class-list {
     grid-template-columns: 1fr 1fr 1fr;
   }
+}
+
+.card {
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 15px;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+}
+
+.card-text {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 1rem;
+}
+
+.badge {
+  display: inline-block;
+  margin-right: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  font-size: 0.85rem;
+  border-radius: 0.25rem;
 }
 
 .text-muted {
