@@ -15,16 +15,16 @@
     <!-- Edit and Review Buttons -->
     <div class="card-footer">
       <router-link
-        v-if="showReviewButton && classData.id"
-        :to="{ name: 'ReviewsPage', params: { classId: classData.id } }"
+        v-if="showReviewButton && classData.class_id"
+        :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
         class="btn btn-primary btn-lg w-100 mb-2"
       >
         Review Class
       </router-link>
       <router-link
-        v-if="classData.id"
+        v-if="showEditButton && classData.id"
         :to="{ name: 'ListClass', params: { classId: classData.id } }"
-        class="btn btn-warning btn-lg w-100"
+        class="btn btn-primary btn-lg w-100"
       >
         Edit Class Listing
       </router-link>
@@ -44,14 +44,20 @@ export default {
     showReviewButton: {
       type: Boolean,
       default: false,
-    }
+    },
+    showEditButton: {
+      type: Boolean,
+      default: false,
+    },
   },
   components: {
     StarRating,
   },
   mounted() {
-    console.log("Class Data on mount:", this.classData);
-  }
+    console.log("Class Data:", this.classData);
+    console.log("showReviewButton:", this.showReviewButton);
+    console.log("showEditButton:", this.showEditButton);
+  },
 };
 </script>
 

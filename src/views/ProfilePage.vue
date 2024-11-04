@@ -23,7 +23,13 @@
 
       <div v-if="!showPastClasses">
         <div v-if="teachingClasses.length > 0" class="class-list">
-          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" />
+          <ClassCard
+            v-for="cls in teachingClasses"
+            :key="cls.id"
+            :classData="cls"
+            :showReviewButton="false"
+            :showEditButton="true"
+          />
         </div>
         <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
@@ -35,6 +41,7 @@
             :key="pastCls.class_id"
             :classData="pastCls"
             :showReviewButton="true"
+            :showEditButton="false"
           />
         </div>
         <div v-else class="text-muted text-center">You have no past classes.</div>
