@@ -111,21 +111,30 @@ export default {
     const ensureUserDocument = async (user) => {
       const userDocRef = doc(db, "users", user.uid);
       const userDoc = await getDoc(userDocRef);
-      
-      const username = user.email.split("@")[0]; // Default username derived from email
-      
-      // Only update `profile_photo` if not present in Firestore
-      const updatedData = {
+
+      const defaultData = {
         email: user.email,
-        username: username,
+        username: userDoc.exists() && userDoc.data().username ? userDoc.data().username : user.email.split("@")[0],
         profile_photo: userDoc.exists() && userDoc.data().profile_photo 
-          ? userDoc.data().profile_photo // Use existing profile photo if it exists
-          : user.photoURL || "" // Else use Firebase auth photoURL or empty string
+          ? userDoc.data().profile_photo 
+          : user.photoURL || "",
+        upcoming_classes_as_student: userDoc.exists() && userDoc.data().upcoming_classes_as_student ? userDoc.data().upcoming_classes_as_student : [],
+        upcoming_classes_as_teacher: userDoc.exists() && userDoc.data().upcoming_classes_as_teacher ? userDoc.data().upcoming_classes_as_teacher : [],
+        posted_classes: userDoc.exists() && userDoc.data().posted_classes ? userDoc.data().posted_classes : [],
+        finances: userDoc.exists() && userDoc.data().finances ? userDoc.data().finances : [],
+        chats: userDoc.exists() && userDoc.data().chats ? userDoc.data().chats : [],
+        teacher_average: userDoc.exists() && userDoc.data().teacher_average !== undefined ? userDoc.data().teacher_average : 0,
+        total_reviews: userDoc.exists() && userDoc.data().total_reviews !== undefined ? userDoc.data().total_reviews : 0,
+        portfolio: userDoc.exists() && userDoc.data().portfolio ? userDoc.data().portfolio : {
+          youtube_links: [],
+          project_images: []
+        },
+        completed_classes: userDoc.exists() && userDoc.data().completed_classes ? userDoc.data().completed_classes : [],
+        pending_reviews: userDoc.exists() && userDoc.data().pending_reviews ? userDoc.data().pending_reviews : []
       };
 
-      // Update Firestore only if document doesn't exist or missing critical fields
-      if (!userDoc.exists() || !userDoc.data().profile_photo || !userDoc.data().username) {
-        await setDoc(userDocRef, updatedData, { merge: true });
+      if (!userDoc.exists() || Object.keys(defaultData).some(key => !(key in userDoc.data()))) {
+        await setDoc(userDocRef, defaultData, { merge: true });
       }
     };
 
@@ -137,7 +146,6 @@ export default {
         const result = await FBInstanceAuth.loginWithGoogle();
         const user = result.user;
 
-        // Ensure user document is properly created/updated
         await ensureUserDocument(user);
 
         const redirectPath = route.query.redirect || '/home-page';

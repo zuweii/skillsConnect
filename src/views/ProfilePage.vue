@@ -6,7 +6,7 @@
       <img :src="userProfile.profile_photo || defaultPhoto" alt="Profile Picture" class="profile-photo mb-3" />
       <h2 class="fw-bold">{{ userProfile.username || 'Unknown User' }}</h2>
       <div class="average-rating mt-3">
-        <h4>Average Class Rating: <StarRating :rating="averageRating" :readOnly="true"/></h4>
+        <h4>Teacher Average Rating: <StarRating :rating="userProfile.teacher_average || 0" :readOnly="true" /></h4>
       </div>
     </div>
 
@@ -29,7 +29,7 @@
 
       <div v-if="!showPastClasses">
         <div v-if="teachingClasses.length > 0" class="class-list">
-          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" class="mb-4" />
+          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" class="row mb-5" />
         </div>
         <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
@@ -145,7 +145,7 @@ export default {
 
 <style scoped>
 .container {
-  max-width: 800px;
+  max-width: 1200px;
   padding-top: 50px;
   margin: 0 auto;
 }
@@ -231,7 +231,7 @@ input:checked + .slider:before {
   }
 }
 
-@media (min-width: 1200px) {
+@media (min-width: 992px) {
   .class-list {
     grid-template-columns: 1fr 1fr 1fr;
   }
