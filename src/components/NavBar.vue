@@ -3,7 +3,7 @@
     <div class="container-fluid">
       <!-- Logo link to the home page -->
       <router-link class="navbar-brand" to="/home-page">
-        <img src="../assets/logo.png" class="logo p-2 mx-5" alt="logo" />
+        <img src="../assets/logo.png" class="logo p-2" alt="logo" />
       </router-link>
       
       <!-- Navbar toggler for mobile view -->
@@ -21,28 +21,33 @@
 
       <!-- Navbar links -->
       <div class="collapse navbar-collapse text-dark" id="navbarNav">
-        <SearchBar v-if="showSearchBar" class="m-auto" />
-        <ul class="navbar-nav ms-auto align-items-center">
+        <SearchBar v-if="showSearchBar" class="my-2" />
+        <ul class="navbar-nav ms-auto align-items-lg-center">
           <!-- Finances link -->
-          <li class="nav-item m-2">
+          <li class="nav-item my-2 my-lg-0">
             <router-link class="nav-link d-flex align-items-center" to="/finances-page">
-              <i class="bi bi-currency-dollar me-1"></i> Finances
+              <i class="bi bi-currency-dollar me-2"></i> Finances
             </router-link>
           </li>
-
-          <!-- Profile dropdown menu -->
-          <li class="nav-item dropdown m-3 d-flex align-items-center">
-            <img :src="userProfilePhoto" alt="Profile" class="profile-photo rounded-circle me-2" width="35" height="35" />
-            <a
-              class="nav-link dropdown-toggle d-flex align-items-center"
-              href="#"
-              id="navbarDropdown"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              Profile
-            </a>
+          <!-- Profile link and dropdown -->
+          <li class="nav-item dropdown my-2 my-lg-0">
+            <div class="d-flex align-items-center">
+              <img
+                :src="userProfilePhoto"
+                alt="Profile"
+                class="profile-photo rounded-circle me-2"
+                width="35"
+                height="35"
+              />
+              <router-link class="nav-link me-2" to="/profile-page">Profile</router-link>
+              <a
+                class="nav-link dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              ></a>
+            </div>
             <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
               <li>
                 <router-link class="dropdown-item" to="/profile-page">View Profile</router-link>
@@ -57,10 +62,9 @@
               </li>
             </ul>
           </li>
-
-          <!-- Teach link button -->
-          <li class="nav-item me-5">
-            <router-link class="teach btn btn-primary text-white" to="/list-class">Teach</router-link>
+          <!-- Teach link -->
+          <li class="nav-item my-2 my-lg-0">
+            <router-link class="teach btn btn-primary text-white w-100" to="/list-class">Teach</router-link>
           </li>
         </ul>
       </div>
@@ -136,5 +140,25 @@ export default {
 .profile-photo {
   object-fit: cover;
   border: 1px solid #e0e0e0;
+}
+
+@media (max-width: 991px) {
+  .navbar-nav {
+    width: 100%;
+  }
+
+  .nav-item {
+    width: 100%;
+  }
+
+  .dropdown-menu {
+    border: none;
+    background-color: transparent;
+    padding-left: 1rem;
+  }
+
+  .profile-photo {
+    margin-left: 0.5rem;
+  }
 }
 </style>
