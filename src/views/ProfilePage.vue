@@ -22,7 +22,7 @@
       <h3 class="text-center mb-4" v-else>Past Classes</h3>
 
       <div v-if="!showPastClasses">
-        <div v-if="teachingClasses.length > 0" class="class-list">
+        <div v-if="teachingClasses.length > 0" class="row">
           <ClassCard
             v-for="cls in teachingClasses"
             :key="cls.id"
@@ -35,7 +35,7 @@
       </div>
 
       <div v-else>
-        <div v-if="pastClasses.length > 0" class="class-list">
+        <div v-if="pastClasses.length > 0" class="row">
           <ClassCard
             v-for="pastCls in pastClasses"
             :key="pastCls.class_id"
@@ -70,7 +70,6 @@ export default {
     const teachingClasses = ref([]);
     const loading = ref(true);
     const error = ref(null);
-    const averageRating = ref(0);
     const showPastClasses = ref(false);
     const defaultPhoto = ref('../assets/default-profile.png');
 
@@ -93,16 +92,6 @@ export default {
               return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
             })
           )).filter(cls => cls !== null);
-
-          let totalRatings = 0;
-          let ratedClassesCount = 0;
-          teachingClasses.value.forEach((cls) => {
-            if (cls && typeof cls.ratings_average === 'number') {
-              totalRatings += cls.ratings_average;
-              ratedClassesCount++;
-            }
-          });
-          averageRating.value = ratedClassesCount > 0 ? totalRatings / ratedClassesCount : 0;
         } else {
           error.value = 'User profile not found.';
         }
@@ -132,7 +121,6 @@ export default {
       teachingClasses,
       loading,
       error,
-      averageRating,
       showPastClasses,
       defaultPhoto,
     };
