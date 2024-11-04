@@ -12,16 +12,15 @@
 
     <!-- Tabs Section -->
     <div class="tabs text-center mb-5">
-      <button @click="showPastClasses = false" :class="{ active: !showPastClasses }" class="tab-button">Classes You're Teaching</button>
-      <button @click="showPastClasses = true" :class="{ active: showPastClasses }" class="tab-button">Past Classes</button>
+      <button @click="currentTab = 'student'" :class="{ active: currentTab === 'student' }" class="tab-button">Upcoming Classes as Student</button>
+      <button @click="currentTab = 'teaching'" :class="{ active: currentTab === 'teaching' }" class="tab-button">Classes You're Teaching</button>
+      <button @click="currentTab = 'past'" :class="{ active: currentTab === 'past' }" class="tab-button">Past Classes</button>
     </div>
 
     <!-- Display Classes Section -->
     <div class="classes-offered">
-      <h3 class="text-center mb-4" v-if="!showPastClasses">Classes You're Teaching</h3>
-      <h3 class="text-center mb-4" v-else>Past Classes</h3>
-
-      <div v-if="!showPastClasses">
+      <div v-if="currentTab === 'teaching'">
+        <h3 class="text-center mb-4">Classes You're Teaching</h3>
         <div v-if="teachingClasses.length > 0" class="row">
           <ClassCard
             v-for="cls in teachingClasses"
@@ -34,7 +33,8 @@
         <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
 
-      <div v-else>
+      <div v-else-if="currentTab === 'past'">
+        <h3 class="text-center mb-4">Past Classes</h3>
         <div v-if="pastClasses.length > 0" class="row">
           <ClassCard
             v-for="pastCls in pastClasses"
@@ -45,6 +45,21 @@
           />
         </div>
         <div v-else class="text-muted text-center">You have no past classes.</div>
+      </div>
+
+      <div v-else-if="currentTab === 'student'">
+        <h3 class="text-center mb-4">Upcoming Classes as Student</h3>
+        <div v-if="upcomingClassesAsStudent.length > 0" class="row">
+          <ClassCard
+            v-for="studentCls in upcomingClassesAsStudent"
+            :key="studentCls.id"
+            :classData="studentCls"
+            :showReviewButton="false"
+            :showEditButton="false"
+            :showDetailsButton="true"
+          />
+        </div>
+        <div v-else class="text-muted text-center">You have no upcoming classes as a student.</div>
       </div>
     </div>
   </div>
@@ -68,9 +83,10 @@ export default {
     const userProfile = ref({});
     const pastClasses = ref([]);
     const teachingClasses = ref([]);
+    const upcomingClassesAsStudent = ref([]);
     const loading = ref(true);
     const error = ref(null);
-    const showPastClasses = ref(false);
+    const currentTab = ref('teaching');
     const defaultPhoto = ref('../assets/default-profile.png');
 
     const fetchUserProfile = async (userID) => {
@@ -92,6 +108,14 @@ export default {
               return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
             })
           )).filter(cls => cls !== null);
+
+          upcomingClassesAsStudent.value = (await Promise.all(
+            (userProfile.value.upcoming_classes_as_student || []).map(async (classId) => {
+              const classDoc = await getDoc(doc(db, 'classes', classId));
+              return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
+            })
+          )).filter(cls => cls !== null);
+          
         } else {
           error.value = 'User profile not found.';
         }
@@ -119,9 +143,10 @@ export default {
       userProfile,
       pastClasses,
       teachingClasses,
+      upcomingClassesAsStudent,
       loading,
       error,
-      showPastClasses,
+      currentTab,
       defaultPhoto,
     };
   },

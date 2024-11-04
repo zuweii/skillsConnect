@@ -2,7 +2,7 @@
   <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
     <div class="card shadow-sm h-100 hover-card">
       <div class="card-img-wrapper">
-        <img :src="classData.image" :alt="classData.title" class="card-img-top class-image" />
+        <img :src="classData.image" :alt="classData.title" class="card-img-top class-image">
         <div class="card-img-overlay-top">
           <span class="badge bg-primary">{{ classData.category }}</span>
         </div>
@@ -20,15 +20,10 @@
               {{ classData.max_capacity - classData.current_enrollment }} spots left
             </span>
           </div>
-          <div class="d-flex align-items-center mb-2">
-            <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
-            <StarRating :rating="classData.ratings_average" />
-            <span class="text-muted ms-2 fs-6">({{ classData.reviews.length }})</span>
-          </div>
-          <!-- Conditional Buttons -->
+          <!-- Edit, Review, and Details Buttons -->
           <router-link
-            v-if="showReviewButton && classData.class_id"
-            :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
+            v-if="showReviewButton && classData.id"
+            :to="{ name: 'ReviewsPage', params: { classId: classData.id } }"
             class="btn btn-primary btn-lg w-100 mb-2"
           >
             Review Class
@@ -36,9 +31,16 @@
           <router-link
             v-if="showEditButton && classData.id"
             :to="{ name: 'ListClass', params: { classId: classData.id } }"
-            class="btn btn-primary btn-lg w-100"
+            class="btn btn-primary btn-lg w-100 mb-2"
           >
             Edit Class Listing
+          </router-link>
+          <router-link
+            v-if="showDetailsButton && classData.id"
+            :to="{ name: 'ClassDetails', params: { id: classData.id } }"
+            class="btn btn-primary btn-lg w-100"
+          >
+            Class Details
           </router-link>
         </div>
       </div>
@@ -47,8 +49,6 @@
 </template>
 
 <script>
-import StarRating from './StarRating.vue';
-
 export default {
   props: {
     classData: {
@@ -63,9 +63,10 @@ export default {
       type: Boolean,
       default: false,
     },
-  },
-  components: {
-    StarRating,
+    showDetailsButton: {
+      type: Boolean,
+      default: false,
+    }
   },
   methods: {
     truncateText(text, length) {
