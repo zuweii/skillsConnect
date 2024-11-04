@@ -1,32 +1,54 @@
 <template>
-  <div class="card mx-auto">
-    <h3 class="card-header">{{ classData.title }}</h3>
-    <img :src="classData.image" :alt="classData.title" class="card-img-top">
-    <div class="card-body">
-      <p class="card-text">{{ classData.description }}</p>
-      <p><strong>Category:</strong> {{ classData.category }} - {{ classData.subcategory }}</p>
-      <p><strong>Location:</strong> {{ classData.location }}</p>
-      <p><strong>Start Date:</strong> {{ classData.start_date.toDate().toLocaleString() }}</p>
-      <div class="class-rating">
-        <h5>Class Rating: <StarRating :rating="classData.ratings_average" :readOnly="true" /></h5>
+  <div class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card shadow-sm h-100 hover-card">
+      <div class="card-img-wrapper">
+        <img :src="classData.image" :alt="classData.title" class="card-img-top class-image">
+        <div class="card-img-overlay-top">
+          <span class="badge bg-primary">{{ classData.category }}</span>
+        </div>
       </div>
-    </div>
-
-    <!-- Render Review Class button using the actual class_id from document ID -->
-    <div class="card-body" v-if="showReviewButton && classData.class_id">
-      <router-link
-        :to="{ name: 'ReviewsPage', params: { classId: classData.class_id } }"
-        class="btn btn-primary btn-lg w-100 align-bottom mt-2"
-      >
-        Review Class
-      </router-link>
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title fw-bold mb-0">{{ classData.title }}</h5>
+        </div>
+        <p class="card-text text-muted small flex-grow-1">{{ truncateText(classData.description, 100) }}</p>
+        <div class="mt-auto">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="card-text h5 text-primary mb-0">${{ classData.price.toFixed(2) }}</p>
+            <span class="badge bg-light text-dark">
+              <i class="bi bi-people-fill me-1"></i>
+              {{ classData.max_capacity - classData.current_enrollment }} spots left
+            </span>
+          </div>
+          <!-- Edit, Review, and Details Buttons -->
+          <router-link
+            v-if="showReviewButton && classData.id"
+            :to="{ name: 'ReviewsPage', params: { classId: classData.id } }"
+            class="btn btn-primary btn-lg w-100 mb-2"
+          >
+            Review Class
+          </router-link>
+          <router-link
+            v-if="showEditButton && classData.id"
+            :to="{ name: 'ListClass', params: { classId: classData.id } }"
+            class="btn btn-primary btn-lg w-100 mb-2"
+          >
+            Edit Class Listing
+          </router-link>
+          <router-link
+            v-if="showDetailsButton && classData.id"
+            :to="{ name: 'ClassDetails', params: { id: classData.id } }"
+            class="btn btn-primary btn-lg w-100"
+          >
+            Class Details
+          </router-link>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import StarRating from './StarRating.vue';
-
 export default {
   props: {
     classData: {
@@ -36,55 +58,76 @@ export default {
     showReviewButton: {
       type: Boolean,
       default: false,
+    },
+    showEditButton: {
+      type: Boolean,
+      default: false,
+    },
+    showDetailsButton: {
+      type: Boolean,
+      default: false,
     }
   },
-  components: {
-    StarRating,
+  methods: {
+    truncateText(text, length) {
+      return text.length <= length ? text : text.substring(0, length) + '...';
+    },
   },
-  mounted() {
-    console.log("Class Data in ClassCard.vue:", this.classData);
-  }
 };
 </script>
 
 <style scoped>
-.card {
-  margin: 20px 0;
-  border-radius: 10px;
-  overflow: hidden;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.card-img-top {
+.class-image {
+  width: 100%;
+  height: 200px;
   object-fit: cover;
-  height: 350px;
+  object-position: center;
 }
 
-.class-rating {
-  display: flex;
-  align-items: center;
-  margin-top: 10px;
+.card {
+  border: 0;
+  transition: all 0.3s ease;
+}
+
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
+}
+
+.card-img-wrapper {
+  position: relative;
+}
+
+.card-img-overlay-top {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
 }
 
 .btn-primary {
   background-color: #5a7dee;
   border: none;
+  transition: background-color 0.3s ease;
 }
 
 .btn-primary:hover {
   background-color: #4e6dd2;
 }
 
-.btn-lg {
-  font-size: 1.1rem;
+.btn-warning {
+  background-color: #ffc107;
+  border: none;
+  transition: background-color 0.3s ease;
 }
 
-.card-header {
+.btn-warning:hover {
+  background-color: #e0a800;
+}
+
+.card-footer {
+  padding: 15px;
   background-color: #f8f9fa;
-  font-weight: bold;
-}
-
-.card-body {
-  padding: 20px;
+  border-top: 1px solid #e9ecef;
 }
 </style>
