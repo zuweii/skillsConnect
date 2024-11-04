@@ -37,16 +37,15 @@
         <div class="d-flex mb-2">
           <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
           <StarRating :rating="classData.ratings_average" />
-          <span class="text-muted ms-2">({{ classData.reviews.length > 0 ? classData.reviews.length : 0 }} Reviews)</span>
-          <span class="ms-3 text-colour fw-bold">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{ classData.max_capacity }}</span>
+          <span class="text-muted ms-2">({{ classData.reviews.length > 0 ? classData.reviews.length : 0 }}
+            Reviews)</span>
+          <span class="ms-3 text-colour fw-bold">Available: {{ classData.max_capacity - classData.current_enrollment
+            }}/{{ classData.max_capacity }}</span>
         </div>
         <h2 class="h3 mb-3">${{ classData.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classData.description }}</p>
-        <button 
-          @click="handleEnrolClick" 
-          class="enrol btn btn-primary btn-lg w-100 text-white align-bottom"
-          :disabled="isEnrolled"
-        >
+        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom"
+          :disabled="isEnrolled">
           {{ isEnrolled ? 'Already Enrolled' : 'Enrol Now' }}
         </button>
         <p v-if="isEnrolled" class="text-success mt-2 text-center">You have already enrolled in this class!</p>
@@ -95,15 +94,19 @@
         <div class="row my-4">
           <div class="col-md-4">
             <div class="d-flex flex-column align-items-center">
-              <div class="instructor-image-container mb-3">
-                <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
-              </div>
-              <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+              <!-- Router link wrapping the instructor image and name to navigate to ProfileView -->
+              <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }"
+                class="text-decoration-none">
+                <div class="instructor-image-container mb-3">
+                  <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+                </div>
+                <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+              </router-link>
             </div>
           </div>
           <div class="col-md-8">
-            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
-              style="height: 200px;">
+            <div v-if="classData.reviews.length === 0"
+              class="text-muted d-flex justify-content-center align-items-center" style="height: 200px;">
               No reviews yet
             </div>
             <div v-else>
@@ -180,6 +183,7 @@ export default {
         const instructorDoc = await getDoc(doc(db, 'users', instructorId));
         if (instructorDoc.exists()) {
           instructorData.value = { id: instructorDoc.id, ...instructorDoc.data() };
+          console.log('Instructor data:', instructorData.value); // Check if `id` exists
         } else {
           console.error('Instructor not found');
         }
