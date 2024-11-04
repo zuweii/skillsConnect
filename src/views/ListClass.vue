@@ -44,7 +44,7 @@
           <div class="card shadow mb-3 p-2">
             <div class="card-body">
               <div class="mb-3">
-                <label for="category" class="form-label fs-5"><b>Category</b></label>
+                <label for="category" class="form-label fs-5"><b>Category</b> <span class="text-danger">*</span></label>
                 <select id="category" v-model="formData.mainCategory" @change="updateSubcategories" class="form-select p-2 mb-2">
                   <option value="" disabled>Select a category</option>
                   <option v-for="category in categories" :key="category.category_name" :value="category.category_name">
@@ -65,23 +65,21 @@
           <div class="card shadow mb-3 p-2">
             <div class="card-body">
               <div class="mb-3">
-                <label class="form-label fs-5"><b>Class Information</b></label>
-                <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2" placeholder="Class Title">
-                <label for="classTitle" class="form-label fs-5"><b>Class Title</b></label>
+                <label for="classTitle" class="form-label fs-5"><b>Class Title</b> <span class="text-danger">*</span></label>
                 <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2">
               </div>
               <div class="mb-3">
-                <label for="price" class="form-label fs-5"><b>Price</b></label>
+                <label for="price" class="form-label fs-5"><b>Price</b> <span class="text-danger">*</span></label>
                 <input type="number" id="price" v-model="formData.price" class="form-control p-2">
               </div>
               <!-- Capacity and Skill Level -->
               <div class="row mb-3">
                 <div class="col">
-                  <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b></label>
+                  <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b> <span class="text-danger">*</span></label>
                   <input type="number" id="maxCapacity" v-model="formData.maxCapacity" class="form-control p-2">
                 </div>
                 <div class="col">
-                  <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b></label>
+                  <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b> <span class="text-danger">*</span></label>
                   <select id="skillLevel" v-model="formData.skillLevel" class="form-select">
                     <option value="" disabled selected>Select Skill Level</option>
                     <option value="beginner">Beginner</option>
@@ -91,41 +89,44 @@
                 </div>
               </div>
               <div class="mb-3">
-                <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b></label>
+                <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b> <span class="text-danger">*</span></label>
                 <input type="number" id="numberOfLessons" v-model="formData.numberOfLessons" class="form-control p-2">
               </div>
               <div class="mb-3">
-                <label for="location" class="form-label fs-5"><b>Location</b></label>
+                <label for="location" class="form-label fs-5"><b>Location</b> <span class="text-danger">*</span></label>
                 <input type="text" id="location" v-model="formData.location" class="form-control p-2">
               </div>
               <!-- Schedule Section -->
               <div class="mb-3">
-                <label class="form-label fs-5"><b>Class Schedule</b></label>
+                <label class="form-label fs-5"><b>Class Schedule</b> <span class="text-danger">*</span></label>
                 <div class="row">
                   <div class="col">
                     <label for="date" class="form-label">Start Date</label>
-                    <input type="date" v-model="formData.date" class="form-control p-2" id="date">
-                    <input type="date" v-model="formData.date" class="form-control p-2" id="date">
+                    <input type="date" v-model="formData.date" @change="validateDateTime" class="form-control p-2" id="date" :min="minDate">
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.startTime" class="form-control p-2" id="start_time">
-                    <input type="time" v-model="formData.startTime" class="form-control p-2" id="start_time">
+                    <input type="time" v-model="formData.startTime" @change="validateDateTime" class="form-control p-2" id="start_time">
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
-                    <input type="time" v-model="formData.endTime" class="form-control p-2" id="end_time">
-                    <input type="time" v-model="formData.endTime" class="form-control p-2" id="end_time">
+                    <input type="time" v-model="formData.endTime" @change="validateDateTime" class="form-control p-2" id="end_time">
                   </div>
+                </div>
+                <div v-if="dateTimeError" class="text-danger mt-2">
+                  {{ dateTimeError }}
                 </div>
               </div>
               <div class="mb-3">
                 <label for="additionalNotes" class="form-label fs-5"><b>Additional Details</b></label>
-                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2">
+                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2" placeholder="e.g Classes on every Monday">
               </div>
               <div class="mb-3">
-                <label for="description" class="form-label fs-5"><b>Description</b></label>
+                <label for="description" class="form-label fs-5"><b>Description</b> <span class="text-danger">*</span></label>
                 <textarea id="description" v-model="formData.description" class="form-control p-2" rows="5"></textarea>
+              </div>
+              <div>
+                <span class="text-danger">*</span> Compulsory
               </div>
               <div class="text-end">
                 <button type="submit" class="list btn btn-primary" :disabled="!isFormValid">{{ isEditMode ? 'Update Class' : 'List Class' }}</button>
@@ -151,11 +152,13 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { collection, addDoc, updateDoc, doc, getDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, updateDoc, doc, getDoc, getDocs, arrayUnion, query, where } from 'firebase/firestore';
 import { db, storage, auth } from '../firebase/firebase_config';
+import { Modal } from 'bootstrap';
+
 
 export default {
   name: 'ListClass',
@@ -187,6 +190,12 @@ export default {
     const imageFile = ref(null);
     const error = ref(null);
     const loading = ref(true);
+    const dateTimeError = ref(null);
+
+    const minDate = computed(() => {
+      const today = new Date();
+      return today.toISOString().split('T')[0];
+    });
 
     const isFormValid = computed(() => {
       return formData.value.mainCategory &&
@@ -201,9 +210,9 @@ export default {
         formData.value.startTime &&
         formData.value.endTime &&
         formData.value.description &&
-        (imageFile.value || previewImage.value);
+        (imageFile.value || previewImage.value) &&
+        !dateTimeError.value;
     });
-
 
     const fetchCategories = async () => {
       try {
@@ -238,7 +247,6 @@ export default {
             maxCapacity: data.max_capacity,
             skillLevel: data.skill_level,
             numberOfLessons: data.number_of_lessons,
-            modeOfLesson: data.mode,
             location: data.location,
             date: data.start_date.toDate().toISOString().split('T')[0],
             startTime: data.start_time.toDate().toTimeString().slice(0, 5),
@@ -253,16 +261,33 @@ export default {
       }
     };
 
-    onMounted(async () => {
-      loading.value = true;
-      await fetchCategories();
-      if (isEditMode.value) await populateFormData();
-      loading.value = false;
-    });
+    const validateDateTime = () => {
+      const now = new Date();
+      const selectedDate = new Date(formData.value.date);
+      const selectedStartTime = new Date(`${formData.value.date}T${formData.value.startTime}`);
+      const selectedEndTime = new Date(`${formData.value.date}T${formData.value.endTime}`);
+
+      if (selectedStartTime < now) {
+        dateTimeError.value = 'Start time cannot be in the past.';
+        return false;
+      }
+
+      if (selectedEndTime <= selectedStartTime) {
+        dateTimeError.value = 'End time must be after start time.';
+        return false;
+      }
+
+      dateTimeError.value = null;
+      return true;
+    };
 
     const submitForm = async () => {
       if (!isFormValid.value) {
         alert('Please fill in all required fields and upload an image.');
+        return;
+      }
+
+      if (!validateDateTime()) {
         return;
       }
 
@@ -275,11 +300,14 @@ export default {
         }
 
         const classData = {
+          teacher_username: auth.currentUser.uid,
+          image: imageUrl,
           category: formData.value.mainCategory,
           subcategory: formData.value.subcategory,
           title: formData.value.classTitle,
           price: parseFloat(formData.value.price),
           max_capacity: parseInt(formData.value.maxCapacity),
+          current_enrollment: 0,
           skill_level: formData.value.skillLevel,
           number_of_lessons: parseInt(formData.value.numberOfLessons),
           location: formData.value.location,
@@ -292,36 +320,34 @@ export default {
           ratings_average: 0
         };
 
-        // Add class to Firestore
-        const classRef = await addDoc(collection(db, 'classes'), classData);
+        // Calculate completion date
+        const completionDate = new Date(classData.start_date);
+        completionDate.setDate(completionDate.getDate() + ((classData.number_of_lessons - 1) * 7));
+        classData.completion_date = 
+
+ completionDate;
+
+        let classRef;
+        if (isEditMode.value) {
+          classRef = doc(db, 'classes', classId);
+          await updateDoc(classRef, classData);
+        } else {
+          classRef = await addDoc(collection(db, 'classes'), classData);
+        }
+
         const classId = classRef.id;
 
         // Update user's posted_classes and upcoming_classes_as_teacher
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, {
           posted_classes: arrayUnion({
             class_id: classId,
-            image: imageUrl,
-            category: classData.category,
-            subcategory: classData.subcategory,
-            title: classData.title,
-            price: classData.price,
-            max_capacity: classData.max_capacity,
-            skill_level: classData.skill_level,
-            number_of_lessons: classData.number_of_lessons,
-            mode: classData.mode,
-            location: classData.location,
-            start_date: classData.start_date,
-            completion_date: classData.completion_date, // Add completion date
-            start_time: classData.start_time,
-            end_time: classData.end_time,
-            additional_schedule_info: classData.schedule,
-            description: classData.description
+            ...classData
           }),
           upcoming_classes_as_teacher: arrayUnion(classId)
         });
 
-        // Rest of the code remains unchanged
+        // Update categories
         const categoriesRef = collection(db, 'categories');
         const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category));
         const categoryQuerySnapshot = await getDocs(categoryQuery);
@@ -333,14 +359,36 @@ export default {
             sub_categories: arrayUnion(classData.subcategory)
           });
         } else {
-          await addDoc(collection(db, 'classes'), classData);
+          await addDoc(categoriesRef, {
+            category_name: classData.category,
+            sub_categories: [classData.subcategory],
+            class_ids: [classId]
+          });
         }
 
-        router.push('/profile');
+        successModal.value.show();
       } catch (err) {
+        console.error('Error submitting form:', err);
         error.value = 'An error occurred while listing the class. Please try again.';
       }
     };
+    const redirectToClassDetails = () => {
+      router.push('/class-details');
+    };
+
+    onMounted(async () => {
+      loading.value = true;
+      await fetchCategories();
+      if (isEditMode.value) await populateFormData();
+      loading.value = false;
+      successModal.value = new Modal(document.getElementById('successModal'));
+      successModal.value._element.addEventListener('hidden.bs.modal', redirectToClassDetails);
+    });
+
+    // Add watchers for date and time fields
+    watch(() => formData.value.date, validateDateTime);
+    watch(() => formData.value.startTime, validateDateTime);
+    watch(() => formData.value.endTime, validateDateTime);
 
     return {
       formData,
@@ -352,6 +400,8 @@ export default {
       loading,
       isFormValid,
       isEditMode,
+      dateTimeError,
+      minDate,
       handleFileUpload(event) {
         const file = event.target.files[0];
         if (file) {
@@ -364,6 +414,7 @@ export default {
         imageFile.value = null;
       },
       updateSubcategories,
+      validateDateTime,
       submitForm
     };
   }

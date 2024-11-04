@@ -1,11 +1,16 @@
 <template>
   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-    <div class="container-fluid">
+    <div class="container-fluid d-flex align-items-center">
       <!-- Logo link to the home page -->
       <router-link class="navbar-brand" to="/home-page">
         <img src="../assets/logo.png" class="logo p-2" alt="logo" />
       </router-link>
-      
+
+      <!-- Centered Search Bar in full size -->
+      <div class="flex-grow-1 d-none d-lg-flex justify-content-center">
+        <SearchBar v-if="showSearchBar" />
+      </div>
+
       <!-- Navbar toggler for mobile view -->
       <button
         class="navbar-toggler"
@@ -20,18 +25,30 @@
       </button>
 
       <!-- Navbar links -->
-      <div class="collapse navbar-collapse text-dark" id="navbarNav">
-        <SearchBar v-if="showSearchBar" class="my-2" />
-        <ul class="navbar-nav ms-auto align-items-lg-center">
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <!-- Search Bar in mobile view (hidden on full size) -->
+        <div class="d-lg-none my-2">
+          <SearchBar v-if="showSearchBar" />
+        </div>
+
+        <ul class="navbar-nav ms-auto align-items-center">
           <!-- Finances link -->
-          <li class="nav-item my-2 my-lg-0">
+          <li class="nav-item my-2 my-lg-0 mx-2">
             <router-link class="nav-link d-flex align-items-center" to="/finances-page">
               <i class="bi bi-currency-dollar me-2"></i> Finances
             </router-link>
           </li>
+
           <!-- Profile link and dropdown -->
-          <li class="nav-item dropdown my-2 my-lg-0">
-            <div class="d-flex align-items-center">
+          <li class="nav-item dropdown my-2 my-lg-0 mx-2">
+            <a
+              class="nav-link d-flex align-items-center dropdown-toggle"
+              href="#"
+              id="navbarDropdown"
+              role="button"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
+            >
               <img
                 :src="userProfilePhoto"
                 alt="Profile"
@@ -39,16 +56,9 @@
                 width="35"
                 height="35"
               />
-              <router-link class="nav-link me-2" to="/profile-page">Profile</router-link>
-              <a
-                class="nav-link dropdown-toggle"
-                href="#"
-                id="navbarDropdown"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              ></a>
-            </div>
-            <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+              Profile
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
               <li>
                 <router-link class="dropdown-item" to="/profile-page">View Profile</router-link>
               </li>
@@ -62,8 +72,9 @@
               </li>
             </ul>
           </li>
-          <!-- Teach link -->
-          <li class="nav-item my-2 my-lg-0">
+
+          <!-- Teach link with full-width on mobile -->
+          <li class="nav-item my-2 my-lg-0 mx-2">
             <router-link class="teach btn btn-primary text-white w-100" to="/list-class">Teach</router-link>
           </li>
         </ul>
@@ -126,11 +137,31 @@ export default {
 
 <style scoped>
 .logo {
-  max-width: 150px;
+  max-width: 140px;
+  transition: transform 0.2s ease-in-out;
+}
+
+.logo:hover {
+  transform: scale(1.05);
+}
+
+.nav-link {
+  color: #555;
+  transition: color 0.2s ease-in-out;
+}
+
+.nav-link:hover, .dropdown-item:hover {
+  color: #5a7dee;
+}
+
+.dropdown-item:active, .teach:active {
+  background-color: #5a7dee;
+  color: white;
 }
 
 .teach {
   background-color: #5a7dee;
+  transition: background-color 0.2s ease-in-out;
 }
 
 .teach:hover {
@@ -142,12 +173,22 @@ export default {
   border: 1px solid #e0e0e0;
 }
 
+.dropdown-menu {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
 @media (max-width: 991px) {
   .navbar-nav {
     width: 100%;
+    text-align: center;
   }
 
   .nav-item {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .teach, .search {
     width: 100%;
   }
 
@@ -155,10 +196,15 @@ export default {
     border: none;
     background-color: transparent;
     padding-left: 1rem;
+    box-shadow: none;
   }
 
   .profile-photo {
     margin-left: 0.5rem;
+  }
+
+  .logo{
+    margin-left: 0;
   }
 }
 </style>

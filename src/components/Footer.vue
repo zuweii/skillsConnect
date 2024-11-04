@@ -72,7 +72,7 @@ export default {
 
 <style scoped>
 footer {
-  background-color: #c4d1f9;
+  background-color: #d9e3ff;
 }
 
 footer a {

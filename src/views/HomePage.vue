@@ -309,38 +309,39 @@
     </div>
   </template>
   
-  <script>
-  import { ref, computed, onMounted } from "vue";
-  import {
-    collection,
-    getDocs,
-    query,
-    where,
-    doc,
-    getDoc,
-    updateDoc,
-    arrayUnion,
-  } from "firebase/firestore";
-  import { db } from "../firebase/firebase_config";
-  import FBInstanceAuth from "../firebase/firebase_auth";
-  import StarRating from "../components/StarRating.vue";
-  
-  export default {
-    name: "HomePage",
-    components: {
-      StarRating,
-    },
-    setup() {
-      const classes = ref([]);
-      const categories = ref([]);
-      const loading = ref(true);
-      const error = ref(null);
-      const currentUser = ref(null);
-      const selectedCategory = ref(null); // To track the selected category
-      const nearbyClasses = ref([]);
-      const userLocation = ref(null);
-      const loadingNearby = ref(false);
-      const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+ <script>
+import { ref, computed, onMounted } from "vue";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  doc,
+  getDoc,
+  updateDoc,
+  arrayUnion,
+  arrayRemove,
+} from "firebase/firestore";
+import { db } from "../firebase/firebase_config";
+import FBInstanceAuth from "../firebase/firebase_auth";
+import StarRating from "../components/StarRating.vue";
+
+export default {
+  name: "HomePage",
+  components: {
+    StarRating,
+  },
+  setup() {
+    const classes = ref([]);
+    const categories = ref([]);
+    const loading = ref(true);
+    const error = ref(null);
+    const currentUser = ref(null);
+    const selectedCategory = ref(null);
+    const nearbyClasses = ref([]);
+    const userLocation = ref(null);
+    const loadingNearby = ref(false);
+    const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
       
       // Computed property for filtered classes
       const filteredClasses = computed(() => {
@@ -351,33 +352,30 @@
       });
   
       const availableClasses = computed(() => {
-        const currentDate = new Date();
-        const filteredClasses = selectedCategory.value
-          ? classes.value.filter(
-              (classItem) => classItem.category === selectedCategory.value
-            )
-          : classes.value;
-  
-        return filteredClasses
-          .filter((classItem) => {
-            const startDate = classItem.start_date.toDate();
-            const hasAvailability =
-              classItem.max_capacity > classItem.current_enrollment;
-            const isNotUserClass =
-              !currentUser.value.upcoming_classes_as_teacher?.includes(
-                classItem.id
-              );
-  
-            // Ensure ratings_average is a number
-            classItem.ratings_average = classItem.ratings_average || 0;
-  
-            // Ensure reviews is an array
-            classItem.reviews = classItem.reviews || [];
-  
-            return hasAvailability && startDate > currentDate && isNotUserClass;
-          })
-          .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
-      });
+      const currentDate = new Date();
+      const filteredClasses = selectedCategory.value
+        ? classes.value.filter(
+            (classItem) => classItem.category === selectedCategory.value
+          )
+        : classes.value;
+
+      return filteredClasses
+        .filter((classItem) => {
+          const startDate = classItem.start_date.toDate();
+          const hasAvailability =
+            classItem.max_capacity > classItem.current_enrollment;
+          const isNotUserClass =
+            !currentUser.value.upcoming_classes_as_teacher?.includes(
+              classItem.id
+            );
+
+          classItem.ratings_average = classItem.ratings_average || 0;
+          classItem.reviews = classItem.reviews || [];
+
+          return hasAvailability && startDate > currentDate && isNotUserClass;
+        })
+        .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
+    });
   
       const filterClassesByCategory = (category) => {
         selectedCategory.value = category;
@@ -388,42 +386,41 @@
       };
   
       const upcomingClassesAsStudent = computed(() => {
-        if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
-          return [];
-  
-        return classes.value
-          .filter((classItem) => {
-            const completionDate = classItem.completion_date.toDate();
-            const currentDate = new Date();
-            // Check if the class ID exists in the user's upcoming_classes_as_student array
-            return (
-              completionDate > currentDate &&
-              currentUser.value.upcoming_classes_as_student.includes(classItem.id)
-            );
-          })
-          .sort(
-            (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
+        return [];
+
+      const currentDate = new Date();
+      return classes.value
+        .filter((classItem) => {
+          const endTime = classItem.end_time.toDate();
+          return (
+            endTime > currentDate &&
+            currentUser.value.upcoming_classes_as_student.includes(classItem.id)
           );
-      });
+        })
+        .sort(
+          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+        );
+    });
+
   
-      const upcomingClassesAsTeacher = computed(() => {
-        if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
-          return [];
-  
-        return classes.value
-          .filter((classItem) => {
-            const completionDate = classItem.completion_date.toDate();
-            const currentDate = new Date();
-            // Check if the class ID exists in the user's upcoming_classes_as_teacher array
-            return (
-              completionDate > currentDate &&
-              currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
-            );
-          })
-          .sort(
-            (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+    const upcomingClassesAsTeacher = computed(() => {
+      if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
+        return [];
+
+      const currentDate = new Date();
+      return classes.value
+        .filter((classItem) => {
+          const endTime = classItem.end_time.toDate();
+          return (
+            endTime > currentDate &&
+            currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
           );
-      });
+        })
+        .sort(
+          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+        );
+    });
   
       const calculateNextLessonDate = (classItem) => {
         const currentDate = new Date();
@@ -481,45 +478,38 @@
         return text.substring(0, length) + "...";
       };
   
-      const fetchData = async () => {
-        try {
-          const user = FBInstanceAuth.getCurrentUser();
-          if (user) {
-            // Get user document directly using the user's UID
-            const userDocRef = doc(db, "users", user.uid);
-            const userDocSnapshot = await getDoc(userDocRef);
-  
-            if (userDocSnapshot.exists()) {
-              // Store user data with ID
-              currentUser.value = {
-                id: userDocSnapshot.id,
-                ...userDocSnapshot.data(),
-              };
-            }
+       const fetchData = async () => {
+      try {
+        const user = FBInstanceAuth.getCurrentUser();
+        if (user) {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnapshot = await getDoc(userDocRef);
+
+          if (userDocSnapshot.exists()) {
+            currentUser.value = {
+              id: userDocSnapshot.id,
+              ...userDocSnapshot.data(),
+            };
           }
-  
-          // Fetch all classes
-          const classCollection = collection(db, "classes");
-          const classSnapshot = await getDocs(classCollection);
-          classes.value = classSnapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-  
-          // Fetch categories
-          await fetchCategories();
-  
-          // Check for completed classes
-          await checkCompletedClasses();
-  
-          await findNearbyClasses(); // Add this line to fetch nearby classes after other data is loaded
-        } catch (err) {
-          console.error("Error fetching data:", err);
-          error.value = "Error loading data";
-        } finally {
-          loading.value = false;
         }
-      };
+
+        const classCollection = collection(db, "classes");
+        const classSnapshot = await getDocs(classCollection);
+        classes.value = classSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        await fetchCategories();
+        await checkCompletedClasses();
+        await findNearbyClasses();
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        error.value = "Error loading data";
+      } finally {
+        loading.value = false;
+      }
+    };
   
       const fetchCategories = async () => {
         try {
@@ -675,28 +665,31 @@
       };
   
       onMounted(() => {
-        fetchData();
-      });
-  
-      return {
-        availableClasses,
-        filteredClasses,
-        filterClassesByCategory,
-        clearCategorySelection,
-        upcomingClassesAsStudent,
-        upcomingClassesAsTeacher,
-        categories,
-        loading,
-        error,
-        calculateNextLessonDate,
-        getCurrentLessonNumber,
-        formatDate,
-        formatTime,
-        truncateText,
-        nearbyClasses,
-        loadingNearby,
-      };
-    },
+      fetchData();
+    });
+
+    return {
+      availableClasses,
+      upcomingClassesAsStudent,
+      upcomingClassesAsTeacher,
+      categories,
+      loading,
+      error,
+      calculateNextLessonDate,
+      getCurrentLessonNumber,
+      formatDate,
+      formatTime,
+      truncateText,
+      nearbyClasses,
+      loadingNearby,
+      filterClassesByCategory: (category) => {
+        selectedCategory.value = category;
+      },
+      clearCategorySelection: () => {
+        selectedCategory.value = null;
+      },
+    };
+  },
     //SEARCH BAR (START)
     created() {
       this.$emit("update:showSearchBar", true);
