@@ -1,5 +1,5 @@
 <template>
-  <div class="card col-md-8 mx-auto">
+  <div class="card mx-auto">
     <h3 class="card-header">{{ classData.title }}</h3>
     <img :src="classData.image" :alt="classData.title" class="card-img-top">
     <div class="card-body">
