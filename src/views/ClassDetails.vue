@@ -121,10 +121,14 @@
         <div class="row my-4">
           <div class="col-md-4">
             <div class="d-flex flex-column align-items-center">
-              <div class="instructor-image-container mb-3">
-                <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
-              </div>
-              <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+              <!-- Router link wrapping the instructor image and name to navigate to ProfileView -->
+              <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }"
+                class="text-decoration-none">
+                <div class="instructor-image-container mb-3">
+                  <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+                </div>
+                <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
+              </router-link>
             </div>
           </div>
           <div class="col-md-8">
@@ -229,6 +233,7 @@ export default {
         const instructorDoc = await getDoc(doc(db, 'users', instructorId));
         if (instructorDoc.exists()) {
           instructorData.value = { id: instructorDoc.id, ...instructorDoc.data() };
+          console.log('Instructor data:', instructorData.value); // Check if `id` exists
         } else {
           console.error('Instructor not found');
         }
