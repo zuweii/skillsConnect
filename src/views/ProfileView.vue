@@ -17,7 +17,8 @@
           <div class="card shadow-sm gradient-border">
             <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
               <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
-                <img :src="userProfile.profile_photo" :alt="userProfile.username" class="rounded-circle mb-3 mb-md-0 me-md-4" style="width: 150px; height: 150px; object-fit: cover;">
+                <img :src="userProfile.profile_photo" :alt="userProfile.username"
+                  class="rounded-circle mb-3 mb-md-0 me-md-4" style="width: 150px; height: 150px; object-fit: cover;">
                 <div class="text-center text-md-start">
                   <h2 class="card-title mb-2">{{ userProfile.username }}</h2>
                   <div class="d-flex align-items-center justify-content-center justify-content-md-start mb-2">
@@ -82,7 +83,8 @@
                       <div class="d-flex justify-content-between align-items-start mb-2">
                         <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
                       </div>
-                      <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}</p>
+                      <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}
+                      </p>
                       <div class="mt-auto">
                         <div class="d-flex justify-content-between align-items-center mb-3">
                           <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
@@ -128,7 +130,8 @@
               <div class="row row-cols-1 g-4">
                 <div v-for="item in portfolio" :key="item.id" class="col">
                   <div class="card h-100 border">
-                    <img :src="item.image" :alt="item.title" class="card-img-top" style="height: 200px; object-fit: cover;">
+                    <img :src="item.image" :alt="item.title" class="card-img-top"
+                      style="height: 200px; object-fit: cover;">
                     <div class="card-body">
                       <h5 class="card-title">{{ item.title }}</h5>
                       <p class="card-text">{{ item.description }}</p>
@@ -148,7 +151,7 @@
 import { ref, onMounted, computed } from 'vue';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
-import { useRoute } from 'vue-router';
+import { RouterLink, useRoute } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
 
 const userProfile = ref(null);
