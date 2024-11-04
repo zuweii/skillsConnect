@@ -139,6 +139,30 @@ export default {
       return totalRating / (currentCount + 1);
     };
 
+    const updateTeacherAverageRating = async (teacherId) => {
+      const classesRef = collection(db, 'classes');
+      const teacherClassesQuery = query(classesRef, where('teacher_username', '==', teacherId));
+      const teacherClassesSnapshot = await getDocs(teacherClassesQuery);
+
+      let totalRating = 0;
+      let totalClasses = 0;
+
+      teacherClassesSnapshot.forEach((doc) => {
+        const classData = doc.data();
+        if (classData.ratings_average) {
+          totalRating += classData.ratings_average;
+          totalClasses++;
+        }
+      });
+
+      const newTeacherAverage = totalClasses > 0 ? totalRating / totalClasses : 0;
+
+      const teacherRef = doc(db, 'users', teacherId);
+      await updateDoc(teacherRef, {
+        teacher_average: newTeacherAverage
+      });
+    };
+
     const submitReview = async () => {
       if (!isValidReview.value) {
         alert('Please provide both a rating and review text.');
@@ -181,6 +205,9 @@ export default {
             ratings_average: newAverage
           });
         });
+
+        // Update teacher's average rating
+        await updateTeacherAverageRating(classData.value.teacher_username);
 
         alert('Review submitted successfully!');
         router.push({ name: 'ProfilePage' });

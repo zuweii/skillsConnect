@@ -38,11 +38,13 @@
           <span class="me-2">{{ classData.ratings_average.toFixed(1) }}</span>
           <StarRating :rating="classData.ratings_average" readOnly />
           <span class="text-muted ms-2">({{ reviewCount }} Reviews)</span>
-          <span class="ms-3 badge bg-primary">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{ classData.max_capacity }}</span>
+          <span class="ms-3 badge bg-primary">Available: {{ classData.max_capacity - classData.current_enrollment }}/{{
+            classData.max_capacity }}</span>
         </div>
         <h2 class="h3 mb-3 text-colour">${{ classData.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classData.description }}</p>
-        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom" :disabled="isEnrolled">
+        <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom"
+          :disabled="isEnrolled">
           {{ isEnrolled ? 'Already Enrolled' : 'Enrol Now' }}
         </button>
         <p v-if="isEnrolled" class="text-success mt-2 text-center">You have already enrolled in this class!</p>
@@ -82,15 +84,6 @@
           </div>
           <div class="col-md-4 mb-3">
             <div class="d-flex align-items-center">
-              <i class="bi bi-laptop text-colour me-2 fs-4"></i>
-              <div>
-                <p class="mb-0 fw-bold">Mode of Lessons</p>
-                <p class="mb-0">{{ capitalizeMode(classData.mode) }}</p>
-              </div>
-            </div>
-          </div>
-          <div class="col-md-4 mb-3">
-            <div class="d-flex align-items-center">
               <i class="bi bi-graph-up text-colour me-2 fs-4"></i>
               <div>
                 <p class="mb-0 fw-bold">Skill Level</p>
@@ -104,6 +97,15 @@
               <div>
                 <p class="mb-0 fw-bold">Location</p>
                 <p class="mb-0">{{ classData.location }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4 mb-3">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-info-circle text-colour me-2 fs-4"></i>
+              <div>
+                <p class="mb-0 fw-bold">Additional Details</p>
+                <p class="mb-0">{{ classData.schedule || 'No additional details' }}</p>
               </div>
             </div>
           </div>
@@ -130,14 +132,17 @@
             </div>
           </div>
           <div class="col-md-8">
-            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center" style="height: 200px;">
+            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
+              style="height: 200px;">
               No reviews yet
             </div>
             <div v-else>
-              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm" style="border:1px solid lightgray">
+              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm"
+                style="border:1px solid lightgray">
                 <div class="card-body">
                   <div class="d-flex align-items-center mb-2">
-                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username"
+                      class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
                     <div>
                       <h5 class="card-title mb-0">{{ review.username }}</h5>
                       <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
@@ -150,7 +155,8 @@
                 </div>
               </div>
               <div v-if="classData.reviews.length > 3" class="text-end mt-3">
-                <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }" class="btn btn-outline-primary">
+                <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }"
+                  class="btn btn-outline-primary">
                   Read All Reviews
                 </router-link>
               </div>
@@ -204,8 +210,8 @@ export default {
 
         if (classDoc.exists()) {
           const data = classDoc.data();
-          classData.value = { 
-            id: classDoc.id, 
+          classData.value = {
+            id: classDoc.id,
             ...data,
             average_rating: data.average_rating || 0,
             reviews: data.reviews || []
@@ -388,16 +394,15 @@ export default {
 }
 
 .bg-primary {
-    background-color: #5a7dee !important;
+  background-color: #5a7dee !important;
 }
 
 .btn-outline-primary {
   color: #5a7dee;
-  border-color:  #5a7dee;
+  border-color: #5a7dee;
 }
 
 .btn-outline-primary:hover {
   background-color: #5a7dee;
   color: white;
-}
-</style>
+}</style>
