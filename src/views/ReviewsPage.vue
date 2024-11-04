@@ -17,7 +17,6 @@
             <h1 class="h3 mb-0 fw-bold text-center">Review: {{ classData?.title }}</h1>
           </div>
           
-          <!-- Class Information -->
           <div class="card-img-wrapper">
             <img :src="classData.image" :alt="classData.title" class="card-img-top class-image">
           </div>
@@ -41,7 +40,6 @@
               </div>
             </div>
 
-            <!-- Review Form -->
             <div class="review-section p-4 bg-gray-50 rounded-lg">
               <h2 class="h4 mb-4 fw-bold">Share Your Experience</h2>
               
@@ -140,55 +138,87 @@ export default {
     };
 
     const submitReview = async () => {
-      if (!isValidReview.value) {
-        alert('Please provide both a rating and review text.');
-        return;
+    if (!isValidReview.value) {
+      alert('Please provide both a rating and review text.');
+      return;
+    }
+  
+    try {
+      const classRef = doc(db, 'classes', props.classId);
+    
+      // Check if `teacher_username` exists in `classData` and use it as instructor ID
+      const instructorId = classData.value.teacher_username;
+      if (!instructorId) {
+        throw new Error('Instructor ID is missing from class data.');
       }
-
-      try {
-        const classRef = doc(db, 'classes', props.classId);
-
-        await runTransaction(db, async (transaction) => {
-          const classDoc = await transaction.get(classRef);
-          if (!classDoc.exists()) {
-            throw new Error('Class does not exist!');
-          }
-
-          const classData = classDoc.data();
-          const currentRatingsAverage = classData.ratings_average || 0;
-          const currentReviewCount = classData.reviews?.length || 0;
-          
-          // Calculate new average
-          const newAverage = calculateNewAverage(
-            currentRatingsAverage,
-            currentReviewCount,
-            selectedRating.value
-          );
-
-          // Create review object with user information
-          const review = {
-            text: reviewText.value,
-            rating: selectedRating.value,
-            timestamp: new Date(),
-            userId: currentUser.value.id,
-            username: currentUser.value.username,
-            userPhoto: currentUser.value.profile_photo || null
-          };
-
-          // Update the document
-          transaction.update(classRef, {
-            reviews: arrayUnion(review),
-            ratings_average: newAverage
-          });
+    
+      const teacherRef = doc(db, 'users', instructorId);
+    
+      await runTransaction(db, async (transaction) => {
+        const classDoc = await transaction.get(classRef);
+        if (!classDoc.exists()) {
+          throw new Error('Class does not exist!');
+        }
+      
+        const teacherDoc = await transaction.get(teacherRef);
+        if (!teacherDoc.exists()) {
+          throw new Error('Teacher does not exist!');
+        }
+      
+        const classData = classDoc.data();
+        const currentRatingsAverage = classData.ratings_average || 0;
+        const currentReviewCount = Array.isArray(classData.reviews) ? classData.reviews.length : 0;
+      
+        // Calculate the new class average
+        const newClassAverage = calculateNewAverage(
+          currentRatingsAverage,
+          currentReviewCount,
+          selectedRating.value
+        );
+      
+        // Create review object
+        const review = {
+          text: reviewText.value,
+          rating: selectedRating.value,
+          timestamp: new Date(),
+          userId: currentUser.value.id,
+          username: currentUser.value.username,
+          userPhoto: currentUser.value.profile_photo || null
+        };
+      
+        // Update the class document, ensuring `reviews` exists
+        transaction.update(classRef, {
+          reviews: arrayUnion(review),
+          ratings_average: newClassAverage
         });
+      
+        // Update the teacher's average rating and review count
+        const teacherData = teacherDoc.data();
+        const currentTeacherAverage = teacherData.teacher_average || 0;
+        const teacherReviewCount = teacherData.total_reviews || 0;
+      
+        const newTeacherAverage = calculateNewAverage(
+          currentTeacherAverage,
+          teacherReviewCount,
+          selectedRating.value
+        );
+      
+        transaction.update(teacherRef, {
+          teacher_average: newTeacherAverage,
+          total_reviews: teacherReviewCount + 1
+        });
+      });
+    
+      alert('Review submitted successfully!');
+      router.push({ name: 'ProfilePage' });
+    } catch (err) {
+      error.value = `Error submitting review: ${err.message}`;
+      alert('Failed to submit review. Please try again.');
+    }
+  };
 
-        alert('Review submitted successfully!');
-        router.push({ name: 'ProfilePage' });
-      } catch (err) {
-        error.value = `Error submitting review: ${err.message}`;
-        alert('Failed to submit review. Please try again.');
-      }
-    };
+
+
 
     const formatDate = (date) => {
       if (!date || !date.seconds) return 'Date not available';
@@ -231,14 +261,6 @@ export default {
   object-position: center;
 }
 
-.gradient-border {
-  position: relative;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(45deg, #5a7dee, #4e6dd2) border-box;
-  border: 1px solid transparent;
-  border-radius: 0.375rem;
-}
-
 .custom-button {
   display: inline-block;
   padding: 0.75rem 1.5rem;
@@ -265,10 +287,6 @@ export default {
 .badge {
   padding: 0.5em 1em;
   font-weight: 500;
-}
-
-.badge i {
-  font-size: 0.9em;
 }
 
 .review-section {
