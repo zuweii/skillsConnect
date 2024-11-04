@@ -1,31 +1,36 @@
 <template>
   <div class="container mt-4">
-    <h2 class="mb-4">List your own class</h2>
+    <h2 class="mb-4">List Your Class</h2>
+
+    <!-- Error Alert -->
     <div v-if="error" class="alert alert-danger" role="alert">
       {{ error }}
     </div>
+
+    <!-- Loading Spinner -->
     <div v-if="loading" class="text-center">
       <div class="spinner-border" role="status">
         <span class="visually-hidden">Loading...</span>
       </div>
     </div>
+
+    <!-- Form Content -->
     <div v-else class="row">
+      <!-- Image Upload Section -->
       <div class="col-md-4 mb-4">
         <div class="card shadow">
           <div class="card-body">
             <div class="photo-upload-area position-relative">
               <input type="file" id="photo-upload" @change="handleFileUpload" accept="image/*" class="d-none">
               <template v-if="!previewImage">
-                <label for="photo-upload"
-                  class="photo-upload-label d-flex flex-column align-items-center justify-content-center">
+                <label for="photo-upload" class="photo-upload-label d-flex flex-column align-items-center justify-content-center">
                   <i class="bi bi-image-fill fs-1"></i>
                   <span class="mt-2">Upload Photo</span>
                 </label>
               </template>
               <template v-else>
                 <img :src="previewImage" alt="Preview" class="img-fluid w-100 h-100 object-fit-cover">
-                <button @click="removePhoto" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
-                  aria-label="Remove photo">
+                <button @click="removePhoto" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" aria-label="Remove photo">
                   <i class="bi bi-x"></i>
                 </button>
               </template>
@@ -34,14 +39,15 @@
         </div>
       </div>
 
+      <!-- Form Fields -->
       <div class="col-md-8">
         <form @submit.prevent="submitForm">
+          <!-- Category Selection -->
           <div class="card shadow mb-3 p-2">
             <div class="card-body">
               <div class="mb-3">
                 <label for="category" class="form-label fs-5"><b>Category</b></label>
-                <select id="category" v-model="formData.mainCategory" @change="updateSubcategories"
-                  class="form-select p-2 mb-2">
+                <select id="category" v-model="formData.mainCategory" @change="updateSubcategories" class="form-select p-2 mb-2">
                   <option value="" disabled selected>Select a category</option>
                   <option v-for="category in categories" :key="category.category_name" :value="category.category_name">
                     {{ category.category_name }}
@@ -60,74 +66,65 @@
             </div>
           </div>
 
+          <!-- Additional Information -->
           <div class="card shadow mb-3 p-2">
             <div class="card-body">
               <div class="mb-3">
-                <label class="form-label fs-5"><b>Class Information</b></label>
-                <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2"
-                  placeholder="Class Title">
+                <label for="classTitle" class="form-label fs-5"><b>Class Title</b></label>
+                <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2">
               </div>
               <div class="mb-3">
-                <input type="number" id="price" v-model="formData.price" class="form-control p-2" placeholder="Price">
+                <label for="price" class="form-label fs-5"><b>Price</b></label>
+                <input type="number" id="price" v-model="formData.price" class="form-control p-2">
               </div>
+              <!-- Capacity and Skill Level -->
               <div class="row mb-3">
                 <div class="col">
-                  <input type="number" id="maxCapacity" v-model="formData.maxCapacity" class="form-control p-2"
-                    placeholder="Max. Capacity of Class">
+                  <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b></label>
+                  <input type="number" id="maxCapacity" v-model="formData.maxCapacity" class="form-control p-2">
                 </div>
                 <div class="col">
+                  <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b></label>
                   <select id="skillLevel" v-model="formData.skillLevel" class="form-select">
-                    <option value="" disabled selected>Skill Level</option>
+                    <option value="" disabled selected>Select Skill Level</option>
                     <option value="beginner">Beginner</option>
                     <option value="intermediate">Intermediate</option>
                     <option value="advanced">Advanced</option>
                   </select>
                 </div>
               </div>
-              <div class="row mb-3">
-                <div class="col">
-                  <input type="number" id="numberOfLessons" v-model="formData.numberOfLessons" class="form-control p-2"
-                    placeholder="Number of Lessons">
-                </div>
-                <div class="col">
-                  <select id="modeOfLesson" v-model="formData.modeOfLesson" class="form-select">
-                    <option value="" disabled selected>Mode of Lesson</option>
-                    <option value="online">Online</option>
-                    <option value="physical">Physical</option>
-                    <option value="hybrid">Hybrid</option>
-                  </select>
-                </div>
+              <div class="mb-3">
+                <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b></label>
+                <input type="number" id="numberOfLessons" v-model="formData.numberOfLessons" class="form-control p-2">
               </div>
               <div class="mb-3">
-                <input type="text" id="location" v-model="formData.location" class="form-control p-2"
-                  placeholder="Location">
+                <label for="location" class="form-label fs-5"><b>Location</b></label>
+                <input type="text" id="location" v-model="formData.location" class="form-control p-2">
               </div>
+              <!-- Schedule Section -->
               <div class="mb-3">
-                <label class="form-label fs-5 mt-4"><b>Class Schedule</b></label>
+                <label class="form-label fs-5"><b>Class Schedule</b></label>
                 <div class="row">
                   <div class="col">
                     <label for="date" class="form-label">Start Date</label>
-                    <input type="date" v-model="formData.date" class="form-control p-2 text-placeholder"
-                      placeholder="DD/MM/YYYY" id="date">
+                    <input type="date" v-model="formData.date" class="form-control p-2" id="date">
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.startTime" class="form-control p-2 text-placeholder"
-                      id="start_time">
+                    <input type="time" v-model="formData.startTime" class="form-control p-2" id="start_time">
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
-                    <input type="time" v-model="formData.endTime" class="form-control p-2 text-placeholder" id="end_time">
+                    <input type="time" v-model="formData.endTime" class="form-control p-2" id="end_time">
                   </div>
                 </div>
               </div>
               <div class="mb-3">
-                <label for="additionalNotes" class="form-label">Additional Details</label>
-                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2"
-                  placeholder="e.g. Classes on every Thursday">
+                <label for="additionalNotes" class="form-label fs-5"><b>Additional Details</b></label>
+                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2">
               </div>
               <div class="mb-3">
-                <label class="form-label fs-5 mt-4"><b>Description</b></label>
+                <label for="description" class="form-label fs-5"><b>Description</b></label>
                 <textarea id="description" v-model="formData.description" class="form-control p-2" rows="5"></textarea>
               </div>
               <div class="text-end">
@@ -139,17 +136,13 @@
       </div>
     </div>
 
-
+    <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-body position-relative p-4">
-            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"
-              aria-label="Close"></button>
-            <div class="text-center mt-2">
-              Your class has been successfully listed!
-            </div>
-
+            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="text-center mt-2">Your class has been successfully listed!</div>
           </div>
         </div>
       </div>
@@ -177,7 +170,6 @@ export default {
       maxCapacity: null,
       skillLevel: '',
       numberOfLessons: null,
-      modeOfLesson: '',
       location: '',
       date: '',
       startTime: '',
@@ -201,7 +193,6 @@ export default {
         formData.value.maxCapacity &&
         formData.value.skillLevel &&
         formData.value.numberOfLessons &&
-        formData.value.modeOfLesson &&
         formData.value.location &&
         formData.value.date &&
         formData.value.startTime &&
@@ -209,6 +200,7 @@ export default {
         formData.value.description &&
         imageFile.value;
     });
+
 
     const fetchCategories = async () => {
       try {
@@ -297,7 +289,6 @@ export default {
           current_enrollment: 0,
           skill_level: formData.value.skillLevel,
           number_of_lessons: parseInt(formData.value.numberOfLessons),
-          mode: formData.value.modeOfLesson,
           location: formData.value.location,
           start_date: startDate,
           completion_date: completionDate, 
@@ -326,7 +317,6 @@ export default {
             max_capacity: classData.max_capacity,
             skill_level: classData.skill_level,
             number_of_lessons: classData.number_of_lessons,
-            mode: classData.mode,
             location: classData.location,
             start_date: classData.start_date,
             completion_date: classData.completion_date, // Add completion date
