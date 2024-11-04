@@ -4,7 +4,7 @@
   <div class="container" v-else>
     <div class="profile-header text-center mb-5">
       <img :src="userProfile.profile_photo || defaultPhoto" alt="Profile Picture" class="profile-photo mb-3" />
-      <h2 class="fw-bold">{{ userProfile.username }}</h2>
+      <h2 class="fw-bold">{{ userProfile.username || 'Unknown User' }}</h2>
       <div class="average-rating mt-3">
         <h4>Average Class Rating: <StarRating :rating="averageRating" :readOnly="true"/></h4>
       </div>
@@ -65,7 +65,7 @@ export default {
   },
   setup() {
     const auth = getAuth();
-    const userProfile = ref(null);
+    const userProfile = ref({}); // Initialize as an empty object
     const pastClasses = ref([]);
     const teachingClasses = ref([]);
     const loading = ref(true);
@@ -82,7 +82,7 @@ export default {
 
           // Retrieve past classes from pending_reviews
           pastClasses.value = (await Promise.all(
-            userProfile.value.pending_reviews.map(async (docId) => {
+            (userProfile.value.pending_reviews || []).map(async (docId) => {
               const classDoc = await getDoc(doc(db, 'classes', docId));
               return classDoc.exists() ? { class_id: classDoc.id, ...classDoc.data() } : null;
             })
@@ -90,7 +90,7 @@ export default {
 
           // Retrieve classes you're teaching from upcoming_classes_as_teacher
           teachingClasses.value = (await Promise.all(
-            userProfile.value.upcoming_classes_as_teacher.map(async (classId) => {
+            (userProfile.value.upcoming_classes_as_teacher || []).map(async (classId) => {
               const classDoc = await getDoc(doc(db, 'classes', classId));
               return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
             })
@@ -100,7 +100,7 @@ export default {
           let totalRatings = 0;
           let ratedClassesCount = 0;
           teachingClasses.value.forEach((cls) => {
-            if (cls && cls.ratings_average) {
+            if (cls && typeof cls.ratings_average === 'number') {
               totalRatings += cls.ratings_average;
               ratedClassesCount++;
             }

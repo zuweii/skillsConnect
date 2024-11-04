@@ -90,6 +90,7 @@
             posted_classes: [],
             finances: [],
             chats: [],
+            teacher_average: 0,
             portfolio: {
               youtube_links: [],
               project_images: [],
