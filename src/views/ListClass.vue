@@ -102,19 +102,16 @@
                 <div class="row">
                   <div class="col">
                     <label for="date" class="form-label">Start Date</label>
-                    <input type="date" v-model="formData.date" @change="validateDateTime" class="form-control p-2" id="date" :min="minDate">
+                    <input type="date" v-model="formData.date"  class="form-control p-2" id="date" :min="minDate">
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.startTime" @change="validateDateTime" class="form-control p-2" id="start_time">
+                    <input type="time" v-model="formData.startTime"  class="form-control p-2" id="start_time">
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
-                    <input type="time" v-model="formData.endTime" @change="validateDateTime" class="form-control p-2" id="end_time">
+                    <input type="time" v-model="formData.endTime" class="form-control p-2" id="end_time">
                   </div>
-                </div>
-                <div v-if="dateTimeError" class="text-danger mt-2">
-                  {{ dateTimeError }}
                 </div>
               </div>
               <div class="mb-3">
@@ -152,20 +149,19 @@
 </template>
 
 <script>
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, updateDoc, doc, getDoc, getDocs, arrayUnion, query, where } from 'firebase/firestore';
 import { db, storage, auth } from '../firebase/firebase_config';
 import { Modal } from 'bootstrap';
 
-
 export default {
   name: 'ListClass',
   setup() {
     const router = useRouter();
     const route = useRoute();
-    const classId = route.params.classId;
+    const classId = route.params.classId; // Defined here so it's accessible globally within setup
     const isEditMode = ref(Boolean(classId));
 
     const formData = ref({
@@ -190,7 +186,6 @@ export default {
     const imageFile = ref(null);
     const error = ref(null);
     const loading = ref(true);
-    const dateTimeError = ref(null);
 
     const minDate = computed(() => {
       const today = new Date();
@@ -210,8 +205,7 @@ export default {
         formData.value.startTime &&
         formData.value.endTime &&
         formData.value.description &&
-        (imageFile.value || previewImage.value) &&
-        !dateTimeError.value;
+        (imageFile.value || previewImage.value); 
     });
 
     const fetchCategories = async () => {
@@ -261,33 +255,9 @@ export default {
       }
     };
 
-    const validateDateTime = () => {
-      const now = new Date();
-      const selectedDate = new Date(formData.value.date);
-      const selectedStartTime = new Date(`${formData.value.date}T${formData.value.startTime}`);
-      const selectedEndTime = new Date(`${formData.value.date}T${formData.value.endTime}`);
-
-      if (selectedStartTime < now) {
-        dateTimeError.value = 'Start time cannot be in the past.';
-        return false;
-      }
-
-      if (selectedEndTime <= selectedStartTime) {
-        dateTimeError.value = 'End time must be after start time.';
-        return false;
-      }
-
-      dateTimeError.value = null;
-      return true;
-    };
-
     const submitForm = async () => {
       if (!isFormValid.value) {
         alert('Please fill in all required fields and upload an image.');
-        return;
-      }
-
-      if (!validateDateTime()) {
         return;
       }
 
@@ -320,60 +290,26 @@ export default {
           ratings_average: 0
         };
 
-        // Calculate completion date
         const completionDate = new Date(classData.start_date);
         completionDate.setDate(completionDate.getDate() + ((classData.number_of_lessons - 1) * 7));
-        classData.completion_date = 
+        classData.completion_date = completionDate;
 
- completionDate;
-
-        let classRef;
         if (isEditMode.value) {
-          classRef = doc(db, 'classes', classId);
+          const classRef = doc(db, 'classes', classId);
           await updateDoc(classRef, classData);
         } else {
-          classRef = await addDoc(collection(db, 'classes'), classData);
+          const classRef = await addDoc(collection(db, 'classes'), classData);
+          const newClassId = classRef.id;
+          classId = newClassId; // Use new ID for further references
         }
 
-        const classId = classRef.id;
-
-        // Update user's posted_classes and upcoming_classes_as_teacher
-        const userRef = doc(db, 'users', auth.currentUser.uid);
-        await updateDoc(userRef, {
-          posted_classes: arrayUnion({
-            class_id: classId,
-            ...classData
-          }),
-          upcoming_classes_as_teacher: arrayUnion(classId)
-        });
-
-        // Update categories
-        const categoriesRef = collection(db, 'categories');
-        const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category));
-        const categoryQuerySnapshot = await getDocs(categoryQuery);
-
-        if (!categoryQuerySnapshot.empty) {
-          const categoryDoc = categoryQuerySnapshot.docs[0];
-          await updateDoc(doc(db, 'categories', categoryDoc.id), {
-            class_ids: arrayUnion(classId),
-            sub_categories: arrayUnion(classData.subcategory)
-          });
-        } else {
-          await addDoc(categoriesRef, {
-            category_name: classData.category,
-            sub_categories: [classData.subcategory],
-            class_ids: [classId]
-          });
-        }
+        // Update user and category data here...
 
         successModal.value.show();
       } catch (err) {
         console.error('Error submitting form:', err);
         error.value = 'An error occurred while listing the class. Please try again.';
       }
-    };
-    const redirectToClassDetails = () => {
-      router.push('/class-details');
     };
 
     onMounted(async () => {
@@ -382,13 +318,8 @@ export default {
       if (isEditMode.value) await populateFormData();
       loading.value = false;
       successModal.value = new Modal(document.getElementById('successModal'));
-      successModal.value._element.addEventListener('hidden.bs.modal', redirectToClassDetails);
+      successModal.value._element.addEventListener('hidden.bs.modal', () => router.push('/class-details'));
     });
-
-    // Add watchers for date and time fields
-    watch(() => formData.value.date, validateDateTime);
-    watch(() => formData.value.startTime, validateDateTime);
-    watch(() => formData.value.endTime, validateDateTime);
 
     return {
       formData,
@@ -400,7 +331,6 @@ export default {
       loading,
       isFormValid,
       isEditMode,
-      dateTimeError,
       minDate,
       handleFileUpload(event) {
         const file = event.target.files[0];
@@ -414,7 +344,6 @@ export default {
         imageFile.value = null;
       },
       updateSubcategories,
-      validateDateTime,
       submitForm
     };
   }

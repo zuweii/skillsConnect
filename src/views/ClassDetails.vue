@@ -113,58 +113,61 @@
       </div>
     </div>
 
-    <div class="card mt-4 p-2 shadow">
+    <div class="card mt-4 shadow">
       <div class="card-body">
-        <h3 class="card-title fw-bold mt-2">
-          Meet the Instructor
-        </h3>
+        <h3 class="card-title fw-bold">Meet The Instructor</h3>
         <div class="row my-4">
-          <div class="col-md-4">
-            <div class="d-flex flex-column align-items-center">
-              <!-- Router link wrapping the instructor image and name to navigate to ProfileView -->
-              <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }"
-                class="text-decoration-none">
-                <div class="instructor-image-container mb-3">
-                  <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+      <div class="col-md-4">
+        <div class="d-flex flex-column align-items-center">
+          <!-- Router link wrapping the instructor image and name to navigate to ProfileView -->
+          <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }" class="text-decoration-none">
+            <div class="instructor-image-container mb-3">
+              <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+            </div>
+            <h4 class="h5 mb-1 text-colour fw-bold text-center">{{ instructorData.username.toUpperCase() }}</h4>
+            <!-- Display the instructor's average rating under their name -->
+            <p class="mb-0 text-muted text-center">Average Rating: {{ instructorData.teacher_average.toFixed(1) }}</p>
+          </router-link>
+        </div>
+      </div>
+      <div class="col-md-8">
+        <h5 class="text-colour">Reviews for {{ classData.title }}</h5>
+        <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
+          style="height: 200px;">
+          No reviews yet
+        </div>
+        <!-- Reviews section -->
+        <div v-else>
+          <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm"
+            style="border:1px solid lightgray">
+            <div class="card-body">
+              <div class="d-flex align-items-center mb-2">
+                <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username"
+                  class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                <div>
+                  <h5 class="card-title mb-0">{{ review.username }}</h5>
+                  <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
                 </div>
-                <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
-              </router-link>
+              </div>
+              <div class="d-flex align-items-center mb-2">
+                <StarRating :rating="review.rating" />
+              </div>
+              <p class="card-text">{{ review.text }}</p>
             </div>
           </div>
-          <div class="col-md-8">
-            <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
-              style="height: 200px;">
-              No reviews yet
-            </div>
-            <div v-else>
-              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm"
-                style="border:1px solid lightgray">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-2">
-                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username"
-                      class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                    <div>
-                      <h5 class="card-title mb-0">{{ review.username }}</h5>
-                      <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center mb-2">
-                    <StarRating :rating="review.rating" />
-                  </div>
-                  <p class="card-text">{{ review.text }}</p>
-                </div>
-              </div>
-              <div v-if="classData.reviews.length > 3" class="text-end mt-3">
-                <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }"
-                  class="btn btn-outline-primary">
-                  Read All Reviews
-                </router-link>
-              </div>
-            </div>
+          <div v-if="classData.reviews.length > 3" class="text-end mt-3">
+            <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }" class="btn btn-outline-primary">
+              Read All Reviews
+            </router-link>
           </div>
         </div>
       </div>
     </div>
+      </div>
+    </div>
+    
+
+
   </div>
 </template>
 
@@ -405,4 +408,5 @@ export default {
 .btn-outline-primary:hover {
   background-color: #5a7dee;
   color: white;
-}</style>
+}
+</style>

@@ -309,49 +309,91 @@
     </div>
   </template>
   
- <script>
-import { ref, computed, onMounted } from "vue";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase_config";
-import FBInstanceAuth from "../firebase/firebase_auth";
-import StarRating from "../components/StarRating.vue";
-
-export default {
-  name: "HomePage",
-  components: {
-    StarRating,
-  },
-  setup() {
-    const classes = ref([]);
-    const categories = ref([]);
-    const loading = ref(true);
-    const error = ref(null);
-    const currentUser = ref(null);
-    const selectedCategory = ref(null);
-    const nearbyClasses = ref([]);
-    const userLocation = ref(null);
-    const loadingNearby = ref(false);
-    const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      
-      // Computed property for filtered classes
-      const filteredClasses = computed(() => {
-        if (!selectedCategory.value) return classes.value; // Return all if no category selected
-        return classes.value.filter(
-          (classItem) => classItem.category === selectedCategory.value
-        );
-      });
+  <script>
+  import { ref, computed, onMounted } from "vue";
+  import {
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+  } from "firebase/firestore";
+  import { db } from "../firebase/firebase_config";
+  import FBInstanceAuth from "../firebase/firebase_auth";
+  import StarRating from "../components/StarRating.vue";
   
-      const availableClasses = computed(() => {
+  export default {
+    name: "HomePage",
+    components: {
+      StarRating,
+    },
+    setup() {
+      const classes = ref([]);
+      const categories = ref([]);
+      const loading = ref(true);
+      const error = ref(null);
+      const currentUser = ref(null);
+      const selectedCategory = ref(null);
+      const nearbyClasses = ref([]);
+      const userLocation = ref(null);
+      const loadingNearby = ref(false);
+      const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      
+      
+      
+      const checkCompletedClasses = async () => {
+      if (!currentUser.value) return;
+
+      const currentDate = new Date();
+      const completedClasses = classes.value.filter((classItem) => {
+        const endTime = classItem.end_time.toDate();
+        return endTime < currentDate;
+      });
+
+      if (completedClasses.length > 0) {
+        const userRef = doc(db, "users", currentUser.value.id);
+
+        // Separate completed classes for student and teacher
+        const completedAsStudent = completedClasses.filter((classItem) =>
+          currentUser.value.upcoming_classes_as_student?.includes(classItem.id)
+        );
+        const completedAsTeacher = completedClasses.filter((classItem) =>
+          currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id)
+        );
+
+        // Update pending_reviews only for classes completed as a student
+        const pendingReviewsUpdate = completedAsStudent.map((classItem) => classItem.id);
+
+        // Prepare the update object
+        const updateObject = {
+          upcoming_classes_as_student: arrayRemove(...completedAsStudent.map(c => c.id)),
+          upcoming_classes_as_teacher: arrayRemove(...completedAsTeacher.map(c => c.id)),
+        };
+
+        // Only add to pending_reviews if there are completed classes as a student
+        if (pendingReviewsUpdate.length > 0) {
+          updateObject.pending_reviews = arrayUnion(...pendingReviewsUpdate);
+        }
+
+        // Perform the update
+        await updateDoc(userRef, updateObject);
+
+        // Refresh user data after updates
+        const updatedUserDoc = await getDoc(userRef);
+        if (updatedUserDoc.exists()) {
+          currentUser.value = {
+            id: updatedUserDoc.id,
+            ...updatedUserDoc.data(),
+          };
+        }
+      }
+    };
+
+    const availableClasses = computed(() => {
       const currentDate = new Date();
       const filteredClasses = selectedCategory.value
         ? classes.value.filter(
@@ -376,16 +418,8 @@ export default {
         })
         .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
     });
-  
-      const filterClassesByCategory = (category) => {
-        selectedCategory.value = category;
-      };
-  
-      const clearCategorySelection = () => {
-        selectedCategory.value = null;
-      };
-  
-      const upcomingClassesAsStudent = computed(() => {
+
+    const upcomingClassesAsStudent = computed(() => {
       if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
         return [];
 
@@ -403,7 +437,6 @@ export default {
         );
     });
 
-  
     const upcomingClassesAsTeacher = computed(() => {
       if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
         return [];
@@ -421,6 +454,23 @@ export default {
           (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
         );
     });
+      
+      
+      // Computed property for filtered classes
+      const filteredClasses = computed(() => {
+        if (!selectedCategory.value) return classes.value; // Return all if no category selected
+        return classes.value.filter(
+          (classItem) => classItem.category === selectedCategory.value
+        );
+      });
+  
+      const filterClassesByCategory = (category) => {
+        selectedCategory.value = category;
+      };
+  
+      const clearCategorySelection = () => {
+        selectedCategory.value = null;
+      };
   
       const calculateNextLessonDate = (classItem) => {
         const currentDate = new Date();
@@ -478,7 +528,7 @@ export default {
         return text.substring(0, length) + "...";
       };
   
-       const fetchData = async () => {
+      const fetchData = async () => {
       try {
         const user = FBInstanceAuth.getCurrentUser();
         if (user) {
@@ -522,53 +572,6 @@ export default {
         } catch (err) {
           console.error("Error fetching categories:", err);
           error.value = "Error loading categories";
-        }
-      };
-  
-      const checkCompletedClasses = async () => {
-        if (!currentUser.value) return;
-  
-        const currentDate = new Date();
-        const completedClasses = classes.value.filter((classItem) => {
-          const completionDate = classItem.completion_date.toDate();
-          return (
-            completionDate < currentDate &&
-            (currentUser.value.upcoming_classes_as_student?.includes(
-              classItem.id
-            ) ||
-              currentUser.value.upcoming_classes_as_teacher?.includes(
-                classItem.id
-              ))
-          );
-        });
-  
-        if (completedClasses.length > 0) {
-          const userRef = doc(db, "users", currentUser.value.id);
-  
-          // Add completed classes to pending_reviews
-          for (const classItem of completedClasses) {
-            await updateDoc(userRef, {
-              pending_reviews: arrayUnion(classItem.id),
-              // Remove from upcoming classes if completed
-              upcoming_classes_as_student:
-                currentUser.value.upcoming_classes_as_student?.filter(
-                  (id) => id !== classItem.id
-                ) || [],
-              upcoming_classes_as_teacher:
-                currentUser.value.upcoming_classes_as_teacher?.filter(
-                  (id) => id !== classItem.id
-                ) || [],
-            });
-          }
-  
-          // Refresh user data after updates
-          const updatedUserDoc = await getDoc(userRef);
-          if (updatedUserDoc.exists()) {
-            currentUser.value = {
-              id: updatedUserDoc.id,
-              ...updatedUserDoc.data(),
-            };
-          }
         }
       };
   

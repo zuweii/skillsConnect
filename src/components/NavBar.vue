@@ -142,7 +142,7 @@ export default {
 }
 
 .logo:hover {
-  transform: scale(1.05);
+  transform: scale(1.01);
 }
 
 .nav-link {
