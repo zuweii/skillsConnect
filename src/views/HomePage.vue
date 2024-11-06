@@ -81,7 +81,8 @@
             </div>
           </div>
         </div>
-  
+   
+   
         <!-- Teacher Classes -->
         <div class="col-md-6 mb-4">
           <div class="card shadow-sm gradient-border">
@@ -153,7 +154,8 @@
           </div>
         </div>
       </div>
-  
+   
+   
       <!-- Categories Section -->
       <div class="mb-4">
         <h1 class="h3 mb-4 fw-bold">What would you like to learn?</h1>
@@ -171,7 +173,8 @@
           </button>
         </div>
       </div>
-  
+   
+   
       <!-- Available Classes Section -->
       <h1 class="h3 mb-4 fw-bold">Available Classes</h1>
       <div class="row mb-5">
@@ -209,9 +212,7 @@
                   </p>
                   <span class="badge bg-light text-dark">
                     <i class="bi bi-people-fill me-1"></i>
-                    {{
-                      classItem.max_capacity - classItem.current_enrollment
-                    }}
+                    {{ classItem.max_capacity - classItem.current_enrollment }}
                     spots left
                   </span>
                 </div>
@@ -235,7 +236,8 @@
           </div>
         </div>
       </div>
-  
+   
+   
       <h1 class="h3 mb-4 fw-bold">Nearby Classes</h1>
       <div v-if="loadingNearby" class="text-center">
         <div class="spinner-border text-primary" role="status">
@@ -280,9 +282,7 @@
                   </p>
                   <span class="badge bg-light text-dark">
                     <i class="bi bi-people-fill me-1"></i>
-                    {{
-                      classItem.max_capacity - classItem.current_enrollment
-                    }}
+                    {{ classItem.max_capacity - classItem.current_enrollment }}
                     spots left
                   </span>
                 </div>
@@ -307,11 +307,12 @@
         </div>
       </div>
     </div>
-  </template>
-  
-  <script>
-  import { ref, computed, onMounted } from "vue";
-  import {
+   </template>
+   
+   
+   <script>
+   import { ref, computed, onMounted, watch } from "vue";
+   import {
     collection,
     getDocs,
     query,
@@ -321,17 +322,24 @@
     updateDoc,
     arrayUnion,
     arrayRemove,
-  } from "firebase/firestore";
-  import { db } from "../firebase/firebase_config";
-  import FBInstanceAuth from "../firebase/firebase_auth";
-  import StarRating from "../components/StarRating.vue";
-  
-  export default {
+   } from "firebase/firestore";
+   import { db } from "../firebase/firebase_config";
+   import FBInstanceAuth from "../firebase/firebase_auth";
+   import StarRating from "../components/StarRating.vue";
+   
+   
+   export default {
     name: "HomePage",
     components: {
       StarRating,
     },
-    setup() {
+    props: {
+      searchQuery: {
+        type: String,
+        default: "",
+      },
+    },
+    setup(props) {
       const classes = ref([]);
       const categories = ref([]);
       const loading = ref(true);
@@ -342,9 +350,9 @@
       const userLocation = ref(null);
       const loadingNearby = ref(false);
       const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-      
-      
-      
+   
+
+
       const checkCompletedClasses = async () => {
       if (!currentUser.value) return;
 
@@ -393,90 +401,99 @@
       }
     };
 
-    const availableClasses = computed(() => {
-      const currentDate = new Date();
-      const filteredClasses = selectedCategory.value
-        ? classes.value.filter(
-            (classItem) => classItem.category === selectedCategory.value
-          )
-        : classes.value;
-
-      return filteredClasses
-        .filter((classItem) => {
-          const startDate = classItem.start_date.toDate();
-          const hasAvailability =
-            classItem.max_capacity > classItem.current_enrollment;
-          const isNotUserClass =
-            !currentUser.value.upcoming_classes_as_teacher?.includes(
-              classItem.id
-            );
-
-          classItem.ratings_average = classItem.ratings_average || 0;
-          classItem.reviews = classItem.reviews || [];
-
-          return hasAvailability && startDate > currentDate && isNotUserClass;
-        })
-        .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
-    });
-
-    const upcomingClassesAsStudent = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
-        return [];
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_student.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-
-    const upcomingClassesAsTeacher = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
-        return [];
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-      
-      
       // Computed property for filtered classes
       const filteredClasses = computed(() => {
-        if (!selectedCategory.value) return classes.value; // Return all if no category selected
-        return classes.value.filter(
-          (classItem) => classItem.category === selectedCategory.value
-        );
+        let filtered = classes.value;
+   
+   
+        if (selectedCategory.value) {
+          filtered = filtered.filter(
+            (classItem) => classItem.category === selectedCategory.value
+          );
+        }
+   
+   
+        if (props.searchQuery) {
+          const query = props.searchQuery.toLowerCase();
+          filtered = filtered.filter(
+            (classItem) =>
+              classItem.title.toLowerCase().includes(query) ||
+              classItem.description.toLowerCase().includes(query)
+          );
+        }
+   
+   
+        return filtered;
       });
-  
-      const filterClassesByCategory = (category) => {
-        selectedCategory.value = category;
-      };
-  
-      const clearCategorySelection = () => {
-        selectedCategory.value = null;
-      };
-  
+   
+   
+      const availableClasses = computed(() => {
+        const currentDate = new Date();
+        return filteredClasses.value
+          .filter((classItem) => {
+            const startDate = classItem.start_date.toDate();
+            const hasAvailability =
+              classItem.max_capacity > classItem.current_enrollment;
+            const isNotUserClass =
+              !currentUser.value.upcoming_classes_as_teacher?.includes(
+                classItem.id
+              );
+   
+   
+            classItem.ratings_average = classItem.ratings_average || 0;
+            classItem.reviews = classItem.reviews || [];
+   
+   
+            return hasAvailability && startDate > currentDate && isNotUserClass;
+          })
+          .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
+      });
+   
+      const upcomingClassesAsStudent = computed(() => {
+        if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
+          return [];
+   
+        const currentDate = new Date();
+        return classes.value
+          .filter((classItem) => {
+            const endTime = classItem.end_time.toDate();
+            return (
+              endTime > currentDate &&
+              currentUser.value.upcoming_classes_as_student.includes(classItem.id)
+            );
+          })
+          .sort(
+            (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+          );
+      });
+   
+   
+      const upcomingClassesAsTeacher = computed(() => {
+        if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
+          return [];
+   
+   
+        const currentDate = new Date();
+        return classes.value
+          .filter((classItem) => {
+            const endTime = classItem.end_time.toDate();
+            return (
+              endTime > currentDate &&
+              currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
+            );
+          })
+          .sort(
+            (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
+          );
+      });
+   
+   
       const calculateNextLessonDate = (classItem) => {
         const currentDate = new Date();
         const startDate = classItem.start_date.toDate();
         const numberOfLessons = classItem.number_of_lessons;
-  
+   
+   
         for (let i = 0; i < numberOfLessons; i++) {
           const lessonDate = new Date(startDate);
           lessonDate.setDate(lessonDate.getDate() + i * 7);
@@ -486,28 +503,33 @@
         }
         return startDate;
       };
-  
+   
+   
       const getCurrentLessonNumber = (classItem) => {
         const currentDate = new Date();
         const startDate = classItem.start_date.toDate();
-  
+   
+   
         // If the class hasn't started yet, return 1
         if (currentDate < startDate) {
           return 1;
         }
-  
+   
+   
         // Calculate weeks passed since start date
         const weeksPassed = Math.floor(
           (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
         );
-  
+   
+   
         // Return current lesson number (minimum 1, maximum number_of_lessons)
         return Math.min(
           Math.max(weeksPassed + 2, 1),
           classItem.number_of_lessons
         );
       };
-  
+   
+   
       const formatDate = (date) => {
         return date.toLocaleDateString("en-US", {
           weekday: "short",
@@ -515,52 +537,59 @@
           day: "numeric",
         });
       };
-  
+   
+   
       const formatTime = (timestamp) => {
         return new Date(timestamp.seconds * 1000).toLocaleTimeString("en-US", {
           hour: "2-digit",
           minute: "2-digit",
         });
       };
-  
+   
+   
       const truncateText = (text, length) => {
         if (text.length <= length) return text;
         return text.substring(0, length) + "...";
       };
-  
+   
+   
       const fetchData = async () => {
-      try {
-        const user = FBInstanceAuth.getCurrentUser();
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnapshot = await getDoc(userDocRef);
-
-          if (userDocSnapshot.exists()) {
-            currentUser.value = {
-              id: userDocSnapshot.id,
-              ...userDocSnapshot.data(),
-            };
+        try {
+          const user = FBInstanceAuth.getCurrentUser();
+          if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnapshot = await getDoc(userDocRef);
+   
+   
+            if (userDocSnapshot.exists()) {
+              currentUser.value = {
+                id: userDocSnapshot.id,
+                ...userDocSnapshot.data(),
+              };
+            }
           }
+   
+   
+          const classCollection = collection(db, "classes");
+          const classSnapshot = await getDocs(classCollection);
+          classes.value = classSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+   
+   
+          await fetchCategories();
+          await checkCompletedClasses();
+          await findNearbyClasses();
+        } catch (err) {
+          console.error("Error fetching data:", err);
+          error.value = "Error loading data";
+        } finally {
+          loading.value = false;
         }
-
-        const classCollection = collection(db, "classes");
-        const classSnapshot = await getDocs(classCollection);
-        classes.value = classSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        await fetchCategories();
-        await checkCompletedClasses();
-        await findNearbyClasses();
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        error.value = "Error loading data";
-      } finally {
-        loading.value = false;
-      }
-    };
-  
+      };
+   
+   
       const fetchCategories = async () => {
         try {
           const categoryCollection = collection(db, "categories"); // Ensure the correct path to your categories collection
@@ -574,7 +603,11 @@
           error.value = "Error loading categories";
         }
       };
-  
+   
+   
+
+   
+   
       const getUserLocation = () => {
         return new Promise((resolve, reject) => {
           if (navigator.geolocation) {
@@ -596,7 +629,8 @@
           }
         });
       };
-  
+   
+   
       const geocodeAddress = async (address) => {
         try {
           const response = await fetch(
@@ -613,7 +647,8 @@
         }
         return null;
       };
-  
+   
+   
       const calculateDistance = (lat1, lon1, lat2, lon2) => {
         const R = 6371; // Radius of Earth in km
         const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -627,7 +662,8 @@
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         return R * c;
       };
-  
+   
+   
       const findNearbyClasses = async () => {
         loadingNearby.value = true;
         try {
@@ -647,7 +683,8 @@
               return classItem;
             })
           );
-  
+   
+   
           nearbyClasses.value = classesWithCoordinates.filter((classItem) => {
             if (classItem.latitude && classItem.longitude) {
               const distance = calculateDistance(
@@ -666,33 +703,41 @@
           loadingNearby.value = false;
         }
       };
-  
+   
+   
       onMounted(() => {
-      fetchData();
-    });
-
-    return {
-      availableClasses,
-      upcomingClassesAsStudent,
-      upcomingClassesAsTeacher,
-      categories,
-      loading,
-      error,
-      calculateNextLessonDate,
-      getCurrentLessonNumber,
-      formatDate,
-      formatTime,
-      truncateText,
-      nearbyClasses,
-      loadingNearby,
-      filterClassesByCategory: (category) => {
-        selectedCategory.value = category;
-      },
-      clearCategorySelection: () => {
-        selectedCategory.value = null;
-      },
-    };
-  },
+        fetchData();
+      });
+      watch(
+        () => props.searchQuery,
+        () => {
+          // You can add any additional logic here when the search query changes
+        }
+      );
+   
+   
+      return {
+        availableClasses,
+        upcomingClassesAsStudent,
+        upcomingClassesAsTeacher,
+        categories,
+        loading,
+        error,
+        calculateNextLessonDate,
+        getCurrentLessonNumber,
+        formatDate,
+        formatTime,
+        truncateText,
+        nearbyClasses,
+        loadingNearby,
+        filterClassesByCategory: (category) => {
+          selectedCategory.value = category;
+        },
+        clearCategorySelection: () => {
+          selectedCategory.value = null;
+        },
+      };
+    },
     //SEARCH BAR (START)
     created() {
       this.$emit("update:showSearchBar", true);
@@ -701,51 +746,59 @@
       this.$emit("update:showSearchBar", false);
     },
     //SEARCH BAR (END)
-  };
-  </script>
-  
-  <style scoped>
-  .container-fluid {
+   };
+   </script>
+   
+   
+   <style scoped>
+   .container-fluid {
     max-width: 1400px;
-  }
-  
-  .class-image {
+   }
+   
+   
+   .class-image {
     width: 100%;
     height: 200px;
     object-fit: cover;
     object-position: center;
-  }
-  
-  .card {
+   }
+   
+   
+   .card {
     border: 0;
     transition: all 0.3s ease;
-  }
-  
-  .gradient-border {
+   }
+   
+   
+   .gradient-border {
     position: relative;
     background: linear-gradient(white, white) padding-box,
       linear-gradient(45deg, #5a7dee, #4e6dd2) border-box;
     border: 1px solid transparent;
     border-radius: 0.375rem;
-  }
-  
-  .hover-card:hover {
+   }
+   
+   
+   .hover-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
-  }
-  
-  .card-img-wrapper {
+   }
+   
+   
+   .card-img-wrapper {
     position: relative;
-  }
-  
-  .card-img-overlay-top {
+   }
+   
+   
+   .card-img-overlay-top {
     position: absolute;
     top: 1rem;
     left: 1rem;
     z-index: 1;
-  }
-  
-  .custom-button {
+   }
+   
+   
+   .custom-button {
     display: inline-block;
     padding: 0.5rem 1rem;
     font-weight: 500;
@@ -756,76 +809,91 @@
     color: white;
     border: none;
     transition: all 0.2s ease;
-  }
-  
-  .custom-button:hover {
+   }
+   
+   
+   .custom-button:hover {
     background-color: #4e6dd2;
     color: white;
     transform: translateY(-1px);
-  }
-  
-  .btn-outline-primary {
+   }
+   
+   
+   .btn-outline-primary {
     color: #5a7dee;
     border-color: #5a7dee;
-  }
-  
-  .btn-outline-primary:hover {
+   }
+   
+   
+   .btn-outline-primary:hover {
     background-color: #5a7dee;
     border-color: #5a7dee;
     color: white;
-  }
-  
-  .text-primary {
+   }
+   
+   
+   .text-primary {
     color: #5a7dee !important;
-  }
-  
-  .bg-primary {
+   }
+   
+   
+   .bg-primary {
     background-color: #5a7dee !important;
-  }
-  
-  .upcoming-list {
+   }
+   
+   
+   .upcoming-list {
     height: 170px;
     max-height: 170px;
     overflow-y: auto;
-  }
-  
-  .upcoming-item:last-child {
+   }
+   
+   
+   .upcoming-item:last-child {
     border-bottom: none !important;
-  }
-  
-  .upcoming-item:hover {
+   }
+   
+   
+   .upcoming-item:hover {
     background-color: #f8f9fa;
-  }
-  
-  /* Custom scrollbar */
-  .upcoming-list::-webkit-scrollbar {
+   }
+   
+   
+   /* Custom scrollbar */
+   .upcoming-list::-webkit-scrollbar {
     width: 6px;
-  }
-  
-  .upcoming-list::-webkit-scrollbar-track {
+   }
+   
+   
+   .upcoming-list::-webkit-scrollbar-track {
     background: #f1f1f1;
-  }
-  
-  .upcoming-list::-webkit-scrollbar-thumb {
+   }
+   
+   
+   .upcoming-list::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 3px;
-  }
-  
-  .upcoming-list::-webkit-scrollbar-thumb:hover {
+   }
+   
+   
+   .upcoming-list::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
-  
-  /* Loading spinner color */
-  .spinner-border.text-primary {
+   }
+   
+   
+   /* Loading spinner color */
+   .spinner-border.text-primary {
     color: #5a7dee !important;
-  }
-  
-  .badge {
+   }
+   
+   
+   .badge {
     font-weight: 500;
-  }
-  
-  /* Category Button Styles (new) */
-  .category-button {
+   }
+   
+   
+   /* Category Button Styles (new) */
+   .category-button {
     background: linear-gradient(45deg, #6a89cc, #b8e994);
     color: white;
     padding: 0.5rem 1rem;
@@ -835,34 +903,39 @@
     border: none;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     transition: all 0.3s ease;
-  }
-  
-  .category-button:hover {
+   }
+   
+   
+   .category-button:hover {
     background: linear-gradient(45deg, #b8e994, #6a89cc);
     color: white;
     transform: translateY(-2px);
-  }
-  
-  .category-button:focus {
+   }
+   
+   
+   .category-button:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(106, 137, 204, 0.4);
-  }
-  
-  /* Optional - Adjust the spacing in the category container */
-  .category-container {
+   }
+   
+   
+   /* Optional - Adjust the spacing in the category container */
+   .category-container {
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
-  }
-  
-  /* Update this if you want specific spacing between category buttons */
-  .d-flex.gap-2 {
+   }
+   
+   
+   /* Update this if you want specific spacing between category buttons */
+   .d-flex.gap-2 {
     gap: 12px;
-  }
-  
-  .rating-text {
+   }
+   
+   
+   .rating-text {
     font-size: 0.5rem;
     color: #6c757d;
-  }
-  </style>
-  
+   }
+   </style>
+   
