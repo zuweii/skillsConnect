@@ -199,12 +199,12 @@ async function fetchFinancialData(userId) {
       // Process finances
       const processedFinances = finances.map(finance => {
         let transactionDate;
-        if (finance.transaction_date && typeof finance.transaction_date.toDate === 'function') {
-          transactionDate = finance.transaction_date.toDate();
-        } else if (finance.transaction_date instanceof Date) {
-          transactionDate = finance.transaction_date;
+        if (finance.date && typeof finance.date.toDate === 'function') {
+          transactionDate = finance.date.toDate(); // Convert Firebase Timestamp to Date
+        } else if (finance.date instanceof Date) {
+          transactionDate = finance.date;
         } else {
-          transactionDate = new Date(finance.transaction_date);
+          transactionDate = new Date(finance.date);
         }
         return {
           amount: parseFloat(finance.amount),
