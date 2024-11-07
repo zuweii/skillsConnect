@@ -292,6 +292,7 @@
                             <p class="card-text">{{ project.description }}</p>
                             
                             <button @click="openEditModal(project, index)" class="btn btn-secondary mt-2">Edit</button>
+                            <button @click="confirmDeleteProject(project, index)" class="btn btn-danger mt-2">Delete</button>
                           </div>
                         </div>
                       </div>
@@ -394,6 +395,26 @@
         </div>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal fade show" tabindex="-1" style="display: block;" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Confirm Delete</h5>
+            <button type="button" class="btn-close" @click="showDeleteModal = false" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete this project? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="showDeleteModal = false">Cancel</button>
+            <button type="button" class="btn btn-danger" @click="deleteProject">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
@@ -438,6 +459,10 @@ export default {
       newStartTime: '',
       newEndTime: ''
     });
+
+    const showDeleteModal = ref(false);
+    const projectToDelete = ref(null);
+    const projectIndexToDelete = ref(null);
 
     // Portfolio Project Data
     const newProject = ref({
@@ -663,6 +688,32 @@ export default {
       return text.substring(0, length) + '...';
     };
 
+    
+    // Function to open the delete confirmation modal
+    
+    function confirmDeleteProject(project, index) {
+      projectToDelete.value = project;
+      projectIndexToDelete.value = index;
+      showDeleteModal.value = true;
+    }
+
+    async function deleteProject() {
+      if (projectIndexToDelete.value !== null) {
+        // Remove the project from the portfolio array in the UI
+        userProfile.value.portfolio.splice(projectIndexToDelete.value, 1);
+      
+        // Update the portfolio in the database
+        try {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
+          showDeleteModal.value = false; // Hide the modal after successful deletion
+        } catch (err) {
+          console.error('Error deleting project:', err);
+        }
+      }
+    };
+
+
     onMounted(async () => {
       const user = auth.currentUser;
       if (user) {
@@ -702,7 +753,12 @@ export default {
       openEditModal,
       handleEditImageUpload,
       submitEditProject,
-      showEditProfileModal, // Return this as well to make it available in the template
+      showEditProfileModal,
+      showDeleteModal,
+      projectToDelete,
+      projectIndexToDelete,
+      confirmDeleteProject,
+      deleteProject,
     };
   },
 };
