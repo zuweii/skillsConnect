@@ -28,7 +28,7 @@
                   </div>
                 </div>
               </div>
-              <button class="btn btn-primary btn-lg">Contact Me</button>
+              <!-- <button class="btn btn-primary btn-lg">Contact Me</button> -->
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@
         <!-- Right Column: Analytics and Portfolio -->
         <div class="col-lg-4">
           <!-- Analytics Overview Section -->
-          <div class="card shadow-sm mb-4">
+          <!-- <div class="card shadow-sm mb-4">
             <div class="card-body">
               <h3 class="card-title mb-4">Analytics Overview</h3>
               <div class="mb-3">
@@ -121,7 +121,7 @@
                 <div class="chart-placeholder rounded">Chart Placeholder</div>
               </div>
             </div>
-          </div>
+          </div> -->
 
           <!-- User Portfolio Section -->
           <div class="card shadow-sm">
