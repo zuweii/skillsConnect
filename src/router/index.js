@@ -15,6 +15,8 @@ import SignupPage from '../views/SignupPage.vue'
 import Settings from '../views/Settings.vue'
 import AllReviews from '../views/AllReviews.vue'
 import Calendar from '../views/Calendar.vue'
+import Finance from '../views/FinancePage.vue'
+import FinancePage from '../views/FinancePage.vue'
 
 
 const routes = [
@@ -66,6 +68,12 @@ const routes = [
     path: '/profile-page',
     name: 'ProfilePage',
     component: ProfilePage,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/finances-page',
+    name: 'Finance',
+    component: FinancePage,
     meta: { requiresAuth: true }
   },
   {
