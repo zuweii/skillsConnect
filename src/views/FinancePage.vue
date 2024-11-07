@@ -41,17 +41,17 @@
               <h3 class="card-title mb-4">Earnings Graph</h3>
               <div class="d-flex justify-content-between mb-4">
                 <select v-model="timeFrame" class="form-select w-auto">
-                  <option value="month">By Month</option>
                   <option value="week">By Week</option>
+                  <option value="month">By Month</option>
                 </select>
                 <!-- <select v-model="selectedClass" class="form-select w-auto">
                   <option value="All">All Classes</option>
-                  <option v-for="classItem in classesData" :key="classItem.classId" :value="classItem.title"> -->
-                    <!-- {{ classItem.title }}
+                  <option v-for="classItem in classesData" :key="classItem.classId" :value="classItem.title">
+                    {{ classItem.title }}
                   </option>
                 </select> -->
               </div>
-              <div ref="earningsGraphRef" style="height: 300px;"></div>
+              <div ref="earningsGraphRef" style="height: 350px;"></div>
             </div>
           </div>
 
@@ -59,7 +59,7 @@
           <div class="card shadow-sm mb-4">
             <div class="card-body">
               <h3 class="card-title mb-4">Earnings Summary</h3>
-              <div ref="summaryGraphRef" style="height: 300px;"></div>
+              <div ref="summaryGraphRef" style="height: 350px;"></div>
             </div>
           </div>
         </div>
@@ -143,7 +143,19 @@ const recentEarnings = computed(() => {
 
 const filteredData = computed(() => {
   if (selectedClass.value === 'All') {
-    return earningsData.value.filter(earning => earning.transactionDate instanceof Date);
+    const data = earningsData.value.filter(earning => earning.transactionDate instanceof Date);
+    
+    if (timeFrame.value === 'month') {
+      // Group data by month
+      const monthlyData = d3.group(data, d => d3.timeMonth(d.transactionDate));
+      return Array.from(monthlyData, ([date, values]) => ({
+        transactionDate: date,
+        amount: d3.sum(values, d => d.amount)
+      }));
+    } else {
+      // Weekly data (no change)
+      return data;
+    }
   } else {
     const selectedClassData = classesData.value.find(c => c.title === selectedClass.value);
     return selectedClassData ? [{ amount: selectedClassData.earnings, transactionDate: new Date() }] : [];
@@ -243,19 +255,11 @@ function drawEarningsGraph() {
   if (!earningsGraphRef.value) return;
 
   const svg = d3.select(earningsGraphRef.value);
-  svg.selectAll("*").remove(); // Clear previous chart
+  svg.selectAll("*").remove(); // clear previous chart
 
-  const containerWidth = earningsGraphRef.value.clientWidth;
-  const containerHeight = earningsGraphRef.value.clientHeight;
-
-  if (!containerWidth || !containerHeight) {
-    console.error('Container dimensions are not available');
-    return;
-  }
-
-  const margin = { top: 20, right: 30, bottom: 30, left: 60 };
-  const width = containerWidth - margin.left - margin.right;
-  const height = containerHeight - margin.top - margin.bottom;
+  const margin = { top: 40, right: 30, bottom: 50, left: 60 };
+  const width = earningsGraphRef.value.clientWidth - margin.left - margin.right;
+  const height = earningsGraphRef.value.clientHeight - margin.top - margin.bottom;
 
   const chart = svg.append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -263,21 +267,12 @@ function drawEarningsGraph() {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  if (filteredData.value.length === 0) {
-    chart.append("text")
-      .attr("x", width / 2)
-      .attr("y", height / 2)
-      .attr("text-anchor", "middle")
-      .text("No data available");
-    return;
-  }
-
   const x = d3.scaleTime()
     .domain(d3.extent(filteredData.value, d => d.transactionDate))
     .range([0, width]);
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(filteredData.value, d => d.amount)])
+    .domain([0, d3.max(filteredData.value, d => d.amount) * 1.1]) 
     .range([height, 0]);
 
   const line = d3.line()
@@ -288,15 +283,34 @@ function drawEarningsGraph() {
     .datum(filteredData.value)
     .attr("fill", "none")
     .attr("stroke", "steelblue")
-    .attr("stroke-width", 1.5)
+    .attr("stroke-width", 2)
     .attr("d", line);
+
+  // Add dots for each data point
+  chart.selectAll(".dot")
+    .data(filteredData.value)
+    .enter().append("circle")
+    .attr("class", "dot")
+    .attr("cx", d => x(d.transactionDate))
+    .attr("cy", d => y(d.amount))
+    .attr("r", 4)
+    .attr("fill", "steelblue");
 
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x));
+    .call(d3.axisBottom(x)
+      .ticks(timeFrame.value === 'month' ? d3.timeMonth.every(1) : d3.timeWeek.every(1))
+      .tickFormat(d => timeFrame.value === 'month' ? d3.timeFormat("%b %Y")(d) : d3.timeFormat("%b %d")(d)))
+    .selectAll("text")
+    .style("text-anchor", "end")
+    .attr("dx", "-.8em")
+    .attr("dy", ".15em")
+    .attr("transform", "rotate(-45)");
 
   chart.append("g")
-    .call(d3.axisLeft(y));
+    .call(d3.axisLeft(y)
+      .ticks(5)
+      .tickFormat(d => `$${d.toLocaleString()}`));
 
   chart.append("text")
     .attr("x", width / 2)
@@ -310,19 +324,11 @@ function drawSummaryGraph() {
   if (!summaryGraphRef.value) return;
 
   const svg = d3.select(summaryGraphRef.value);
-  svg.selectAll("*").remove(); // Clear previous chart
+  svg.selectAll("*").remove(); // clear previous chart
 
-  const containerWidth = summaryGraphRef.value.clientWidth;
-  const containerHeight = summaryGraphRef.value.clientHeight;
-
-  if (!containerWidth || !containerHeight) {
-    console.error('Container dimensions are not available');
-    return;
-  }
-
-  const margin = { top: 20, right: 30, bottom: 30, left: 60 };
-  const width = containerWidth - margin.left - margin.right;
-  const height = containerHeight - margin.top - margin.bottom;
+  const margin = { top: 40, right: 30, bottom: 40, left: 60 };
+  const width = summaryGraphRef.value.clientWidth - margin.left - margin.right;
+  const height = summaryGraphRef.value.clientHeight - margin.top - margin.bottom;
 
   const chart = svg.append("svg")
     .attr("width", width + margin.left + margin.right)
@@ -336,22 +342,13 @@ function drawSummaryGraph() {
     { period: 'Last Year', amount: calculateEarnings(12) }
   ];
 
-  if (summaryData.every(d => d.amount === 0)) {
-    chart.append("text")
-      .attr("x", width / 2)
-      .attr("y", height / 2)
-      .attr("text-anchor", "middle")
-      .text("No data available");
-    return;
-  }
-
   const x = d3.scaleBand()
     .range([0, width])
     .domain(summaryData.map(d => d.period))
     .padding(0.1);
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(summaryData, d => d.amount)])
+    .domain([0, d3.max(summaryData, d => d.amount) * 1.1]) 
     .range([height, 0]);
 
   chart.selectAll(".bar")
@@ -366,10 +363,14 @@ function drawSummaryGraph() {
 
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x));
+    .call(d3.axisBottom(x))
+    .selectAll("text")
+    .style("text-anchor", "middle");
 
   chart.append("g")
-    .call(d3.axisLeft(y));
+    .call(d3.axisLeft(y)
+      .ticks(5)
+      .tickFormat(d => `$${d.toLocaleString()}`));
 
   chart.append("text")
     .attr("x", width / 2)
@@ -406,7 +407,6 @@ function formatDate(date) {
 
 .container-fluid {
   max-width: 1200px;
-
 }
 
 .card {
