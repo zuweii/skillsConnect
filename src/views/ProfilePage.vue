@@ -273,10 +273,7 @@
 
                 <!-- Portfolio Uploads Tab -->
                 <div :class="{ 'active show': currentTab === 'portfolio' }" class="tab-pane fade" id="portfolio" role="tabpanel" aria-labelledby="portfolio-tab">
-                  <div v-if="!userProfile.portfolio || userProfile.portfolio.length === 0" class="text-muted text-center">
-                    No portfolio
-                  </div>
-                  <div v-else>
+                  <div v-if="userProfile.portfolio && userProfile.portfolio.length > 0">
                     <h3 class="mb-4">My Portfolio Projects</h3>
                     <div class="row row-cols-1 row-cols-md-2 g-4">
                       <div v-for="(project, index) in userProfile.portfolio" :key="index" class="col">
@@ -284,13 +281,13 @@
                           <div class="portfolio-media">
                             <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image" class="portfolio-image card-img-top">
                             <div v-if="project.youtubeLink" class="embed-responsive embed-responsive-16by9 portfolio-video">
-                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen class="embed-responsive-item"></iframe>
-                              </div>
+                              <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen class="embed-responsive-item"></iframe>
+                            </div>
                           </div>
                           <div class="card-body">
                             <h5 class="card-title">{{ project.title }}</h5>
                             <p class="card-text">{{ project.description }}</p>
-                            
+
                             <button @click="openEditModal(project, index)" class="btn btn-secondary mt-2">Edit</button>
                             <button @click="confirmDeleteProject(project, index)" class="btn btn-danger mt-2">Delete</button>
                           </div>
@@ -298,7 +295,11 @@
                       </div>
                     </div>
                   </div>
+                  <div v-else class="text-muted text-center">
+                    No portfolio
+                  </div>
                 </div>
+                
               </div>
             </div>
           </div>
