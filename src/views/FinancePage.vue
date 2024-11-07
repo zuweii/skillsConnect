@@ -17,13 +17,15 @@
           <div class="card shadow-sm gradient-border">
             <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
               <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
-                <img :src="userProfile.profile_photo" :alt="userProfile.username" class="rounded-circle profile-photo mb-3 mb-md-0 me-md-4">
+                <img :src="userProfile.profile_photo" :alt="userProfile.username"
+                  class="rounded-circle profile-photo mb-3 mb-md-0 me-md-4">
                 <div class="text-center text-md-start">
                   <h2 class="card-title mb-2">{{ userProfile.username }}'s Financial Overview</h2>
                   <div class="d-flex align-items-center justify-content-center justify-content-md-start mb-2">
-                    <span class="me-2">Total Earnings:</span>
+                    <span class="me-2">Total Earnings To Date:</span>
                     <span class="font-weight-bold">${{ totalEarnings.toFixed(2) }}</span>
                   </div>
+                  <div id="tooltip" class="tooltip" style="opacity: 0; position: absolute; pointer-events: none;"></div>
                 </div>
               </div>
             </div>
@@ -40,10 +42,12 @@
             <div class="card-body">
               <h3 class="card-title mb-4">Earnings Graph</h3>
               <div class="d-flex justify-content-between mb-4">
-                <select v-model="timeFrame" class="form-select w-auto">
-                  <option value="week">By Week</option>
-                  <option value="month">By Month</option>
-                </select>
+                <div class="d-flex justify-content-between mb-4">
+                  <select v-model="selectedTimeframe" class="form-select w-auto">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30">Last 30 Days</option>
+                  </select>
+                </div>
                 <!-- <select v-model="selectedClass" class="form-select w-auto">
                   <option value="All">All Classes</option>
                   <option v-for="classItem in classesData" :key="classItem.classId" :value="classItem.title">
@@ -72,13 +76,16 @@
               <h3 class="card-title mb-4">Quick Stats</h3>
               <ul class="list-unstyled">
                 <li class="mb-3">
-                  <strong>Total Lifetime Earnings :</strong> ${{ totalEarnings.toFixed(2) }}
+                  <strong>Current Month Earnings:</strong> ${{ currentMonthEarnings.toFixed(2) }}
+                </li>
+                <!-- <li class="mb-3">
+                  <strong>Earnings to Date: </strong> ${{ totalEarnings.toFixed(2) }}
+                </li> -->
+                <li class="mb-3">
+                  <strong> Active Classes Listed: </strong> {{ totalClasses }}
                 </li>
                 <li class="mb-3">
-                  <strong>Total Lifetime Classes:</strong> {{ totalClasses }}
-                </li>
-                <li class="mb-3">
-                  <strong>Average Earnings per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}
+                  <strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}
                 </li>
               </ul>
             </div>
@@ -89,7 +96,8 @@
             <div class="card-body">
               <h3 class="card-title mb-4">Recent Earnings</h3>
               <ul class="list-group list-group-flush">
-                <li v-for="(earning, index) in recentEarnings" :key="index" class="list-group-item d-flex justify-content-between align-items-center">
+                <li v-for="(earning, index) in recentEarnings" :key="index"
+                  class="list-group-item d-flex justify-content-between align-items-center">
                   <div>
                     <strong>${{ earning.amount.toFixed(2) }}</strong>
                     <br>
@@ -135,39 +143,61 @@ const averageEarningsPerClass = computed(() => {
   return totalClasses.value > 0 ? totalEarnings.value / totalClasses.value : 0;
 });
 
+const currentMonthEarnings = computed(() => {
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  return earningsData.value
+    .filter(earning => earning.transactionDate >= startOfMonth)
+    .reduce((sum, earning) => sum + earning.amount, 0);
+});
+
 const recentEarnings = computed(() => {
   return [...earningsData.value]
     .sort((a, b) => b.transactionDate - a.transactionDate)
     .slice(0, 5);
 });
 
+const selectedTimeframe = ref(7); // Default to last 7 days
+
 const filteredData = computed(() => {
-  if (selectedClass.value === 'All') {
-    const data = earningsData.value.filter(earning => earning.transactionDate instanceof Date);
-    
-    if (timeFrame.value === 'month') {
-      // Group data by month
-      const monthlyData = d3.group(data, d => d3.timeMonth(d.transactionDate));
-      return Array.from(monthlyData, ([date, values]) => ({
-        transactionDate: date,
-        amount: d3.sum(values, d => d.amount)
-      }));
-    } else {
-      // Weekly data (no change)
-      return data;
-    }
-  } else {
-    const selectedClassData = classesData.value.find(c => c.title === selectedClass.value);
-    return selectedClassData ? [{ amount: selectedClassData.earnings, transactionDate: new Date() }] : [];
-  }
+  const now = new Date();
+  const startDate = new Date(now);
+  startDate.setDate(now.getDate() - selectedTimeframe.value + 1); // Set start date to either 7 or 30 days ago
+
+  // Filter data to only include entries within the selected timeframe
+  const timeframeData = earningsData.value.filter(earning => earning.transactionDate >= startDate);
+
+  // Group data by day
+  const dailyData = d3.group(timeframeData, d => {
+    const day = new Date(d.transactionDate);
+    day.setHours(0, 0, 0, 0); // Set time to start of the day for consistent grouping
+    return day;
+  });
+
+  // Format the grouped data for plotting
+  return Array.from(dailyData, ([date, values]) => ({
+    transactionDate: date,
+    amount: d3.sum(values, d => d.amount)
+  })).sort((a, b) => a.transactionDate - b.transactionDate); // Sort by date
 });
 
-onMounted(refreshUserProfile);
+onMounted(async () => {
+  await refreshUserProfile();
+  drawEarningsGraph();
+});
 
-watch([timeFrame, selectedClass], async () => {
+watch([filteredData, selectedTimeframe], async () => {
   await nextTick();
   drawEarningsGraph();
-  drawSummaryGraph();
+});
+
+watch([earningsData, filteredData], async ([newEarningsData, newFilteredData]) => {
+  if (newEarningsData.length > 0 && newFilteredData.length > 0) {
+    await nextTick();
+    drawEarningsGraph();
+    drawSummaryGraph();
+  }
 });
 
 async function refreshUserProfile() {
@@ -181,6 +211,8 @@ async function refreshUserProfile() {
         userProfile.value = financialData.userProfile;
         earningsData.value = financialData.finances;
         classesData.value = financialData.classes;
+        loading.value = false;
+
         await nextTick();
         drawEarningsGraph();
         drawSummaryGraph();
@@ -252,10 +284,10 @@ async function fetchFinancialData(userId) {
 }
 
 function drawEarningsGraph() {
-  if (!earningsGraphRef.value) return;
+  if (!earningsGraphRef.value || loading.value) return;
 
   const svg = d3.select(earningsGraphRef.value);
-  svg.selectAll("*").remove(); // clear previous chart
+  svg.selectAll("*").remove(); // Clear previous chart
 
   const margin = { top: 40, right: 30, bottom: 50, left: 60 };
   const width = earningsGraphRef.value.clientWidth - margin.left - margin.right;
@@ -267,57 +299,69 @@ function drawEarningsGraph() {
     .append("g")
     .attr("transform", `translate(${margin.left},${margin.top})`);
 
-  const x = d3.scaleTime()
-    .domain(d3.extent(filteredData.value, d => d.transactionDate))
-    .range([0, width]);
+  // Define tooltip element
+  const tooltip = d3.select("#tooltip");
+
+  // Define scales
+  const x = d3.scaleBand()
+    .domain(filteredData.value.map(d => d.transactionDate))
+    .range([0, width])
+    .padding(0.2);
 
   const y = d3.scaleLinear()
-    .domain([0, d3.max(filteredData.value, d => d.amount) * 1.1]) 
+    .domain([0, d3.max(filteredData.value, d => d.amount) * 1.1])
     .range([height, 0]);
 
-  const line = d3.line()
-    .x(d => x(d.transactionDate))
-    .y(d => y(d.amount));
-
-  chart.append("path")
-    .datum(filteredData.value)
-    .attr("fill", "none")
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 2)
-    .attr("d", line);
-
-  // Add dots for each data point
-  chart.selectAll(".dot")
+  // Draw bars with hover events for tooltip
+  chart.selectAll(".bar")
     .data(filteredData.value)
-    .enter().append("circle")
-    .attr("class", "dot")
-    .attr("cx", d => x(d.transactionDate))
-    .attr("cy", d => y(d.amount))
-    .attr("r", 4)
-    .attr("fill", "steelblue");
+    .enter()
+    .append("rect")
+    .attr("class", "bar")
+    .attr("x", d => x(d.transactionDate))
+    .attr("width", x.bandwidth())
+    .attr("y", d => y(d.amount))
+    .attr("height", d => height - y(d.amount))
+    .attr("fill", "steelblue")
+    .on("mouseover", (event, d) => {
+      tooltip
+        .style("opacity", 1)
+        .html(`<strong>${d3.timeFormat("%b %d, %Y")(d.transactionDate)}</strong><br>$${d.amount.toFixed(2)}`)
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY - 28}px`);
+    })
+    .on("mousemove", (event) => {
+      tooltip
+        .style("left", `${event.pageX + 10}px`)
+        .style("top", `${event.pageY - 28}px`);
+    })
+    .on("mouseout", () => {
+      tooltip.style("opacity", 0);
+    });
 
+  // X-axis
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
-    .call(d3.axisBottom(x)
-      .ticks(timeFrame.value === 'month' ? d3.timeMonth.every(1) : d3.timeWeek.every(1))
-      .tickFormat(d => timeFrame.value === 'month' ? d3.timeFormat("%b %Y")(d) : d3.timeFormat("%b %d")(d)))
+    .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b %d")))
     .selectAll("text")
     .style("text-anchor", "end")
     .attr("dx", "-.8em")
     .attr("dy", ".15em")
     .attr("transform", "rotate(-45)");
 
+  // Y-axis
   chart.append("g")
     .call(d3.axisLeft(y)
       .ticks(5)
       .tickFormat(d => `$${d.toLocaleString()}`));
 
+  // Title
   chart.append("text")
     .attr("x", width / 2)
     .attr("y", 0 - margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
-    .text(`Earnings ${timeFrame.value === 'month' ? 'by Month' : 'by Week'}`);
+    // .text(`Daily Earnings (${selectedTimeframe.value === 7 ? "Last 7 Days" : "Last 30 Days"})`);
 }
 
 function drawSummaryGraph() {
@@ -377,7 +421,7 @@ function drawSummaryGraph() {
     .attr("y", 0 - margin.top / 2)
     .attr("text-anchor", "middle")
     .style("font-size", "16px")
-    .text("Earnings Summary");
+    // .text("Earnings Summary");
 }
 
 function calculateEarnings(months) {
@@ -403,6 +447,17 @@ function formatDate(date) {
   min-height: 100vh;
   padding-top: 2rem;
   padding-bottom: 2rem;
+}
+
+.tooltip {
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  padding: 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  pointer-events: none;
+  position: absolute;
+  text-align: center;
 }
 
 .container-fluid {
