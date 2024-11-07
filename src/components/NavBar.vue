@@ -70,9 +70,6 @@
                 <router-link class="dropdown-item" to="/profile-page">View Profile</router-link>
               </li>
               <li>
-                <router-link class="dropdown-item" to="/settings">Settings</router-link>
-              </li>
-              <li>
                 <button class="dropdown-item text-danger" @click="handleLogout">
                   Logout <i class="bi bi-box-arrow-right text-danger"></i>
                 </button>

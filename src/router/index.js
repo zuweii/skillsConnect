@@ -82,12 +82,6 @@ const routes = [
     component: SignupPage,
   },
   {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings,
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/class/:classId/reviews',
     name: 'AllReviews',
     component: AllReviews,
