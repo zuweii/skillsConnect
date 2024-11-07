@@ -106,35 +106,33 @@
           </div>
         </div>
 
-        <!-- Right Column: Analytics and Portfolio -->
+        <!-- User Portfolio Section -->
         <div class="col-lg-4">
-          <!-- Analytics Overview Section -->
-          <!-- <div class="card shadow-sm mb-4">
-            <div class="card-body">
-              <h3 class="card-title mb-4">Analytics Overview</h3>
-              <div class="mb-3">
-                <h5>New Client Status</h5>
-                <div class="chart-placeholder rounded">Chart Placeholder</div>
-              </div>
-              <div>
-                <h5>Return Client Status</h5>
-                <div class="chart-placeholder rounded">Chart Placeholder</div>
-              </div>
-            </div>
-          </div> -->
-
-          <!-- User Portfolio Section -->
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h3 class="card-title mb-4">Portfolio</h3>
-              <div class="row row-cols-1 g-4">
-                <div v-for="item in portfolio" :key="item.id" class="col">
-                  <div class="card h-100 border">
-                    <img :src="item.image" :alt="item.title" class="card-img-top"
-                      style="height: 200px; object-fit: cover;">
-                    <div class="card-body">
-                      <h5 class="card-title">{{ item.title }}</h5>
-                      <p class="card-text">{{ item.description }}</p>
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                  <h3 class="card-title mb-4">Portfolio</h3>
+                  <div v-if="portfolio.length === 0" class="text-muted text-center">
+                    No portfolio projects to display.
+                  </div>
+                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
+                    <div v-for="(project, index) in portfolio" :key="index" class="col">
+                      <div class="card h-100">
+                        <div class="portfolio-media">
+                          <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
+                            class="portfolio-image card-img-top">
+                          <div v-if="project.youtubeLink"
+                            class="embed-responsive embed-responsive-16by9 portfolio-video">
+                            <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen
+                              class="embed-responsive-item"></iframe>
+                          </div>
+                        </div>
+                        <div class="card-body">
+                          <h5 class="card-title">{{ project.title }}</h5>
+                          <p class="card-text">{{ project.description }}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
