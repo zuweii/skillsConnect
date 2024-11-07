@@ -5,23 +5,36 @@
     </div>
     <template v-else>
       <LandingNavBar v-if="isLandingPage" @google-login="handleGoogleLogin" />
-      <Navbar v-else-if="!isLoginPage && !isSignupPage" :showSearchBar="showSearchBar" />
-      <router-view @update:showSearchBar="updateShowSearchBar"></router-view>
+      <Navbar
+        v-else-if="!isLoginPage && !isSignupPage"
+        :showSearchBar="showSearchBar"
+        :classes="classes"
+        @search="handleSearch"
+      />
+      <router-view
+        @update:showSearchBar="updateShowSearchBar"
+        :searchQuery="searchQuery"
+      ></router-view>
       <Footer v-if="shouldShowFooter" />
     </template>
   </div>
-</template>
-
-<script>
-import Navbar from './components/NavBar.vue';
-import LandingNavBar from './components/LandingNavBar.vue';
-import Footer from './components/Footer.vue';
-import { auth, googleProvider } from './firebase/firebase_config';
-import { signInWithPopup } from 'firebase/auth';
-import FBInstanceAuth from './firebase/firebase_auth';
-
-export default {
-  name: 'App',
+ </template>
+ 
+ 
+ <script>
+ import { ref, onMounted } from "vue";
+ import { db } from "./firebase/firebase_config";
+ import { collection, getDocs } from "firebase/firestore";
+ import Navbar from "./components/NavBar.vue";
+ import LandingNavBar from "./components/LandingNavBar.vue";
+ import Footer from "./components/Footer.vue";
+ import { auth, googleProvider } from "./firebase/firebase_config";
+ import { signInWithPopup } from "firebase/auth";
+ import FBInstanceAuth from "./firebase/firebase_auth";
+ 
+ 
+ export default {
+  name: "App",
   components: {
     Navbar,
     LandingNavBar,
@@ -33,15 +46,54 @@ export default {
       isLoading: true,
     };
   },
+ 
+ 
+  setup() {
+    const classes = ref([]);
+    const searchQuery = ref("");
+ 
+ 
+    const fetchClasses = async () => {
+      try {
+        const classCollection = collection(db, "classes");
+        const classSnapshot = await getDocs(classCollection);
+        classes.value = classSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+      } catch (error) {
+        console.error("Error fetching classes:", error);
+      }
+    };
+ 
+ 
+    const handleSearch = (query) => {
+      searchQuery.value = query;
+    };
+ 
+ 
+    onMounted(() => {
+      fetchClasses();
+    });
+ 
+ 
+    return {
+      classes,
+      searchQuery,
+      handleSearch,
+    };
+  },
+ 
+ 
   computed: {
     isLoginPage() {
-      return this.$route.name === 'LoginPage';
+      return this.$route.name === "LoginPage";
     },
     isSignupPage() {
-      return this.$route.name === 'SignupPage';
+      return this.$route.name === "SignupPage";
     },
     isLandingPage() {
-      return this.$route.name === 'LandingPage';
+      return this.$route.name === "LandingPage";
     },
     shouldShowFooter() {
       // Show footer on all pages except the landing, login, and signup pages
@@ -57,7 +109,7 @@ export default {
         await FBInstanceAuth.waitForAuthReady();
         this.isLoading = false;
       } catch (error) {
-        console.error('Error initializing app:', error);
+        console.error("Error initializing app:", error);
         this.isLoading = false;
       }
     },
@@ -65,7 +117,7 @@ export default {
       try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
-        console.log('User logged in:', user);
+        console.log("User logged in:", user);
         // Perform any additional actions, such as storing user data or redirecting
       } catch (error) {
         console.error("Google login error:", error);
@@ -84,12 +136,13 @@ export default {
       });
     },
   },
-};
-</script>
-
-<style>
-/* Loading Overlay Styling */
-.loading-overlay {
+ };
+ </script>
+ 
+ 
+ <style>
+ /* Loading Overlay Styling */
+ .loading-overlay {
   position: fixed;
   top: 0;
   left: 0;
@@ -100,19 +153,26 @@ export default {
   justify-content: center;
   align-items: center;
   z-index: 9999;
-}
-
-.loading-spinner {
+ }
+ 
+ 
+ .loading-spinner {
   border: 4px solid #f3f3f3;
   border-top: 4px solid #3498db;
   border-radius: 50%;
   width: 40px;
   height: 40px;
   animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-</style>
+ }
+ 
+ 
+ @keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+ }
+ </style>
+ 

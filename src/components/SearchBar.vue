@@ -21,62 +21,91 @@
       </li>
     </ul>
   </div>
-</template>
-
-<script>
-export default {
-  name: 'SearchBar',
-  data() {
-    return {
-      searchQuery: '',
-      suggestions: []
-    }
+ </template>
+ 
+ 
+ <script>
+ import { ref, watch } from "vue";
+ 
+ 
+ export default {
+  name: "SearchBar",
+  props: {
+    classes: {
+      type: Array,
+      required: true,
+      default: () => [],
+    },
   },
-  methods: {
-    onInput() {
-      // Simulated API call for suggestions
-      // Replace this with actual API call when you have the backend ready
-      if (this.searchQuery.length > 2) {
-        this.suggestions = [
-          { id: 1, title: 'Sourdough Bread Baking' },
-          { id: 2, title: 'French Pastry Masterclass' },
-          { id: 3, title: 'Italian Pasta Making' }
-        ].filter(item => item.title.toLowerCase().includes(this.searchQuery.toLowerCase()))
+  emits: ["search"],
+  setup(props, { emit }) {
+    const searchQuery = ref("");
+    const suggestions = ref([]);
+ 
+ 
+    const onInput = () => {
+      if (searchQuery.value.length > 2 && Array.isArray(props.classes)) {
+        suggestions.value = props.classes
+          .filter((item) =>
+            item.title.toLowerCase().includes(searchQuery.value.toLowerCase())
+          )
+          .slice(0, 5); // Limit to 5 suggestions
       } else {
-        this.suggestions = []
+        suggestions.value = [];
       }
-    },
-    selectSuggestion(suggestion) {
-      this.searchQuery = suggestion.title
-      this.suggestions = []
-      // Implement navigation to the selected class details page
-      // this.$router.push({ name: 'ClassDetails', params: { id: suggestion.id } })
-    },
-    performSearch() {
-      // Implement search functionality
-      console.log('Searching for:', this.searchQuery)
-    }
-  }
-}
-</script>
-
-<style scoped>
-.search-bar-container {
+    };
+ 
+ 
+    const selectSuggestion = (suggestion) => {
+      searchQuery.value = suggestion.title;
+      suggestions.value = [];
+      performSearch();
+    };
+ 
+ 
+    const performSearch = () => {
+      emit("search", searchQuery.value);
+    };
+ 
+ 
+    watch(searchQuery, (newValue) => {
+      if (newValue === "") {
+        emit("search", "");
+      }
+    });
+ 
+ 
+    return {
+      searchQuery,
+      suggestions,
+      onInput,
+      selectSuggestion,
+      performSearch,
+    };
+  },
+ };
+ </script>
+ 
+ 
+ <style scoped>
+ .search-bar-container {
   position: relative;
   width: 100%;
   max-width: 700px;
-}
-
-.search-input {
+ }
+ 
+ 
+ .search-input {
   width: 100%;
   padding: 10px 40px 10px 15px;
   border: 1px solid #e0e0e0;
-  border-radius:20px;
+  border-radius: 20px;
   font-size: 16px;
   background-color: rgb(250, 250, 250);
-}
-
-.search-button {
+ }
+ 
+ 
+ .search-button {
   position: absolute;
   right: 5px;
   top: 50%;
@@ -84,9 +113,10 @@ export default {
   background: none;
   border: none;
   cursor: pointer;
-}
-
-.suggestions {
+ }
+ 
+ 
+ .suggestions {
   position: absolute;
   top: 100%;
   left: 0;
@@ -101,14 +131,20 @@ export default {
   max-height: 200px;
   overflow-y: auto;
   z-index: 1000;
-}
-
-.suggestion-item {
+ }
+ 
+ 
+ .suggestion-item {
   padding: 10px 15px;
   cursor: pointer;
-}
-
-.suggestion-item:hover {
+ }
+ 
+ 
+ .suggestion-item:hover {
   background-color: #f5f5f5;
-}
-</style>
+ }
+ </style>
+ 
+ 
+ 
+ 

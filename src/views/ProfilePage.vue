@@ -1,78 +1,384 @@
 <template>
-  <div v-if="loading" class="text-center">Loading profile...</div>
-  <div v-else-if="error" class="text-danger text-center">{{ error }}</div>
-  <div class="container" v-else>
-    <div class="profile-header text-center mb-5">
-      <img :src="userProfile.profile_photo || defaultPhoto" alt="Profile Picture" class="profile-photo mb-3" />
-      <h2 class="fw-bold">{{ userProfile.username || 'Unknown User' }}</h2>
-      <div class="average-rating mt-3">
-        <h4>Average Class Rating: <StarRating :rating="averageRating" :readOnly="true"/></h4>
+  <div class="profile-view">
+    <div v-if="loading" class="container-fluid d-flex justify-content-center align-items-center" style="height: 100vh;">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading...</span>
       </div>
     </div>
-
-    <!-- Toggle Switch Section -->
-    <div class="toggle-switches text-center mb-5">
-      <div class="toggle-container">
-        <span>View Classes You're Teaching</span>
-        <label class="switch">
-          <input type="checkbox" v-model="showPastClasses" />
-          <span class="slider round"></span>
-        </label>
-        <span>View Past Classes</span>
+    <div v-else-if="error" class="container-fluid mt-4">
+      <div class="alert alert-danger" role="alert">
+        {{ error }}
       </div>
     </div>
-
-    <!-- Display Classes Section -->
-    <div class="classes-offered">
-      <h3 class="text-center mb-4" v-if="!showPastClasses">Classes You're Teaching</h3>
-      <h3 class="text-center mb-4" v-else>Past Classes</h3>
-
-      <div v-if="!showPastClasses">
-        <div v-if="teachingClasses.length > 0" class="class-list">
-          <ClassCard v-for="cls in teachingClasses" :key="cls.id" :classData="cls" class="mb-4" />
+    <div v-else class="container-fluid px-4">
+      <!-- Profile Header -->
+      <div class="row mb-4">
+        <div class="col-12">
+          <div class="card shadow-sm gradient-border">
+            <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
+              <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
+                <img :src="userProfile.profile_photo || defaultPhoto" :alt="userProfile.username"
+                  class="rounded-circle mb-3 mb-md-0 me-md-4" style="width: 150px; height: 150px; object-fit: cover;">
+                <div class="text-center text-md-start">
+                  <h2 class="card-title mb-2">{{ userProfile.username }}</h2>
+                  <div class="d-flex align-items-center justify-content-center justify-content-md-start mb-2">
+                    <span class="me-2">Average Class Rating:</span>
+                    <StarRating :rating="userProfile.teacher_average || 0" readOnly />
+                    <span class="ms-2">({{ (userProfile.teacher_average || 0).toFixed(1) }})</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-else class="text-muted text-center">You have no classes that you're currently teaching.</div>
       </div>
 
-      <div v-else>
-        <div v-if="pastClasses.length > 0" class="class-list">
-          <ClassCard
-            v-for="pastCls in pastClasses"
-            :key="pastCls.class_id"
-            :classData="pastCls"
-            :showReviewButton="true"
-            class="mb-4"
-          />
+      <div class="row">
+        <!-- Left Column: Classes and Reviews -->
+        <div class="col-lg-8 mb-4">
+          <!-- Tabs Section -->
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'student'" :class="{ active: currentTab === 'student' }" class="nav-link"
+                    id="student-tab" data-bs-toggle="tab" data-bs-target="#student" type="button" role="tab"
+                    aria-controls="student" aria-selected="true">Upcoming Classes as Student</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'teaching'" :class="{ active: currentTab === 'teaching' }" class="nav-link"
+                    id="teaching-tab" data-bs-toggle="tab" data-bs-target="#teaching" type="button" role="tab"
+                    aria-controls="teaching" aria-selected="false">Classes Listed by You</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'review'" :class="{ active: currentTab === 'review' }" class="nav-link"
+                    id="review-tab" data-bs-toggle="tab" data-bs-target="#review" type="button" role="tab"
+                    aria-controls="review" aria-selected="false">Classes to Review</button>
+                </li>
+              </ul>
+
+              <div class="tab-content mt-4" id="profileTabsContent">
+                <!-- Upcoming Classes as Student -->
+                <div :class="{ 'active show': currentTab === 'student' }" class="tab-pane fade" id="student"
+                  role="tabpanel" aria-labelledby="student-tab">
+                  <div class="row mb-3">
+                    <label for="studentFilterType" class="form-label">Filter by:</label>
+                    <div class="col">
+                      
+                      <select v-model="studentFilterType" id="studentFilterType" class="form-select">
+                        <option value="day">Day</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                      </select>
+                    </div>
+                    <div class="col">
+                      <input v-if="studentFilterType === 'day'" type="date" v-model="studentFilterValue"
+                        class="form-control ">
+                      <input v-if="studentFilterType === 'month'" type="month" v-model="studentFilterValue"
+                        class="form-control ">
+                      <input v-if="studentFilterType === 'year'" type="number" v-model="studentFilterValue"
+                        class="form-control " placeholder="Enter year">
+                    </div>
+
+
+                  </div>
+                  <div v-if="filteredUpcomingClassesAsStudent.length === 0" class="text-muted text-center">
+                    No upcoming classes as student.
+                  </div>
+                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
+                    <div v-for="cls in filteredUpcomingClassesAsStudent" :key="cls.id"
+                      class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                      <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-img-wrapper">
+                          <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
+                          <div class="card-img-overlay-top">
+                            <span class="badge bg-primary">{{ cls.category }}</span>
+                          </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
+                          </div>
+                          <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
+                          <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                              <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                              <span class="badge bg-light text-dark">
+                                <i class="bi bi-people-fill me-1"></i>
+                                {{ cls.max_capacity - cls.current_enrollment }} spots left
+                              </span>
+                            </div>
+
+                            <router-link :to="{ name: 'ClassDetails', params: { id: cls.id } }"
+                              class="custom-button w-100">
+                              Class Details
+                            </router-link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Classes Listed by You -->
+                <div :class="{ 'active show': currentTab === 'teaching' }" class="tab-pane fade" id="teaching"
+                  role="tabpanel" aria-labelledby="teaching-tab">
+                  <div class="row mb-3">
+                    <label for="studentFilterType" class="form-label">Filter by:</label>
+                    <div class="col">
+                      
+                      <select v-model="studentFilterType" id="studentFilterType" class="form-select">
+                        <option value="day">Day</option>
+                        <option value="month">Month</option>
+                        <option value="year">Year</option>
+                      </select>
+                    </div>
+                    <div class="col">
+                      <input v-if="studentFilterType === 'day'" type="date" v-model="studentFilterValue"
+                        class="form-control ">
+                      <input v-if="studentFilterType === 'month'" type="month" v-model="studentFilterValue"
+                        class="form-control ">
+                      <input v-if="studentFilterType === 'year'" type="number" v-model="studentFilterValue"
+                        class="form-control " placeholder="Enter year">
+                    </div>
+
+
+                  </div>
+                  <div v-if="filteredTeachingClasses.upcoming.length === 0 && filteredTeachingClasses.past.length === 0"
+                    class="text-muted text-center">
+                    No classes listed by you.
+                  </div>
+                  <div v-else>
+                    <h4>Upcoming/Ongoing Classes</h4>
+                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
+                      <div v-for="cls in filteredTeachingClasses.upcoming" :key="cls.id"
+                        class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                        <div class="card shadow-sm h-100 hover-card">
+                          <div class="card-img-wrapper">
+                            <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
+                            <div class="card-img-overlay-top">
+                              <span class="badge bg-primary">{{ cls.category }}</span>
+                            </div>
+                          </div>
+                          <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                              <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
+                            <div class="mt-auto">
+                              <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                                <span class="badge bg-light text-dark">
+                                  <i class="bi bi-people-fill me-1"></i>
+                                  {{ cls.max_capacity - cls.current_enrollment }} spots left
+                                </span>
+                              </div>
+                              <router-link :to="{ name: 'ListClass', params: { classId: cls.id } }"
+                                class="custom-button w-100">
+                                Edit Class Listing
+                              </router-link>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <h4>Past Classes</h4>
+                    <div class="row row-cols-1 row-cols-md-2 g-4">
+                      <div v-for="cls in filteredTeachingClasses.past" :key="cls.id"
+                        class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                        <div class="card shadow-sm h-100 hover-card">
+                          <div class="card-img-wrapper">
+                            <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
+                            <div class="card-img-overlay-top">
+                              <span class="badge bg-primary">{{ cls.category }}</span>
+                            </div>
+                          </div>
+                          <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                              <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
+                            <div class="mt-auto">
+                              <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                                <span class="badge bg-light text-dark">
+                                  <i class="bi bi-people-fill me-1"></i>
+                                  {{ cls.current_enrollment }} enrolled
+                                </span>
+                              </div>
+                              <button @click="openRelistModal(cls)" class="custom-button w-100">Relist Class</button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Classes to Review -->
+                <div :class="{ 'active show': currentTab === 'review' }" class="tab-pane fade" id="review" role="tabpanel"
+                  aria-labelledby="review-tab">
+                  <div v-if="classesToReview.length === 0" class="text-muted text-center">
+                    No classes to review.
+                  </div>
+                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
+                    <div v-for="cls in classesToReview" :key="cls.id" class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                      <div class="card shadow-sm h-100 hover-card">
+                        <div class="card-img-wrapper">
+                          <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
+                          <div class="card-img-overlay-top">
+                            <span class="badge bg-primary">{{ cls.category }}</span>
+                          </div>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
+                          </div>
+                          <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
+                          <div class="mt-auto">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                              <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                              <span class="badge bg-light text-dark">
+                                <i class="bi bi-people-fill me-1"></i>
+                                {{ cls.current_enrollment }} enrolled
+                              </span>
+                            </div>
+                            <router-link :to="{ name: 'ReviewsPage', params: { classId: cls.id } }"
+                              class="custom-button w-100">
+                              Review Class
+                            </router-link>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        <div v-else class="text-muted text-center">You have no past classes.</div>
+
+        <!-- Right Column: Analytics and Portfolio -->
+        <div class="col-lg-4">
+
+          <!-- User Portfolio Section -->
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <h3 class="card-title mb-4">Portfolio</h3>
+              <div class="row row-cols-1 g-4">
+                <div v-for="(item, index) in userProfile.portfolio?.project_images || []" :key="index" class="col">
+                  <div class="card h-100 border">
+                    <img :src="item.image" :alt="item.title" class="card-img-top"
+                      style="height: 200px; object-fit: cover;">
+                    <div class="card-body">
+                      <h5 class="card-title">{{ item.title }}</h5>
+                      <p class="card-text">{{ item.description }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+
+    <div class="modal fade" id="relistModal" tabindex="-1" aria-labelledby="relistModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="relistModalLabel">Relist Class</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitRelist">
+            <div class="mb-3">
+              <label for="newStartDate" class="form-label">New Start Date</label>
+              <input type="date" class="form-control" id="newStartDate" v-model="relistData.newStartDate" required>
+            </div>
+            <div class="mb-3">
+              <label for="newStartTime" class="form-label">New Start Time</label>
+              <input type="time" class="form-control" id="newStartTime" v-model="relistData.newStartTime" required>
+            </div>
+            <div class="mb-3">
+              <label for="newEndTime" class="form-label">New End Time</label>
+              <input type="time" class="form-control" id="newEndTime" v-model="relistData.newEndTime" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Relist Class</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 </template>
 
 <script>
-import ClassCard from '../components/ClassCard.vue';
-import StarRating from '../components/StarRating.vue';
-import { ref, onMounted } from 'vue';
-import { doc, getDoc } from 'firebase/firestore';
+import { ref, onMounted, computed } from 'vue';
+import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
+import { Modal } from 'bootstrap';
+import StarRating from '../components/StarRating.vue';
 
 export default {
   components: {
-    ClassCard,
     StarRating,
   },
   setup() {
     const auth = getAuth();
-    const userProfile = ref({}); // Initialize as an empty object
-    const pastClasses = ref([]);
+    const userProfile = ref({});
+    const upcomingClassesAsStudent = ref([]);
     const teachingClasses = ref([]);
+    const classesToReview = ref([]);
     const loading = ref(true);
     const error = ref(null);
-    const averageRating = ref(0);
-    const showPastClasses = ref(false);
-    const defaultPhoto = ref('../assets/default-profile.png'); // Default image path
+    const currentTab = ref('student');
+    const defaultPhoto = ref('../assets/default-profile.png');
+
+    const studentFilterType = ref('day');
+    const studentFilterValue = ref('');
+    const teachingFilterType = ref('day');
+    const teachingFilterValue = ref('');
+
+    const relistData = ref({
+      classId: null,
+      newStartDate: '',
+      newStartTime: '',
+      newEndTime: ''
+    });
+
+    const filteredUpcomingClassesAsStudent = computed(() => {
+      return filterClasses(upcomingClassesAsStudent.value, studentFilterType.value, studentFilterValue.value);
+    });
+
+    const filteredTeachingClasses = computed(() => {
+      const now = new Date();
+      const filtered = filterClasses(teachingClasses.value, teachingFilterType.value, teachingFilterValue.value);
+      return {
+        upcoming: filtered.filter(cls => new Date(cls.end_time.toDate()) > now),
+        past: filtered.filter(cls => new Date(cls.end_time.toDate()) <= now)
+      };
+    });
+
+    const filterClasses = (classes, filterType, filterValue) => {
+      if (!filterValue) return classes;
+      return classes.filter(cls => {
+        const classDate = cls.start_date.toDate();
+        switch (filterType) {
+          case 'day':
+            return classDate.toDateString() === new Date(filterValue).toDateString();
+          case 'month':
+            const [year, month] = filterValue.split('-');
+            return classDate.getFullYear() === parseInt(year) && classDate.getMonth() === parseInt(month) - 1;
+          case 'year':
+            return classDate.getFullYear() === parseInt(filterValue);
+          default:
+            return true;
+        }
+      });
+    };
 
     const fetchUserProfile = async (userID) => {
       try {
@@ -80,44 +386,110 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = userDoc.data();
 
-          // Retrieve past classes from pending_reviews
-          pastClasses.value = (await Promise.all(
-            (userProfile.value.pending_reviews || []).map(async (docId) => {
-              const classDoc = await getDoc(doc(db, 'classes', docId));
-              return classDoc.exists() ? { class_id: classDoc.id, ...classDoc.data() } : null;
-            })
-          )).filter(cls => cls !== null);
+          const studentClassesQuery = query(
+            collection(db, 'classes'),
+            where('student_ids', 'array-contains', userID)
+          );
+          const studentClassesSnapshot = await getDocs(studentClassesQuery);
+          upcomingClassesAsStudent.value = studentClassesSnapshot.docs
+            .map(doc => ({ id: doc.id, ...doc.data() }))
+            .filter(cls => new Date(cls.end_time.toDate()) > new Date());
 
-          // Retrieve classes you're teaching from upcoming_classes_as_teacher
-          teachingClasses.value = (await Promise.all(
-            (userProfile.value.upcoming_classes_as_teacher || []).map(async (classId) => {
+          const teachingClassesQuery = query(
+            collection(db, 'classes'),
+            where('teacher_username', '==', userID)
+          );
+          const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
+          teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+          classesToReview.value = await Promise.all(
+            (userProfile.value.pending_reviews || []).map(async (classId) => {
               const classDoc = await getDoc(doc(db, 'classes', classId));
               return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
             })
-          )).filter(cls => cls !== null);
-
-          // Calculate average rating based on teaching classes
-          let totalRatings = 0;
-          let ratedClassesCount = 0;
-          teachingClasses.value.forEach((cls) => {
-            if (cls && typeof cls.ratings_average === 'number') {
-              totalRatings += cls.ratings_average;
-              ratedClassesCount++;
-            }
-          });
-          averageRating.value = ratedClassesCount > 0 ? totalRatings / ratedClassesCount : 0;
-        } else {
-          error.value = 'User profile not found.';
+          );
+          classesToReview.value = classesToReview.value.filter(cls => cls !== null);
         }
       } catch (err) {
-        error.value = `Error: ${err.message}`;
+        error.value = 'Failed to load user profile. Please try again later.';
+        console.error('Error fetching user profile:', err);
       } finally {
         loading.value = false;
       }
     };
 
-    const refreshUserProfile = async () => {
-      loading.value = true;
+    const openRelistModal = (cls) => {
+      relistData.value.classId = cls.id;
+      const modal = new Modal(document.getElementById('relistModal'));
+      modal.show();
+    };
+
+    const submitRelist = async () => {
+      try {
+        const userId = auth.currentUser.uid;
+        const classRef = doc(db, 'classes', relistData.value.classId);
+
+        const startDate = new Date(`${relistData.value.newStartDate}T${relistData.value.newStartTime}`);
+        const endTime = new Date(`${relistData.value.newStartDate}T${relistData.value.newEndTime}`);
+        const completionDate = new Date(startDate);
+        const classData = await getDoc(classRef);
+        const numberOfLessons = classData.exists() ? classData.data().number_of_lessons : 1;
+        completionDate.setDate(completionDate.getDate() + ((numberOfLessons - 1) * 7));
+
+        await updateDoc(classRef, {
+          start_date: startDate,
+          start_time: startDate,
+          end_time: endTime,
+          completion_date: completionDate,
+        });
+
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const postedClasses = userData.posted_classes || [];
+
+          const classIndex = postedClasses.findIndex(postedClass => postedClass.class_id === relistData.value.classId);
+
+          if (classIndex !== -1) {
+            postedClasses[classIndex].start_date = startDate;
+            postedClasses[classIndex].start_time = startDate;
+            postedClasses[classIndex].end_time = endTime;
+            postedClasses[classIndex].completion_date = completionDate;
+
+            await updateDoc(userRef, { posted_classes: postedClasses });
+          }
+        }
+
+        const modal = Modal.getInstance(document.getElementById('relistModal'));
+        modal.hide();
+        await fetchUserProfile(auth.currentUser.uid);
+      } catch (err) {
+        console.error('Error relisting class:', err);
+      }
+    };
+
+    const calculateCompletionDate = (startDate, numberOfLessons) => {
+      const completionDate = new Date(startDate);
+      completionDate.setDate(completionDate.getDate() + ((numberOfLessons - 1) * 7));
+      return completionDate;
+    };
+
+    const formatDate = (date) => {
+      return date.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    };
+
+    const formatTime = (time) => {
+      return time.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const truncateText = (text, length) => {
+      if (text.length <= length) return text;
+      return text.substring(0, length) + '...';
+    };
+
+    onMounted(async () => {
       const user = auth.currentUser;
       if (user) {
         await fetchUserProfile(user.uid);
@@ -125,119 +497,152 @@ export default {
         error.value = "User not authenticated";
         loading.value = false;
       }
-    };
-
-    onMounted(refreshUserProfile);
+    });
 
     return {
       userProfile,
-      pastClasses,
+      upcomingClassesAsStudent,
       teachingClasses,
+      classesToReview,
       loading,
       error,
-      averageRating,
-      showPastClasses,
+      currentTab,
       defaultPhoto,
+      studentFilterType,
+      studentFilterValue,
+      teachingFilterType,
+      teachingFilterValue,
+      filteredUpcomingClassesAsStudent,
+      filteredTeachingClasses,
+      openRelistModal,
+      relistData,
+      submitRelist,
+      formatDate,
+      formatTime,
+      truncateText,
     };
   },
 };
 </script>
 
 <style scoped>
-.container {
-  max-width: 800px;
-  padding-top: 50px;
-  margin: 0 auto;
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+@import url('https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css');
+
+.profile-view {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  padding-top: 2rem;
+  padding-bottom: 2rem;
 }
 
-.profile-header {
-  margin-bottom: 20px;
+.container-fluid {
+  max-width: 1400px;
 }
 
-.profile-photo {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid #ddd;
+.btn-primary {
+  background-color: #5a7dee;
+  border-color: #5a7dee;
 }
 
-.toggle-container {
+.btn-primary:hover,
+.btn-primary:focus {
+  background-color: #4e6dd2;
+  border-color: #4e6dd2;
+}
+
+.card {
+  border: none;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.chart-placeholder {
+  height: 200px;
+  background-color: #e9ecef;
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 15px;
-  margin-top: 20px;
+  align-items: center;
+  color: #6c757d;
 }
 
-.switch {
+.text-primary {
+  color: #5a7dee !important;
+}
+
+.class-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  object-position: center;
+}
+
+.gradient-border {
   position: relative;
-  display: inline-block;
-  width: 60px;
-  height: 34px;
+  background: linear-gradient(white, white) padding-box,
+    linear-gradient(45deg, #5a7dee, #4e6dd2) border-box;
+  border: 1px solid transparent;
+  border-radius: 0.375rem;
 }
 
-.switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
+.hover-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
 }
 
-.slider {
+.card-img-wrapper {
+  position: relative;
+}
+
+.card-img-overlay-top {
   position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: .4s;
-  border-radius: 34px;
+  top: 1rem;
+  left: 1rem;
+  z-index: 1;
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px;
-  width: 26px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: .4s;
-  border-radius: 50%;
+h2,
+h3,
+h4,
+h5 {
+  font-weight: 600;
 }
 
-input:checked + .slider {
-  background-color: #4CAF50;
-}
-
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-
-.classes-offered {
-  margin-top: 30px;
-}
-
-.class-list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 768px) {
-  .class-list {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (min-width: 1200px) {
-  .class-list {
-    grid-template-columns: 1fr 1fr 1fr;
-  }
+.card-title {
+  font-size: 1.25rem;
+  color: #333;
 }
 
 .text-muted {
   color: #6c757d !important;
+}
+
+.bg-primary {
+  background-color: #5a7dee !important;
+}
+
+.custom-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  background-color: #5a7dee;
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.custom-button:hover {
+  background-color: #4e6dd2;
+  color: white;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 767.98px) {
+  .card-body {
+    padding: 1rem;
+  }
 }
 </style>
