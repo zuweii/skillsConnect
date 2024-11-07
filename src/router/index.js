@@ -14,6 +14,7 @@ import ReviewsPage from '../views/ReviewsPage.vue'
 import SignupPage from '../views/SignupPage.vue'
 import Settings from '../views/Settings.vue'
 import AllReviews from '../views/AllReviews.vue'
+import Calendar from '../views/Calendar.vue'
 
 
 const routes = [
@@ -81,15 +82,15 @@ const routes = [
     component: SignupPage,
   },
   {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings,
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/class/:classId/reviews',
     name: 'AllReviews',
     component: AllReviews,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: Calendar,
     meta: { requiresAuth: true }
   }
 ]

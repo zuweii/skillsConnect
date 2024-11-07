@@ -4,32 +4,52 @@
       <div class="logo-container">
         <img src="../assets/logo.png" alt="SkillsConnect Logo" class="logo" />
       </div>
-      <p class="login-instruction">Log in. Connect. Share your skills!</p>
       
-      <!-- Google Login Button -->
-      <button @click="handleGoogleLogin" class="btn btn-google btn-block">
-        <i class="bi bi-google me-2"></i> Login with Google
-      </button>
-      
-      <div class="divider">or</div>
+      <p class="login-instruction">Log in to connect and share your skills!</p>
 
       <form @submit.prevent="handleLogin">
         <div class="form-group">
-          <input type="email" v-model="email" placeholder="Email" required class="form-control" />
+          <label for="email">Email</label>
+          <input type="email" id="email" v-model="email" required class="form-control" />
         </div>
         <div class="form-group">
-          <input :type="showPassword ? 'text' : 'password'" v-model="password" placeholder="Password" required class="form-control" />
-        </div>
-        <div class="form-check">
-          <input type="checkbox" id="showPassword" v-model="showPassword" class="form-check-input" />
-          <label for="showPassword" class="form-check-label">Show Password</label>
+          <label for="password">Password</label>
+          <div class="password-input">
+            <input :type="showPassword ? 'text' : 'password'" id="password" v-model="password" required class="form-control" />
+            <button type="button" @click="togglePassword" class="password-toggle">
+              <i :class="showPassword ? 'bi bi-eye-slash' : 'bi bi-eye'"></i>
+            </button>
+          </div>
         </div>
         <button type="submit" class="btn btn-primary btn-block" :disabled="isLoading">
-          {{ isLoading ? 'Logging in...' : 'Login' }}
+          {{ isLoading ? 'Logging in...' : 'Log in' }}
         </button>
         <p v-if="error" class="error-message">{{ error }}</p>
       </form>
-      <p class="signup-link text-center mt-4">
+
+      <div class="divider">
+        <span>or</span>
+      </div>
+
+      <!-- Google Sign-In Button -->
+      <button @click="handleGoogleLogin" class="gsi-material-button">
+        <div class="gsi-material-button-state"></div>
+        <div class="gsi-material-button-content-wrapper">
+          <div class="gsi-material-button-icon">
+            <svg version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" xmlns:xlink="http://www.w3.org/1999/xlink" style="display: block;">
+              <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"></path>
+              <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"></path>
+              <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"></path>
+              <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"></path>
+              <path fill="none" d="M0 0h48v48H0z"></path>
+            </svg>
+          </div>
+          <span class="gsi-material-button-contents">Sign in with Google</span>
+          <span style="display: none;">Sign in with Google</span>
+        </div>
+      </button>
+
+      <p class="signup-link">
         Don't have an account? <router-link to="/signup">Sign up</router-link>
       </p>
     </div>
@@ -39,9 +59,8 @@
 <script>
 import { ref, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider, db } from "../firebase/firebase_config";
 import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "../firebase/firebase_config";
 import FBInstanceAuth from "../firebase/firebase_auth";
 
 export default {
@@ -158,6 +177,10 @@ export default {
       }
     };
 
+    const togglePassword = () => {
+      showPassword.value = !showPassword.value;
+    };
+
     return {
       email,
       password,
@@ -165,7 +188,8 @@ export default {
       error,
       isLoading,
       handleLogin,
-      handleGoogleLogin
+      handleGoogleLogin,
+      togglePassword
     };
   }
 };
@@ -188,54 +212,93 @@ export default {
 
 .login-card {
   background-color: white;
-  padding: 3rem;
+  padding: 2rem;
   border-radius: 12px;
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 450px;
+  max-width: 400px;
   max-height: 90vh;
   overflow-y: auto;
 }
 
 .logo-container {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
 }
 
 .logo {
-  max-width: 250px;
+  max-width: 200px;
   height: auto;
+}
+
+.login-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  color: #333;
 }
 
 .login-instruction {
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 1.5rem;
   color: #666;
-  font-size: 1rem;
+  font-size: 0.9rem;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
 }
 
 .form-control {
   width: 100%;
-  padding: 0.7rem;
+  padding: 0.75rem;
   border: 1px solid #ced4da;
   border-radius: 6px;
   font-size: 1rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
-.form-check {
-  margin-bottom: 1.5rem;
-  font-size: 1rem;
+.form-control:focus {
+  border-color: #5a7dee;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(90, 125, 238, 0.25);
+}
+
+.password-input {
+  position: relative;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #666;
 }
 
 .btn-primary {
   background-color: #5a7dee;
   border-color: #5a7dee;
-  padding: 0.7rem;
-  font-size: 1.1rem;
+  padding: 0.75rem;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+}
+
+.btn-primary:hover, .btn-primary:focus {
+  background-color: #4e6dd2;
+  border-color: #4e6dd2;
 }
 
 .btn-block {
@@ -243,29 +306,153 @@ export default {
   width: 100%;
 }
 
-.btn-google {
-  background-color: #5a7dee;
-  border-color: #5a7dee;
-  color: white;
-  margin-bottom: 1rem;
-  font-size: 1.1rem;
-}
-
-.btn-google:hover {
-  background-color: #4e6dd2;
-  border-color: #4e6dd2;
-}
-
 .divider {
+  display: flex;
+  align-items: center;
   text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #ced4da;
+}
+
+.divider span {
+  padding: 0 0.5rem;
+  color: #6c757d;
   font-size: 0.9rem;
-  color: #666;
-  margin: 1rem 0;
 }
 
 .error-message {
-  color: red;
+  color: #dc3545;
   text-align: center;
   margin-top: 1rem;
+  font-size: 0.9rem;
+}
+
+.signup-link {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.signup-link a {
+  color: #5a7dee;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.signup-link a:hover {
+  text-decoration: underline;
+}
+
+/* Google Sign-In Button Styles */
+.gsi-material-button {
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  -webkit-appearance: none;
+  background-color: WHITE;
+  background-image: none;
+  border: 1px solid #747775;
+  -webkit-border-radius: 4px;
+  border-radius: 4px;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  color: #1f1f1f;
+  cursor: pointer;
+  font-family: 'Roboto', arial, sans-serif;
+  font-size: 14px;
+  height: 40px;
+  letter-spacing: 0.25px;
+  outline: none;
+  overflow: hidden;
+  padding: 0 12px;
+  position: relative;
+  text-align: center;
+  -webkit-transition: background-color .218s, border-color .218s, box-shadow .218s;
+  transition: background-color .218s, border-color .218s, box-shadow .218s;
+  vertical-align: middle;
+  white-space: nowrap;
+  width: 100%;
+  max-width: 400px;
+  min-width: min-content;
+  margin-top: 1rem;
+}
+
+.gsi-material-button .gsi-material-button-icon {
+  height: 20px;
+  margin-right: 12px;
+  min-width: 20px;
+  width: 20px;
+}
+
+.gsi-material-button .gsi-material-button-content-wrapper {
+  -webkit-align-items: center;
+  align-items: center;
+  display: flex;
+  -webkit-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  height: 100%;
+  justify-content: space-between;
+  position: relative;
+  width: 100%;
+}
+
+.gsi-material-button .gsi-material-button-contents {
+  -webkit-flex-grow: 1;
+  flex-grow: 1;
+  font-family: 'Roboto', arial, sans-serif;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: top;
+}
+
+.gsi-material-button .gsi-material-button-state {
+  -webkit-transition: opacity .218s;
+  transition: opacity .218s;
+  bottom: 0;
+  left: 0;
+  opacity: 0;
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.gsi-material-button:disabled {
+  cursor: default;
+  background-color: #ffffff61;
+  border-color: #1f1f1f1f;
+}
+
+.gsi-material-button:disabled .gsi-material-button-contents {
+  opacity: 38%;
+}
+
+.gsi-material-button:disabled .gsi-material-button-icon {
+  opacity: 38%;
+}
+
+.gsi-material-button:not(:disabled):active .gsi-material-button-state, 
+.gsi-material-button:not(:disabled):focus .gsi-material-button-state {
+  background-color: #303030;
+  opacity: 12%;
+}
+
+.gsi-material-button:not(:disabled):hover {
+  -webkit-box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+  box-shadow: 0 1px 2px 0 rgba(60, 64, 67, .30), 0 1px 3px 1px rgba(60, 64, 67, .15);
+}
+
+.gsi-material-button:not(:disabled):hover .gsi-material-button-state {
+  background-color: #303030;
+  opacity: 8%;
 }
 </style>
