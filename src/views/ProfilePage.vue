@@ -26,7 +26,7 @@
                     <StarRating :rating="userProfile.teacher_average || 0" readOnly />
                     <span class="ms-2">({{ (userProfile.teacher_average || 0).toFixed(1) }})</span>
                   </div>
-                  <button @click="showEditProfileModal = true" class="btn btn-primary">
+                  <button @click="showEditProfileModal = true" class="btn btn-primary position-absolute top-0 end-0 m-3">
                     Edit Profile Settings
                   </button>
                 
@@ -465,7 +465,6 @@ export default {
     const projectToDelete = ref(null);
     const projectIndexToDelete = ref(null);
 
-    // Portfolio Project Data
     const newProject = ref({
       title: '',
       description: '',
@@ -478,19 +477,16 @@ export default {
 
       const project = { ...newProject.value };
 
-      // Ensure portfolio is an array
       if (!Array.isArray(userProfile.value.portfolio)) {
         userProfile.value.portfolio = [];
       }
 
-      // Add the new project to the portfolio
       userProfile.value.portfolio.push(project);
     
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
-        // Reset the form after successful addition
         newProject.value = { title: '', description: '', youtubeLink: '', imageUrl: '' };
       } catch (err) {
         console.error('Error updating portfolio:', err);
@@ -534,14 +530,12 @@ export default {
     const submitEditProject = async () => {
       if (editIndex.value === null) return;
 
-      // Update the project in the portfolio array
       userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
       
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
-        // Close the modal
         const modal = Modal.getInstance(document.getElementById('editPostModal'));
         modal.hide();
       } catch (err) {
@@ -586,29 +580,23 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = userDoc.data();
 
-          const studentClassesQuery = query(
-            collection(db, 'classes'),
-            where('student_ids', 'array-contains', userID)
-          );
-          const studentClassesSnapshot = await getDocs(studentClassesQuery);
-          upcomingClassesAsStudent.value = studentClassesSnapshot.docs
-            .map(doc => ({ id: doc.id, ...doc.data() }))
-            .filter(cls => new Date(cls.end_time.toDate()) > new Date());
+          // Fetch upcoming classes where the user is a student
+          if (userProfile.value.upcoming_classes_as_student.length > 0) {
+            const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId => 
+              getDoc(doc(db, 'classes', classId))
+            );
 
-          const teachingClassesQuery = query(
-            collection(db, 'classes'),
-            where('teacher_username', '==', userID)
-          );
-          const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
-          teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const upcomingClassesSnapshots = await Promise.all(upcomingClassesPromises);
 
-          classesToReview.value = await Promise.all(
-            (userProfile.value.pending_reviews || []).map(async (classId) => {
-              const classDoc = await getDoc(doc(db, 'classes', classId));
-              return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
-            })
-          );
-          classesToReview.value = classesToReview.value.filter(cls => cls !== null);
+            // Map and filter the classes to get only future classes
+            upcomingClassesAsStudent.value = upcomingClassesSnapshots
+              .filter(snapshot => snapshot.exists)
+              .map(snapshot => ({ id: snapshot.id, ...snapshot.data() }))
+              .filter(cls => new Date(cls.end_time.toDate()) > new Date());
+
+          } else {
+            console.log("No upcoming classes found in user's upcoming_classes_as_student array.");
+          }
         }
       } catch (err) {
         error.value = 'Failed to load user profile. Please try again later.';
@@ -617,6 +605,7 @@ export default {
         loading.value = false;
       }
     };
+
 
     const openRelistModal = (cls) => {
       relistData.value.classId = cls.id;
@@ -689,9 +678,6 @@ export default {
       return text.substring(0, length) + '...';
     };
 
-    
-    // Function to open the delete confirmation modal
-    
     function confirmDeleteProject(project, index) {
       projectToDelete.value = project;
       projectIndexToDelete.value = index;
@@ -700,20 +686,17 @@ export default {
 
     async function deleteProject() {
       if (projectIndexToDelete.value !== null) {
-        // Remove the project from the portfolio array in the UI
         userProfile.value.portfolio.splice(projectIndexToDelete.value, 1);
       
-        // Update the portfolio in the database
         try {
           const userRef = doc(db, 'users', auth.currentUser.uid);
           await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
-          showDeleteModal.value = false; // Hide the modal after successful deletion
+          showDeleteModal.value = false;
         } catch (err) {
           console.error('Error deleting project:', err);
         }
       }
     };
-
 
     onMounted(async () => {
       const user = auth.currentUser;
@@ -764,6 +747,7 @@ export default {
   },
 };
 </script>
+
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
