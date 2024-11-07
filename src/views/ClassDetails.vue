@@ -113,7 +113,7 @@
       </div>
     </div>
 
-    <div class="card mt-4 shadow">
+    <div class="card my-4 shadow">
       <div class="card-body">
         <h3 class="card-title fw-bold">Meet The Instructor</h3>
         <div class="row my-4">
@@ -132,8 +132,8 @@
       </div>
       <div class="col-md-8">
         <h5 class="text-colour">Reviews for {{ classData.title }}</h5>
-        <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
-          style="height: 200px;">
+        <div v-if="classData.reviews.length === 0" class="card shadow-sm mb-3 text-muted d-flex justify-content-center align-items-center"
+          style="height: 200px; background-color: rgb(246, 246, 246);">
           No reviews yet
         </div>
         <!-- Reviews section -->

@@ -32,6 +32,13 @@
         </div>
 
         <ul class="navbar-nav ms-auto align-items-center">
+          <!-- Calendar link -->
+          <li class="nav-item my-2 my-lg-0 mx-2">
+            <router-link class="nav-link d-flex align-items-center" to="/calendar">
+              <i class="bi bi-calendar me-2"></i> Calendar
+            </router-link>
+          </li>
+
           <!-- Finances link -->
           <li class="nav-item my-2 my-lg-0 mx-2">
             <router-link class="nav-link d-flex align-items-center" to="/finances-page">

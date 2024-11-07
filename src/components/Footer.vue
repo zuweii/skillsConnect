@@ -1,5 +1,5 @@
 <template>
-  <footer class="py-5 mt-5">
+  <footer class="py-5">
     <div class="container">
       <div class="text-center mb-4">
         <h2 class="h4 mb-3"><img src="../assets/logo.png" alt="logo" class="logo"></h2>
