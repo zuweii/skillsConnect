@@ -161,7 +161,7 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
-    const classId = route.params.classId; // Defined here so it's accessible globally within setup
+    let classId = route.params.classId; // Defined here so it's accessible globally within setup
     const isEditMode = ref(Boolean(classId));
 
     const formData = ref({
