@@ -594,6 +594,20 @@ export default {
               .map(snapshot => ({ id: snapshot.id, ...snapshot.data() }))
               .filter(cls => new Date(cls.end_time.toDate()) > new Date());
 
+              const teachingClassesQuery = query(
+                collection(db, 'classes'),
+                where('teacher_username', '==', userID)
+              );
+              const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
+              teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+              
+              classesToReview.value = await Promise.all(
+                (userProfile.value.pending_reviews || []).map(async (classId) => {
+                  const classDoc = await getDoc(doc(db, 'classes', classId));
+                  return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
+                })
+              );
+              classesToReview.value = classesToReview.value.filter(cls => cls !== null);
           } else {
             console.log("No upcoming classes found in user's upcoming_classes_as_student array.");
           }
