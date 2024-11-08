@@ -78,7 +78,8 @@
               </div>
               <div class="mb-3">
                 <label for="price" class="form-label fs-5"><b>Price</b> <span class="text-danger">*</span></label>
-                <input type="number" id="price" v-model="formData.price" class="form-control p-2">
+                <input type="number" id="price" v-model="formData.price" @input="formatPrice" step="0.01" min="0"
+                  class="form-control p-2">
               </div>
               <!-- Capacity and Skill Level -->
               <div class="row mb-3">
@@ -169,7 +170,8 @@
         <div class="modal-content">
           <div class="modal-header bg-success text-white">
             <h5 class="modal-title" id="successModalLabel">Success!</h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" @click="goToDashboard"></button>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"
+              @click="goToDashboard"></button>
           </div>
           <div class="modal-body">
             <div class="text-center">
@@ -228,6 +230,13 @@ export default {
     const minDate = computed(() => {
       const today = new Date();
       return today.toISOString().split('T')[0];
+    });
+
+    const formatPrice = computed(() => {
+      if (this.formData.price !== null) {
+        // Convert to string, limit to 2 decimal places, and convert back to number
+        this.formData.price = Number(parseFloat(this.formData.price).toFixed(2));
+      }
     });
 
     const isFormValid = computed(() => {
@@ -378,6 +387,7 @@ export default {
 
         const completionDate = new Date(classData.start_date);
         completionDate.setDate(completionDate.getDate() + ((classData.number_of_lessons - 1) * 7));
+        completionDate.setHours(23, 59, 59, 999); // Set time to 23:59:59.999
         classData.completion_date = completionDate;
 
         if (isEditMode.value) {
