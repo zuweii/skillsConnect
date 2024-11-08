@@ -1,7 +1,7 @@
 <template>
   <div class="reviews-page">
-    <div v-if="loading" class="loading-spinner">
-      <div class="spinner"></div>
+    <div v-if="loading">
+      <div class="visually-hidden">Loading</div>
     </div>
     <div v-else-if="error" class="error-message">
       {{ error }}

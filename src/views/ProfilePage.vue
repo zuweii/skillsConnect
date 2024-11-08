@@ -15,27 +15,28 @@
       <div class="row mb-4">
         <div class="col-12">
           <div class="card shadow-sm gradient-border">
-            <div class="card-body d-flex flex-column flex-md-row align-items-center justify-content-between p-4">
-              <div class="d-flex flex-column flex-md-row align-items-center mb-3 mb-md-0">
-                <img :src="userProfile.profile_photo || defaultPhoto" :alt="userProfile.username"
-                  class="rounded-circle mb-3 mb-md-0 me-md-4" style="width: 150px; height: 150px; object-fit: cover;">
-                <div class="text-center text-md-start">
+            <div class="card-body p-4">
+              <div class="row align-items-center">
+                <div class="col-md-auto mb-3 mb-md-0">
+                  <img :src="userProfile.profile_photo || defaultPhoto" :alt="userProfile.username" class="rounded-circle"
+                    style="width: 150px; height: 150px; object-fit: cover;">
+                </div>
+                <div class="col-md">
                   <h2 class="card-title mb-2">{{ userProfile.username }}</h2>
-                  <div class="d-flex align-items-center justify-content-center justify-content-md-start mb-2">
+                  <div class="d-flex align-items-center mb-2">
                     <span class="me-2">Average Class Rating:</span>
                     <StarRating :rating="userProfile.teacher_average || 0" readOnly />
                     <span class="ms-2">({{ (userProfile.teacher_average || 0).toFixed(1) }})</span>
                   </div>
-                  <button @click="showEditProfileModal = true" class="btn btn-primary position-absolute top-0 end-0 m-3">
+                  <router-link v-if="userProfile.id" :to="{ name: 'ViewAllReviews', params: { userId: userProfile.id } }"
+                    class="text-primary">
+                    View All Class Ratings
+                  </router-link>
+                </div>
+                <div class="col-md-auto mt-3 mt-md-0">
+                  <button @click="showEditProfileModal = true" class="btn btn-primary">
                     Edit Profile Settings
                   </button>
-                
-                  <!-- Edit Profile Modal -->
-                  <EditProfileModal
-                    v-if="showEditProfileModal"
-                    @close="showEditProfileModal = false"
-                  />
-
                 </div>
               </div>
             </div>
@@ -66,9 +67,9 @@
                     aria-controls="review" aria-selected="false">Classes to Review</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                  <button @click="currentTab = 'portfolio'" :class="{ active: currentTab === 'portfolio' }" class="nav-link"
-                    id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button" role="tab"
-                    aria-controls="portfolio" aria-selected="false">Portfolio</button>
+                  <button @click="currentTab = 'portfolio'" :class="{ active: currentTab === 'portfolio' }"
+                    class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio" type="button"
+                    role="tab" aria-controls="portfolio" aria-selected="false">Portfolio</button>
                 </li>
               </ul>
 
@@ -76,192 +77,179 @@
                 <!-- Upcoming Classes as Student -->
                 <div :class="{ 'active show': currentTab === 'student' }" class="tab-pane fade" id="student"
                   role="tabpanel" aria-labelledby="student-tab">
-                  <!-- Content for Upcoming Classes as Student goes here -->
-                  <div class="row mb-3">
+                  <div class="mb-4">
                     <label for="studentFilterType" class="form-label">Filter by:</label>
-                    <div class="col">
-                      
-                      <select v-model="studentFilterType" id="studentFilterType" class="form-select">
+                    <div class="d-flex gap-2">
+                      <select v-model="studentFilterType" id="studentFilterType" class="form-select w-auto">
                         <option value="day">Day</option>
                         <option value="month">Month</option>
                         <option value="year">Year</option>
                       </select>
-                    </div>
-                    <div class="col">
                       <input v-if="studentFilterType === 'day'" type="date" v-model="studentFilterValue"
-                        class="form-control ">
+                        class="form-control w-auto">
                       <input v-if="studentFilterType === 'month'" type="month" v-model="studentFilterValue"
-                        class="form-control ">
+                        class="form-control w-auto">
                       <input v-if="studentFilterType === 'year'" type="number" v-model="studentFilterValue"
-                        class="form-control " placeholder="Enter year">
+                        class="form-control w-auto" placeholder="Enter year">
                     </div>
                   </div>
-                  <div v-if="filteredUpcomingClassesAsStudent.length === 0" class="text-muted text-center">
+                  <div v-if="filteredUpcomingClassesAsStudent.length === 0" class="alert alert-info">
                     No upcoming classes as student.
                   </div>
-                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                    <div v-for="cls in filteredUpcomingClassesAsStudent" :key="cls.id"
-                      class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                  <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <div v-for="cls in filteredUpcomingClassesAsStudent" :key="cls.id" class="col">
                       <div class="card shadow-sm h-100 hover-card">
                         <div class="card-img-wrapper">
                           <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
                           <div class="card-img-overlay-top">
-                            <span class="badge bg-primary">{{ cls.category }}</span>
+                            <span class="badge bg-primary">
+                              {{ cls.category }}
+                            </span>
                           </div>
                         </div>
                         <div class="card-body d-flex flex-column">
                           <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
                           </div>
+
                           <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
                           <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                              <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                              <p class="card-text h5 text-primary mb-0">${{ cls.price?.toFixed(2) || '0.00' }}</p>
                               <span class="badge bg-light text-dark">
                                 <i class="bi bi-people-fill me-1"></i>
-                                {{ cls.max_capacity - cls.current_enrollment }} spots left
+                                {{ cls.current_enrollment }} / {{ cls.max_capacity }} enrolled
                               </span>
                             </div>
-
+                            <div class="d-flex align-items-center mb-2">
+                              <span class="me-2">{{ cls.ratings_average.toFixed(1) }}</span>
+                              <StarRating :rating="cls.ratings_average" readOnly />
+                              <span class="text-muted ms-2 fs-6">({{ cls.reviews.length }})</span>
+                            </div>
                             <router-link :to="{ name: 'ClassDetails', params: { id: cls.id } }"
-                              class="custom-button w-100">
-                              Class Details
+                              class="btn btn-primary custom-button btn-sm w-100">
+                              View Details
                             </router-link>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-
                 </div>
 
                 <!-- Classes Listed by You -->
                 <div :class="{ 'active show': currentTab === 'teaching' }" class="tab-pane fade" id="teaching"
                   role="tabpanel" aria-labelledby="teaching-tab">
-                  <!-- Content for Classes Listed by You goes here -->
-                  <div class="row mb-3">
-                    <label for="studentFilterType" class="form-label">Filter by:</label>
-                    <div class="col">
-                      
-                      <select v-model="studentFilterType" id="studentFilterType" class="form-select">
+                  <div class="mb-4">
+                    <div class="btn-group" role="group" aria-label="Class filter">
+                      <button @click="teachingClassFilter = 'current'"
+                        :class="['btn', teachingClassFilter === 'current' ? 'btn-primary' : 'btn-outline-primary']">
+                        Current Classes
+                      </button>
+                      <button @click="teachingClassFilter = 'past'"
+                        :class="['btn', teachingClassFilter === 'past' ? 'btn-primary' : 'btn-outline-primary']">
+                        Past Classes
+                      </button>
+                    </div>
+                  </div>
+                  <div class="mb-4">
+                    <label for="teachingFilterType" class="form-label">Filter by:</label>
+                    <div class="d-flex gap-2">
+                      <select v-model="teachingFilterType" id="teachingFilterType" class="form-select w-auto">
                         <option value="day">Day</option>
                         <option value="month">Month</option>
                         <option value="year">Year</option>
                       </select>
-                    </div>
-                    <div class="col">
-                      <input v-if="studentFilterType === 'day'" type="date" v-model="studentFilterValue"
-                        class="form-control ">
-                      <input v-if="studentFilterType === 'month'" type="month" v-model="studentFilterValue"
-                        class="form-control ">
-                      <input v-if="studentFilterType === 'year'" type="number" v-model="studentFilterValue"
-                        class="form-control " placeholder="Enter year">
+                      <input v-if="teachingFilterType === 'day'" type="date" v-model="teachingFilterValue"
+                        class="form-control w-auto">
+                      <input v-if="teachingFilterType === 'month'" type="month" v-model="teachingFilterValue"
+                        class="form-control w-auto">
+                      <input v-if="teachingFilterType === 'year'" type="number" v-model="teachingFilterValue"
+                        class="form-control w-auto" placeholder="Enter year">
                     </div>
                   </div>
-                  <div v-if="filteredTeachingClasses.upcoming.length === 0 && filteredTeachingClasses.past.length === 0"
-                    class="text-muted text-center">
-                    No classes listed by you.
+                  <div v-if="filteredTeachingClasses.length === 0" class="alert alert-info">
+                    No classes found.
                   </div>
-                  <div v-else>
-                    <h4>Upcoming/Ongoing Classes</h4>
-                    <div class="row row-cols-1 row-cols-md-2 g-4 mb-4">
-                      <div v-for="cls in filteredTeachingClasses.upcoming" :key="cls.id"
-                        class="col-lg-6 col-md-6 col-sm-12 mb-4">
-                        <div class="card shadow-sm h-100 hover-card">
-                          <div class="card-img-wrapper">
-                            <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
-                            <div class="card-img-overlay-top">
-                              <span class="badge bg-primary">{{ cls.category }}</span>
-                            </div>
-                          </div>
-                          <div class="card-body d-flex flex-column">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                              <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
-                            </div>
-                            <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
-                            <div class="mt-auto">
-                              <div class="d-flex justify-content-between align-items-center mb-3">
-                                <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
-                                <span class="badge bg-light text-dark">
-                                  <i class="bi bi-people-fill me-1"></i>
-                                  {{ cls.max_capacity - cls.current_enrollment }} spots left
-                                </span>
-                              </div>
-                              <router-link :to="{ name: 'ListClass', params: { classId: cls.id } }"
-                                class="custom-button w-100">
-                                Edit Class Listing
-                              </router-link>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div v-if="filteredTeachingClasses.past.length === 0" class="text-muted text-center">
-                    <h4> No Past Classes</h4>
-                  </div>
-                  <div v-else class="row row-cols-1 row-cols-md-2 g-4"></div>
-                    <div v-for="cls in filteredTeachingClasses.past" :key="cls.id"
-                      class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                  <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <div v-for="cls in filteredTeachingClasses" :key="cls.id" class="col">
                       <div class="card shadow-sm h-100 hover-card">
                         <div class="card-img-wrapper">
                           <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
                           <div class="card-img-overlay-top">
-                            <span class="badge bg-primary">{{ cls.category }}</span>
+                            <span class="badge bg-primary">
+                              {{ cls.category }}
+                            </span>
                           </div>
                         </div>
                         <div class="card-body d-flex flex-column">
                           <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
                           </div>
+
                           <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
                           <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                              <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                              <p class="card-text h5 text-primary mb-0">${{ cls.price?.toFixed(2) || '0.00' }}</p>
                               <span class="badge bg-light text-dark">
                                 <i class="bi bi-people-fill me-1"></i>
-                                {{ cls.current_enrollment }} enrolled
+                                {{ cls.current_enrollment }} / {{ cls.max_capacity }} enrolled
                               </span>
                             </div>
-                            <button @click="openRelistModal(cls)" class="custom-button w-100">Relist Class</button>
+                            <div class="d-flex align-items-center mb-2">
+                              <span class="me-2">{{ cls.ratings_average.toFixed(1) }}</span>
+                              <StarRating :rating="cls.ratings_average" readOnly />
+                              <span class="text-muted ms-2 fs-6">({{ cls.reviews.length }})</span>
+                            </div>
+                            <button v-if="cls.isActive" @click="openRelistModal(cls)"
+                              class="btn btn-primary custom-button btn-sm w-100">Edit Class</button>
+                            <button v-else @click="openRelistModal(cls)"
+                              class="btn btn-secondary custom-button-relist btn-sm w-100">Relist Class</button>
                           </div>
                         </div>
                       </div>
                     </div>
-
+                  </div>
                 </div>
 
                 <!-- Classes to Review -->
                 <div :class="{ 'active show': currentTab === 'review' }" class="tab-pane fade" id="review" role="tabpanel"
                   aria-labelledby="review-tab">
-                  <!-- Content for Classes to Review goes here -->
-                  <div v-if="classesToReview.length === 0" class="text-muted text-center">
+                  <div v-if="classesToReview.length === 0" class="alert alert-info">
                     No classes to review.
                   </div>
-                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                    <div v-for="cls in classesToReview" :key="cls.id" class="col-lg-6 col-md-6 col-sm-12 mb-4">
+                  <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <div v-for="cls in classesToReview" :key="cls.id" class="col">
                       <div class="card shadow-sm h-100 hover-card">
                         <div class="card-img-wrapper">
                           <img :src="cls.image || '/placeholder.svg'" :alt="cls.title" class="card-img-top class-image">
                           <div class="card-img-overlay-top">
-                            <span class="badge bg-primary">{{ cls.category }}</span>
+                            <span class="badge bg-primary">
+                              {{ cls.category }}
+                            </span>
                           </div>
                         </div>
                         <div class="card-body d-flex flex-column">
                           <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="card-title fw-bold mb-0">{{ cls.title }}</h5>
                           </div>
+
                           <p class="card-text text-muted small flex-grow-1">{{ truncateText(cls.description, 100) }}</p>
                           <div class="mt-auto">
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                              <p class="card-text h5 text-primary mb-0">${{ cls.price.toFixed(2) }}</p>
+                              <p class="card-text h5 text-primary mb-0">${{ cls.price?.toFixed(2) || '0.00' }}</p>
                               <span class="badge bg-light text-dark">
                                 <i class="bi bi-people-fill me-1"></i>
-                                {{ cls.current_enrollment }} enrolled
+                                {{ cls.current_enrollment }} / {{ cls.max_capacity }} enrolled
                               </span>
                             </div>
+                            <div class="d-flex align-items-center mb-2">
+                              <span class="me-2">{{ cls.ratings_average.toFixed(1) }}</span>
+                              <StarRating :rating="cls.ratings_average" readOnly />
+                              <span class="text-muted ms-2 fs-6">({{ cls.reviews.length }})</span>
+                            </div>
                             <router-link :to="{ name: 'ReviewsPage', params: { classId: cls.id } }"
-                              class="custom-button w-100">
+                              class="btn btn-primary custom-button btn-sm w-100">
                               Review Class
                             </router-link>
                           </div>
@@ -271,17 +259,22 @@
                   </div>
                 </div>
 
+
                 <!-- Portfolio Uploads Tab -->
-                <div :class="{ 'active show': currentTab === 'portfolio' }" class="tab-pane fade" id="portfolio" role="tabpanel" aria-labelledby="portfolio-tab">
+                <div :class="{ 'active show': currentTab === 'portfolio' }" class="tab-pane fade" id="portfolio"
+                  role="tabpanel" aria-labelledby="portfolio-tab">
                   <div v-if="userProfile.portfolio && userProfile.portfolio.length > 0">
                     <h3 class="mb-4">My Portfolio Projects</h3>
                     <div class="row row-cols-1 row-cols-md-2 g-4">
                       <div v-for="(project, index) in userProfile.portfolio" :key="index" class="col">
                         <div class="card shadow-sm">
                           <div class="portfolio-media">
-                            <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image" class="portfolio-image card-img-top">
-                            <div v-if="project.youtubeLink" class="embed-responsive embed-responsive-16by9 portfolio-video">
-                              <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen class="embed-responsive-item"></iframe>
+                            <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
+                              class="portfolio-image card-img-top">
+                            <div v-if="project.youtubeLink"
+                              class="embed-responsive embed-responsive-16by9 portfolio-video">
+                              <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen
+                                class="embed-responsive-item"></iframe>
                             </div>
                           </div>
                           <div class="card-body">
@@ -289,7 +282,8 @@
                             <p class="card-text">{{ project.description }}</p>
 
                             <button @click="openEditModal(project, index)" class="btn btn-secondary mt-2">Edit</button>
-                            <button @click="confirmDeleteProject(project, index)" class="btn btn-danger mt-2">Delete</button>
+                            <button @click="confirmDeleteProject(project, index)"
+                              class="btn btn-danger mt-2">Delete</button>
                           </div>
                         </div>
                       </div>
@@ -299,7 +293,7 @@
                     No portfolio
                   </div>
                 </div>
-                
+
               </div>
             </div>
           </div>
@@ -318,11 +312,13 @@
                 </div>
                 <div class="mb-3">
                   <label for="projectDescription" class="form-label">Description</label>
-                  <textarea v-model="newProject.description" id="projectDescription" class="form-control" rows="3" required></textarea>
+                  <textarea v-model="newProject.description" id="projectDescription" class="form-control" rows="3"
+                    required></textarea>
                 </div>
                 <div class="mb-3">
                   <label for="youtubeLink" class="form-label">YouTube Link</label>
-                  <input type="url" v-model="newProject.youtubeLink" id="youtubeLink" class="form-control" placeholder="https://www.youtube.com/watch?v=example">
+                  <input type="url" v-model="newProject.youtubeLink" id="youtubeLink" class="form-control"
+                    placeholder="https://www.youtube.com/watch?v=example">
                 </div>
                 <div class="mb-3">
                   <label for="projectImage" class="form-label">Project Image</label>
@@ -380,7 +376,8 @@
               </div>
               <div class="mb-3">
                 <label for="editProjectDescription" class="form-label">Description</label>
-                <textarea v-model="editProject.description" id="editProjectDescription" class="form-control" rows="3" required></textarea>
+                <textarea v-model="editProject.description" id="editProjectDescription" class="form-control" rows="3"
+                  required></textarea>
               </div>
               <div class="mb-3">
                 <label for="editYouTubeLink" class="form-label">YouTube Link</label>
@@ -482,7 +479,7 @@ export default {
       }
 
       userProfile.value.portfolio.push(project);
-    
+
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
@@ -531,7 +528,7 @@ export default {
       if (editIndex.value === null) return;
 
       userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
-      
+
       try {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
@@ -547,14 +544,17 @@ export default {
       return filterClasses(upcomingClassesAsStudent.value, studentFilterType.value, studentFilterValue.value);
     });
 
+    const teachingClassFilter = ref('current');
     const filteredTeachingClasses = computed(() => {
       const now = new Date();
       const filtered = filterClasses(teachingClasses.value, teachingFilterType.value, teachingFilterValue.value);
-      return {
-        upcoming: filtered.filter(cls => new Date(cls.end_time.toDate()) > now),
-        past: filtered.filter(cls => new Date(cls.end_time.toDate()) <= now)
-      };
+      return filtered.filter(cls => {
+        const isActive = new Date(cls.end_time.toDate()) > now;
+        cls.isActive = isActive;
+        return teachingClassFilter.value === 'current' ? isActive : !isActive;
+      });
     });
+
 
     const filterClasses = (classes, filterType, filterValue) => {
       if (!filterValue) return classes;
@@ -574,15 +574,16 @@ export default {
       });
     };
 
+
     const fetchUserProfile = async (userID) => {
       try {
         const userDoc = await getDoc(doc(db, 'users', userID));
         if (userDoc.exists()) {
-          userProfile.value = userDoc.data();
+          userProfile.value = { id: userDoc.id, ...userDoc.data() };
 
           // Fetch upcoming classes where the user is a student
           if (userProfile.value.upcoming_classes_as_student.length > 0) {
-            const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId => 
+            const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId =>
               getDoc(doc(db, 'classes', classId))
             );
 
@@ -594,20 +595,20 @@ export default {
               .map(snapshot => ({ id: snapshot.id, ...snapshot.data() }))
               .filter(cls => new Date(cls.end_time.toDate()) > new Date());
 
-              const teachingClassesQuery = query(
-                collection(db, 'classes'),
-                where('teacher_username', '==', userID)
-              );
-              const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
-              teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-              
-              classesToReview.value = await Promise.all(
-                (userProfile.value.pending_reviews || []).map(async (classId) => {
-                  const classDoc = await getDoc(doc(db, 'classes', classId));
-                  return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
-                })
-              );
-              classesToReview.value = classesToReview.value.filter(cls => cls !== null);
+            const teachingClassesQuery = query(
+              collection(db, 'classes'),
+              where('teacher_username', '==', userID)
+            );
+            const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
+            teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+            classesToReview.value = await Promise.all(
+              (userProfile.value.pending_reviews || []).map(async (classId) => {
+                const classDoc = await getDoc(doc(db, 'classes', classId));
+                return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
+              })
+            );
+            classesToReview.value = classesToReview.value.filter(cls => cls !== null);
           } else {
             console.log("No upcoming classes found in user's upcoming_classes_as_student array.");
           }
@@ -701,7 +702,7 @@ export default {
     async function deleteProject() {
       if (projectIndexToDelete.value !== null) {
         userProfile.value.portfolio.splice(projectIndexToDelete.value, 1);
-      
+
         try {
           const userRef = doc(db, 'users', auth.currentUser.uid);
           await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
@@ -757,6 +758,7 @@ export default {
       projectIndexToDelete,
       confirmDeleteProject,
       deleteProject,
+      teachingClassFilter
     };
   },
 };
@@ -809,23 +811,23 @@ export default {
 }
 
 .class-image {
-  width: 100%;
   height: 200px;
   object-fit: cover;
-  object-position: center;
 }
 
 .gradient-border {
   position: relative;
-  background: linear-gradient(white, white) padding-box,
-    linear-gradient(45deg, #5a7dee, #4e6dd2) border-box;
-  border: 1px solid transparent;
+  border-top: 5px solid #5a7dee;
   border-radius: 0.375rem;
+}
+
+.hover-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .hover-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 .card-img-wrapper {
@@ -885,6 +887,7 @@ h5 {
   overflow: hidden;
   max-width: 100%;
 }
+
 .embed-responsive .embed-responsive-item {
   position: absolute;
   top: 0;
@@ -901,23 +904,72 @@ h5 {
 
 .portfolio-media {
   width: 100%;
-  max-width: 500px; 
-  margin: 0 auto; 
+  max-width: 500px;
+  margin: 0 auto;
 }
 
 .portfolio-image {
   width: 100%;
-  max-height: 280px; 
-  object-fit: cover; 
-  border-radius: 5px; 
+  max-height: 280px;
+  object-fit: cover;
+  border-radius: 5px;
   display: block;
   margin-bottom: 15px;
 }
 
 .portfolio-video iframe {
   width: 100%;
-  height: 280px; 
+  height: 280px;
   border-radius: 5px;
   display: block;
+}
+
+.btn-group {
+  width: 100%;
+  margin-bottom: 1rem;
+  border-radius: 50px;
+  padding: 5px;
+}
+
+.btn-group .btn {
+  flex: 1;
+  border-radius: 25px;
+}
+.custom-button {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  background-color: #5a7dee;
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.custom-button:hover {
+  background-color: #7b88b5;
+  color: white;
+  transform: translateY(-1px);
+}
+
+.custom-button-relist {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 0.375rem;
+  background-color: #787878;
+  color: white;
+  border: none;
+  transition: all 0.2s ease;
+}
+
+.custom-button-relist:hover {
+  background-color: #4c4c4c;
+  color: white;
+  transform: translateY(-1px);
 }
 </style>

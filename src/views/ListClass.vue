@@ -5,6 +5,10 @@
       {{ error }}
     </div>
 
+    <div v-if="hasConflict" class="alert alert-danger" role="alert">
+      This class conflicts with your existing schedule. Please choose a different time or date.
+    </div>
+
     <!-- Loading Spinner -->
     <div v-if="loading" class="text-center">
       <div class="spinner-border" role="status">
@@ -21,14 +25,16 @@
             <div class="photo-upload-area position-relative">
               <input type="file" id="photo-upload" @change="handleFileUpload" accept="image/*" class="d-none">
               <template v-if="!previewImage">
-                <label for="photo-upload" class="photo-upload-label d-flex flex-column align-items-center justify-content-center">
+                <label for="photo-upload"
+                  class="photo-upload-label d-flex flex-column align-items-center justify-content-center">
                   <i class="bi bi-image-fill fs-1"></i>
                   <span class="mt-2">Upload Photo</span>
                 </label>
               </template>
               <template v-else>
                 <img :src="previewImage" alt="Preview" class="img-fluid w-100 h-100 object-fit-cover">
-                <button @click="removePhoto" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" aria-label="Remove photo">
+                <button @click="removePhoto" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2"
+                  aria-label="Remove photo">
                   <i class="bi bi-x"></i>
                 </button>
               </template>
@@ -45,7 +51,8 @@
             <div class="card-body">
               <div class="mb-3">
                 <label for="category" class="form-label fs-5"><b>Category</b> <span class="text-danger">*</span></label>
-                <select id="category" v-model="formData.mainCategory" @change="updateSubcategories" class="form-select p-2 mb-2">
+                <select id="category" v-model="formData.mainCategory" @change="updateSubcategories"
+                  class="form-select p-2 mb-2">
                   <option value="" disabled>Select a category</option>
                   <option v-for="category in categories" :key="category.category_name" :value="category.category_name">
                     {{ category.category_name }}
@@ -65,7 +72,8 @@
           <div class="card shadow mb-3 p-2">
             <div class="card-body">
               <div class="mb-3">
-                <label for="classTitle" class="form-label fs-5"><b>Class Title</b> <span class="text-danger">*</span></label>
+                <label for="classTitle" class="form-label fs-5"><b>Class Title</b> <span
+                    class="text-danger">*</span></label>
                 <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2">
               </div>
               <div class="mb-3">
@@ -75,11 +83,13 @@
               <!-- Capacity and Skill Level -->
               <div class="row mb-3">
                 <div class="col">
-                  <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b> <span class="text-danger">*</span></label>
+                  <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b> <span
+                      class="text-danger">*</span></label>
                   <input type="number" id="maxCapacity" v-model="formData.maxCapacity" class="form-control p-2">
                 </div>
                 <div class="col">
-                  <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b> <span class="text-danger">*</span></label>
+                  <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b> <span
+                      class="text-danger">*</span></label>
                   <select id="skillLevel" v-model="formData.skillLevel" class="form-select">
                     <option value="" disabled selected>Select Skill Level</option>
                     <option value="beginner">Beginner</option>
@@ -89,7 +99,8 @@
                 </div>
               </div>
               <div class="mb-3">
-                <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b> <span class="text-danger">*</span></label>
+                <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b> <span
+                    class="text-danger">*</span></label>
                 <input type="number" id="numberOfLessons" v-model="formData.numberOfLessons" class="form-control p-2">
               </div>
               <div class="mb-3">
@@ -102,11 +113,11 @@
                 <div class="row">
                   <div class="col">
                     <label for="date" class="form-label">Start Date</label>
-                    <input type="date" v-model="formData.date"  class="form-control p-2" id="date" :min="minDate">
+                    <input type="date" v-model="formData.date" class="form-control p-2" id="date" :min="minDate">
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
-                    <input type="time" v-model="formData.startTime"  class="form-control p-2" id="start_time">
+                    <input type="time" v-model="formData.startTime" class="form-control p-2" id="start_time">
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
@@ -116,17 +127,20 @@
               </div>
               <div class="mb-3">
                 <label for="additionalNotes" class="form-label fs-5"><b>Additional Details</b></label>
-                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2" placeholder="e.g Classes on every Monday">
+                <input type="text" id="additionalNotes" v-model="formData.additionalNotes" class="form-control p-2"
+                  placeholder="e.g Classes on every Monday">
               </div>
               <div class="mb-3">
-                <label for="description" class="form-label fs-5"><b>Description</b> <span class="text-danger">*</span></label>
+                <label for="description" class="form-label fs-5"><b>Description</b> <span
+                    class="text-danger">*</span></label>
                 <textarea id="description" v-model="formData.description" class="form-control p-2" rows="5"></textarea>
               </div>
               <div>
                 <span class="text-danger">*</span> Compulsory
               </div>
               <div class="text-end">
-                <button type="submit" class="list btn btn-primary" :disabled="!isFormValid">{{ isEditMode ? 'Update Class' : 'List Class' }}</button>
+                <button type="submit" class="list btn btn-primary" :disabled="!isFormValid">{{ isEditMode ? 'Update Class'
+                  : 'List Class' }}</button>
               </div>
             </div>
           </div>
@@ -134,13 +148,35 @@
       </div>
     </div>
 
+    <!-- Conflict Modal -->
+    <div class="modal fade" id="conflictModal" tabindex="-1" aria-labelledby="conflictModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header bg-danger text-white">
+            <h5 class="modal-title" id="conflictModalLabel">Schedule Conflict</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p>This class conflicts with your existing schedule. Please choose a different time or date.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Success Modal -->
     <div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
-          <div class="modal-body position-relative p-4">
-            <button type="button" class="btn-close position-absolute top-0 end-0 m-3" data-bs-dismiss="modal" aria-label="Close"></button>
-            <div class="text-center mt-2">Your class has been successfully listed!</div>
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title" id="successModalLabel">Success!</h5>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" @click="goToDashboard"></button>
+          </div>
+          <div class="modal-body">
+            <div class="text-center">
+              <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+              <h4 class="mt-3">Your class has been successfully listed!</h4>
+              <p class="mt-3">You can view and manage your classes in your dashboard.</p>
+            </div>
           </div>
         </div>
       </div>
@@ -161,7 +197,7 @@ export default {
   setup() {
     const router = useRouter();
     const route = useRoute();
-    let classId = route.params.classId; // Defined here so it's accessible globally within setup
+    let classId = route.params.classId;
     const isEditMode = ref(Boolean(classId));
 
     const formData = ref({
@@ -186,6 +222,8 @@ export default {
     const imageFile = ref(null);
     const error = ref(null);
     const loading = ref(true);
+    const conflictModal = ref(null);
+    const successModal = ref(null);
 
     const minDate = computed(() => {
       const today = new Date();
@@ -205,7 +243,7 @@ export default {
         formData.value.startTime &&
         formData.value.endTime &&
         formData.value.description &&
-        (imageFile.value || previewImage.value); 
+        (imageFile.value || previewImage.value);
     });
 
     const fetchCategories = async () => {
@@ -255,9 +293,57 @@ export default {
       }
     };
 
+    const checkForConflicts = async () => {
+      if (!auth.currentUser) return false;
+
+      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+      if (!userDoc.exists()) return false;
+
+      const userData = userDoc.data();
+      const userClassesAsStudent = userData.upcoming_classes_as_student || [];
+      const userClassesAsTeacher = userData.upcoming_classes_as_teacher || [];
+      const allUserClasses = [...userClassesAsStudent, ...userClassesAsTeacher];
+
+      for (const classId of allUserClasses) {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        if (classDoc.exists()) {
+          const existingClass = classDoc.data();
+          if (isTimeConflict(formData.value, existingClass)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
+    const isTimeConflict = (newClass, existingClass) => {
+      const newStart = new Date(`${newClass.date}T${newClass.startTime}`);
+      const newEnd = new Date(`${newClass.date}T${newClass.endTime}`);
+      const existingStart = existingClass.start_time.toDate();
+      const existingEnd = existingClass.end_time.toDate();
+
+      if (newStart.toDateString() !== existingStart.toDateString()) {
+        return false;
+      }
+
+      return (
+        (newStart < existingEnd && newEnd > existingStart) ||
+        (newEnd > existingStart && newEnd <= existingEnd) ||
+        (newStart >= existingStart && newStart < existingEnd)
+      );
+    };
+
     const submitForm = async () => {
       if (!isFormValid.value) {
         alert('Please fill in all required fields and upload an image.');
+        return;
+      }
+
+      const hasConflict = await checkForConflicts();
+
+      if (hasConflict) {
+        conflictModal.value.show();
         return;
       }
 
@@ -299,11 +385,37 @@ export default {
           await updateDoc(classRef, classData);
         } else {
           const classRef = await addDoc(collection(db, 'classes'), classData);
-          const newClassId = classRef.id;
-          classId = newClassId; // Use new ID for further references
+          classId = classRef.id;
         }
 
-        // Update user and category data here...
+        // Update user and category data
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, {
+          posted_classes: arrayUnion({
+            class_id: classId,
+            ...classData
+          }),
+          upcoming_classes_as_teacher: arrayUnion(classId)
+        });
+
+        // Update categories
+        const categoriesRef = collection(db, 'categories');
+        const categoryQuery = query(categoriesRef, where("category_name", "==", classData.category));
+        const categoryQuerySnapshot = await getDocs(categoryQuery);
+
+        if (!categoryQuerySnapshot.empty) {
+          const categoryDoc = categoryQuerySnapshot.docs[0];
+          await updateDoc(doc(db, 'categories', categoryDoc.id), {
+            class_ids: arrayUnion(classId),
+            sub_categories: arrayUnion(classData.subcategory)
+          });
+        } else {
+          await addDoc(categoriesRef, {
+            category_name: classData.category,
+            sub_categories: [classData.subcategory],
+            class_ids: [classId]
+          });
+        }
 
         successModal.value.show();
       } catch (err) {
@@ -312,13 +424,17 @@ export default {
       }
     };
 
+    const goToDashboard = () => {
+      router.push('/dashboard');
+    };
+
     onMounted(async () => {
       loading.value = true;
       await fetchCategories();
       if (isEditMode.value) await populateFormData();
       loading.value = false;
+      conflictModal.value = new Modal(document.getElementById('conflictModal'));
       successModal.value = new Modal(document.getElementById('successModal'));
-      successModal.value._element.addEventListener('hidden.bs.modal', () => router.push('/class-details'));
     });
 
     return {
@@ -344,7 +460,8 @@ export default {
         imageFile.value = null;
       },
       updateSubcategories,
-      submitForm
+      submitForm,
+      goToDashboard
     };
   }
 };
