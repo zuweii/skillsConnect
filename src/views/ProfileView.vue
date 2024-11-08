@@ -106,7 +106,6 @@
           </div>
         </div>
 
-        <!-- User Portfolio Section -->
         <div class="col-lg-4">
           <div class="row">
             <div class="col-12">
@@ -173,7 +172,7 @@ const fetchUserData = async (userID) => {
       userProfile.value = userDoc.data();
       reviews.value = userProfile.value.reviews || [];
       listings.value = userProfile.value.posted_classes || [];
-      portfolio.value = userProfile.value.portfolio?.project_images || [];
+      portfolio.value = userProfile.value.portfolio || []; 
 
       const totalRatings = listings.value.reduce((sum, cls) => sum + (cls.ratings_average || 0), 0);
       averageRating.value = listings.value.length ? totalRatings / listings.value.length : 0;
@@ -200,6 +199,12 @@ const formatDate = (date) => {
 const truncateText = (text, length) => {
   if (text.length <= length) return text;
   return text.substring(0, length) + '...';
+};
+
+const formatYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  const videoId = url.split('v=')[1];
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
 };
 
 onMounted(() => {
@@ -322,6 +327,19 @@ h2, h3, h4, h5 {
     background-color: #5a7dee !important;
 }
 
+.portfolio-image {
+  height: 200px;
+  object-fit: cover;
+}
+
+.portfolio-video {
+  height: 200px;
+}
+
+.embed-responsive-item {
+  width: 100%;
+  height: 100%;
+}
 
 @media (max-width: 767.98px) {
   .card-body {
