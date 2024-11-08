@@ -15,9 +15,7 @@ import SignupPage from '../views/SignupPage.vue'
 import Settings from '../views/Settings.vue'
 import AllReviews from '../views/AllReviews.vue'
 import Calendar from '../views/Calendar.vue'
-import Finance from '../views/FinancePage.vue'
 import FinancePage from '../views/FinancePage.vue'
-
 
 const routes = [
   {
