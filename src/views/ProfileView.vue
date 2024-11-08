@@ -115,21 +115,32 @@
                   <div v-if="portfolio.length === 0" class="text-muted text-center">
                     No portfolio projects to display.
                   </div>
-                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                    <div v-for="(project, index) in portfolio" :key="index" class="col">
-                      <div class="card h-100">
-                        <div class="portfolio-media">
-                          <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
-                            class="portfolio-image card-img-top">
-                          <div v-if="project.youtubeLink"
-                            class="embed-responsive embed-responsive-16by9 portfolio-video">
-                            <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen
-                              class="embed-responsive-item"></iframe>
+                  <div v-else class="portfolio-container">
+                    <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
+                      <div class="card">
+                        <div class="row g-0">
+                          <div class="col-md-12">
+                            <div class="portfolio-media h-100 position-relative">
+                              <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
+                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                              <div v-if="!project.imageUrl && project.youtubeLink" class="ratio ratio-16x9 h-100">
+                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen></iframe>
+                              </div>
+                              <a v-if="project.imageUrl && project.youtubeLink" 
+                                 :href="project.youtubeLink" 
+                                 target="_blank" 
+                                 rel="noopener noreferrer" 
+                                 class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-50 text-white text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                              </a>
+                            </div>
                           </div>
-                        </div>
-                        <div class="card-body">
-                          <h5 class="card-title">{{ project.title }}</h5>
-                          <p class="card-text">{{ project.description }}</p>
+                          <div class="col-md-12">
+                            <div class="card-body">
+                              <h5 class="card-title">{{ project.title }}</h5>
+                              <p class="card-text">{{ project.description }}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -159,6 +170,7 @@ const averageRating = ref(0);
 const loading = ref(true);
 const error = ref(null);
 const route = useRoute();
+const classId = route.params.id;
 
 const fetchUserData = async (userID) => {
   if (!userID) {
@@ -327,8 +339,21 @@ h2, h3, h4, h5 {
     background-color: #5a7dee !important;
 }
 
-.portfolio-image {
+.portfolio-container {
+  max-height: 800px; 
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.portfolio-item {
+  margin-bottom: 1rem;
+}
+
+.portfolio-media {
   height: 200px;
+}
+
+.portfolio-image {
   object-fit: cover;
 }
 
@@ -339,6 +364,37 @@ h2, h3, h4, h5 {
 .embed-responsive-item {
   width: 100%;
   height: 100%;
+}
+
+.ratio-16x9 {
+  aspect-ratio: 16 / 9;
+}
+
+.portfolio-media .position-absolute {
+  transition: opacity 0.3s ease;
+}
+
+.portfolio-media:hover .position-absolute {
+  opacity: 0.8;
+}
+
+/* Customizing the scrollbar */
+.portfolio-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.portfolio-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.portfolio-container::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.portfolio-container::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 
 @media (max-width: 767.98px) {
