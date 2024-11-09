@@ -86,10 +86,6 @@
                                   {{ classItem.max_capacity - classItem.current_enrollment }} spots left
                                 </span>
                               </div>
-                              <!-- <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
-                                class="custom-button w-100">
-                                View Details
-                              </router-link> -->
                               <router-link class="custom-button w-100">View Details</router-link>
                             </div>
                           </div>
@@ -99,81 +95,77 @@
                   </div>
                 </div>
 
-
-
-                  <!-- Reviews Tab -->
-                  <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
-                    role="tabpanel" aria-labelledby="reviews-tab">
-                    <div v-if="reviews.length === 0" class="text-muted text-center">
-                      No reviews yet.
-                    </div>
-                    <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                      <div v-for="review in reviews" :key="review.id" class="col">
-                        <div class="card h-100 border">
-                          <div class="card-body">
-                            <h5 class="card-title">{{ review.author }}</h5>
-                            <p class="card-text">{{ review.comment }}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                              <StarRating :rating="review.rating" readOnly />
-                              <small class="text-muted">{{ formatDate(review.date) }}</small>
-                            </div>
+                <!-- Reviews Tab -->
+                <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
+                  role="tabpanel" aria-labelledby="reviews-tab">
+                  <div v-if="reviews.length === 0" class="text-muted text-center">
+                    No reviews yet.
+                  </div>
+                  <div v-else class="reviews-list">
+                    <!-- Display each review related to classes taught by the user -->
+                    <div v-for="review in reviews" :key="review.id" class="review-card">
+                      <div class="review-header">
+                        <div class="reviewer-info">
+                          <img :src="review.userPhoto || '/placeholder.svg?height=60&width=60'" :alt="review.username" class="reviewer-avatar">
+                          <div class="reviewer-details">
+                            <h3 class="reviewer-name">{{ review.username }}</h3>
+                            <StarRating :rating="review.rating" readOnly />
                           </div>
                         </div>
+                        <span class="review-date">{{ formatDate(review.timestamp) }}</span>
                       </div>
+                      <p class="review-text">{{ review.text }}</p>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- Right Column: Portfolio -->
-          <div class="col-lg-4">
-            <div class="row">
-              <div class="col-12">
-                <div class="card shadow-sm mb-4">
-                  <div class="card-body">
-                    <h3 class="card-title mb-4">Portfolio</h3>
-                    <div v-if="portfolio.length === 0" class="text-muted text-center">
-                      No portfolio projects to display.
-                    </div>
-                    <div v-else class="portfolio-container">
-                      <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
-                        <div class="card shadow-sm h-100 portfolio-card">
-                          <!-- Carousel for Image/Video Display -->
-                          <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
-                            <div class="carousel-inner">
-                              <div v-if="project.imageUrl" class="carousel-item active">
-                                <img :src="project.imageUrl" :alt="project.title"
-                                  class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                              </div>
-                              <div v-if="project.youtubeLink" class="carousel-item"
-                                :class="{ active: !project.imageUrl }">
-                                <div class="ratio ratio-16x9">
-                                  <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
-                                    allowfullscreen class="embed-responsive-item"></iframe>
-                                </div>
+        <!-- Right Column: Portfolio -->
+        <div class="col-lg-4">
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                  <h3 class="card-title mb-4">Portfolio</h3>
+                  <div v-if="portfolio.length === 0" class="text-muted text-center">
+                    No portfolio projects to display.
+                  </div>
+                  <div v-else class="portfolio-container">
+                    <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
+                      <div class="card shadow-sm h-100 portfolio-card">
+                        <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
+                          <div class="carousel-inner">
+                            <div v-if="project.imageUrl" class="carousel-item active">
+                              <img :src="project.imageUrl" :alt="project.title"
+                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                            </div>
+                            <div v-if="project.youtubeLink" class="carousel-item"
+                              :class="{ active: !project.imageUrl }">
+                              <div class="ratio ratio-16x9">
+                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
+                                  allowfullscreen class="embed-responsive-item"></iframe>
                               </div>
                             </div>
-                            <!-- Carousel Controls -->
-                            <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
-                              type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
-                              <span class="carousel-control-icon" aria-hidden="true"><i
-                                  class="bi bi-chevron-left"></i></span>
-                              <span class="visually-hidden">Previous</span>
-                            </button>
-                            <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
-                              type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
-                              <span class="carousel-control-icon" aria-hidden="true"><i
-                                  class="bi bi-chevron-right"></i></span>
-                              <span class="visually-hidden">Next</span>
-                            </button>
                           </div>
-                          <!-- Project Details -->
-                          <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ project.title }}</h5>
-                            <p class="card-text">{{ project.description }}</p>
-                          </div>
+                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
+                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
+                            <span class="carousel-control-icon" aria-hidden="true"><i
+                                class="bi bi-chevron-left"></i></span>
+                            <span class="visually-hidden">Previous</span>
+                          </button>
+                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
+                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
+                            <span class="carousel-control-icon" aria-hidden="true"><i
+                                class="bi bi-chevron-right"></i></span>
+                            <span class="visually-hidden">Next</span>
+                          </button>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                          <h5 class="card-title">{{ project.title }}</h5>
+                          <p class="card-text">{{ project.description }}</p>
                         </div>
                       </div>
                     </div>
@@ -185,11 +177,12 @@
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { useRoute } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
@@ -214,10 +207,8 @@ const fetchUserData = async (userID) => {
     const userDoc = await getDoc(doc(db, "users", userID));
     if (userDoc.exists()) {
       const data = userDoc.data();
-      console.log("Fetched User Data:", data);  
       userProfile.value = data;
-      listings.value = data.posted_classes || [];  
-      console.log("Listings Data:", listings.value);  
+      listings.value = data.posted_classes || [];
       portfolio.value = data.portfolio || [];
     } else {
       error.value = "User profile not found.";
@@ -230,6 +221,30 @@ const fetchUserData = async (userID) => {
   }
 };
 
+// New function to fetch reviews for all classes taught by the instructor
+const fetchReviewsByTeacher = async (teacherUsername) => {
+  try {
+    const q = query(collection(db, "classes"), where("teacher_username", "==", teacherUsername));
+    const querySnapshot = await getDocs(q);
+    const allReviews = [];
+    let totalRating = 0;
+    let reviewCount = 0;
+
+    querySnapshot.forEach((doc) => {
+      const classData = doc.data();
+      if (classData.reviews) {
+        allReviews.push(...classData.reviews);
+        totalRating += classData.reviews.reduce((sum, review) => sum + review.rating, 0);
+        reviewCount += classData.reviews.length;
+      }
+    });
+
+    reviews.value = allReviews;
+    averageRating.value = reviewCount > 0 ? totalRating / reviewCount : 0;
+  } catch (err) {
+    console.error("Error fetching reviews:", err);
+  }
+};
 
 const formatDate = (date) => {
   if (!date || !date.seconds) return 'Date not available';
@@ -254,7 +269,10 @@ const formatYouTubeEmbedUrl = (url) => {
 onMounted(() => {
   const userId = route.params.userId;
   if (userId) {
-    fetchUserData(userId);
+    fetchUserData(userId).then(() => {
+      // Assuming `userProfile.value.username` is the teacher's username
+      fetchReviewsByTeacher(userProfile.value.username);
+    });
   } else {
     error.value = "User ID not found in route parameters.";
     loading.value = false;
