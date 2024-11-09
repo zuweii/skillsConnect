@@ -3,10 +3,10 @@
     <div class="container-fluid d-flex justify-content-between align-items-center">
       <!-- Logo Link (left-aligned) -->
       <router-link to="/" class="navbar-brand d-flex align-items-center">
-        <img src="../assets/logo.png" class="logo p-2 mx-5" alt="SkillsConnect Logo" />
+        <img src="../assets/logo.png" class="logo p-2" alt="SkillsConnect Logo" />
       </router-link>
 
-      <!-- Login Button (right-aligned) -->
+
       <router-link to="/login" class="btn btn-primary btn-login">Login</router-link>
     </div>
   </nav>
@@ -19,21 +19,23 @@ export default {
 </script>
 
 <style scoped>
-/* Navbar styling */
 .navbar {
-  padding: 1rem 2rem;
+  padding: 0.5rem 1rem;
 }
 
-/* Logo styling */
 .logo {
-  max-width: 150px;
+  max-width: 140px;
+  transition: transform 0.2s ease-in-out;
 }
 
-/* Button styling */
+.logo:hover {
+  transform: scale(1.01);
+}
+
 .btn-login {
   background-color: #5a7dee;
   border-color: #5a7dee;
-  white-space: nowrap; /* Prevents button from stretching */
+  white-space: nowrap;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
@@ -42,10 +44,19 @@ export default {
   border-color: #4e6dd2;
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .navbar {
-    padding: 0.5rem 1rem;
+@media (max-width: 991px) {
+  .navbar-nav {
+    width: 100%;
+    text-align: center;
+  }
+
+  .nav-item {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .logo {
+    margin-left: 0;
   }
 }
 </style>

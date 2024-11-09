@@ -18,7 +18,10 @@
               required 
               class="form-control" 
               autocomplete="username"
+              @blur="checkUsernameAvailability"
             />
+            <span v-if="usernameAvailable === false" class="text-danger">Username is already taken</span>
+            <span v-if="usernameAvailable === true" class="text-success">Username is available</span>
           </div>
           <div class="form-group">
             <label for="email">Email <span class="text-danger">*</span></label>
@@ -29,7 +32,10 @@
               required 
               class="form-control" 
               autocomplete="email"
+              @blur="checkEmailAvailability"
             />
+            <span v-if="emailAvailable === false" class="text-danger">Email is already in use</span>
+            <span v-if="emailAvailable === true" class="text-success">Email is available</span>
           </div>
         </div>
         <div class="form-row">
@@ -104,7 +110,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, storage } from '../firebase/firebase_config';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -123,12 +129,16 @@ export default {
     const isLoading = ref(false);
     const profileImageFile = ref(null);
     const profileImageName = ref('');
+    const usernameAvailable = ref(null);
+    const emailAvailable = ref(null);
 
     const isFormValid = computed(() => {
       return username.value.trim() !== '' &&
              email.value.trim() !== '' &&
              password.value.length >= 6 &&
-             password.value === confirmPassword.value;
+             password.value === confirmPassword.value &&
+             usernameAvailable.value === true &&
+             emailAvailable.value === true;
     });
 
     const handleFileUpload = (event) => {
@@ -141,6 +151,47 @@ export default {
 
     const togglePassword = () => {
       showPassword.value = !showPassword.value;
+    };
+
+    const checkUsernameAvailability = async () => {
+      if (username.value.trim() === '') {
+        usernameAvailable.value = null;
+        return;
+      }
+
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', username.value.trim()));
+        const querySnapshot = await getDocs(q);
+        usernameAvailable.value = querySnapshot.empty;
+      } catch (err) {
+        console.error('Error checking username availability:', err);
+        usernameAvailable.value = null;
+      }
+    };
+
+    const checkEmailAvailability = async () => {
+      if (email.value.trim() === '') {
+        emailAvailable.value = null;
+        return;
+      }
+
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('email', '==', email.value.trim()));
+        const querySnapshot = await getDocs(q);
+        emailAvailable.value = querySnapshot.empty;
+        
+        if (!emailAvailable.value) {
+          error.value = "This email is already in use. Please use a different email.";
+        } else {
+          error.value = null;
+        }
+      } catch (err) {
+        console.error('Error checking email availability:', err);
+        emailAvailable.value = null;
+        error.value = "An error occurred while checking email availability. Please try again.";
+      }
     };
 
     const saveUserData = async (uid, email, username, profilePhotoUrl) => {
@@ -173,6 +224,18 @@ export default {
       error.value = null;
       isLoading.value = true;
 
+      if (!usernameAvailable.value) {
+        error.value = "Please choose a different username.";
+        isLoading.value = false;
+        return;
+      }
+
+      if (!emailAvailable.value) {
+        error.value = "This email is already in use. Please use a different email.";
+        isLoading.value = false;
+        return;
+      }
+
       if (password.value !== confirmPassword.value) {
         error.value = "Passwords do not match.";
         isLoading.value = false;
@@ -180,10 +243,8 @@ export default {
       }
 
       try {
-        // Step 1: Create user with email and password
         const { user } = await createUserWithEmailAndPassword(auth, email.value, password.value);
 
-        // Step 2: Upload profile image to Firebase Storage if it exists
         let profileImageUrl = '';
         if (profileImageFile.value) {
           const storagePath = `profile-photos/${user.uid}`;
@@ -192,10 +253,8 @@ export default {
           profileImageUrl = await getDownloadURL(profileImageRef);
         }
 
-        // Step 3: Save user data in Firestore
         await saveUserData(user.uid, user.email, username.value, profileImageUrl);
 
-        // Step 4: Redirect to the homepage after successful signup
         router.push('/home-page');
       } catch (err) {
         console.error('Signup failed:', err);
@@ -228,9 +287,13 @@ export default {
       isLoading,
       isFormValid,
       profileImageName,
+      usernameAvailable,
+      emailAvailable,
       handleSignup,
       handleFileUpload,
       togglePassword,
+      checkUsernameAvailability,
+      checkEmailAvailability,
     };
   },
 };
@@ -427,5 +490,13 @@ export default {
   .form-row {
     flex-direction: column;
   }
+}
+
+.text-danger {
+  color: #dc3545;
+}
+
+.text-success {
+  color: #28a745;
 }
 </style>
