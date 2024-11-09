@@ -16,7 +16,7 @@
         <!-- Student Classes -->
         <div class="col-md-6 mb-4">
           <div class="card shadow-sm gradient-border">
-            <div class="card-header bg-white border-0 py-3">
+            <div class="card-header bg-white border-0 shadow-sm py-3">
               <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
                 <i class="bi bi-journal-text me-2 text-primary"></i>
                 My Upcoming Classes as Student
@@ -78,7 +78,7 @@
         <!-- Teacher Classes -->
         <div class="col-md-6 mb-4">
           <div class="card shadow-sm gradient-border">
-            <div class="card-header bg-white border-0 py-3">
+            <div class="card-header bg-white border-0 shadow-sm py-3">
               <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
                 <i class="bi bi-easel me-2 text-primary"></i>
                 My Upcoming Classes as Teacher
@@ -140,71 +140,6 @@
         </div>
       </div>
 
-
-      <!-- Categories Section -->
-      <div class="categories-section mb-4">
-        <h1 class="h3 mb-4 fw-bold">What would you like to learn?</h1>
-        <div class="categories-btn-group">
-          <button class="category-btn" :class="{ active: selectedCategory === 'all' }" @click="selectCategory('all')">
-            All
-          </button>
-          <button v-for="category in categories" :key="category.category_name" class="category-btn"
-            :class="{ active: selectedCategory === category.category_name }"
-            @click="selectCategory(category.category_name)">
-            {{ category.category_name }}
-          </button>
-        </div>
-      </div>
-
-
-      <!-- Available Classes Section -->
-      <h1 class="h3 mb-4 fw-bold">Available Classes</h1>
-      <div class="row mb-5">
-        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.max_capacity - classItem.current_enrollment }}
-                    spots left
-                  </span>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{
-                    classItem.ratings_average.toFixed(1)
-                  }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
-                </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-
       <h1 class="h3 mb-4 fw-bold">Nearby Classes</h1>
       <div v-if="loadingNearby" class="text-center">
         <div class="spinner-border text-primary" role="status">
@@ -212,7 +147,7 @@
         </div>
       </div>
       <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
-        No classes found within 1km of your location.
+        No classes found within 5km of your location.
       </div>
       <div v-else class="row mb-5">
         <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
@@ -239,8 +174,7 @@
                   </p>
                   <span class="badge bg-light text-dark">
                     <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.max_capacity - classItem.current_enrollment }}
-                    spots left
+                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
                   </span>
                 </div>
                 <div class="d-flex align-items-center mb-2">
@@ -258,6 +192,75 @@
           </div>
         </div>
       </div>
+
+ <!-- Available Classes Section -->
+ <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
+
+<!-- Categories Section -->
+<div class="categories-section mb-4">
+  <div class="categories-btn-group">
+    <button 
+      class="category-btn" 
+      :class="{ active: selectedCategory === null }" 
+      @click="selectCategory(null)"
+    >
+      All
+    </button>
+    <button 
+      v-for="category in categories" 
+      :key="category.category_name" 
+      class="category-btn"
+      :class="{ active: selectedCategory === category.category_name }"
+      @click="selectCategory(category.category_name)"
+    >
+      {{ category.category_name }}
+    </button>
+  </div>
+</div>
+
+<div class="row mb-5">
+  <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+    <div class="card shadow-sm h-100 hover-card">
+      <div class="card-img-wrapper">
+        <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+        <div class="card-img-overlay-top">
+          <span class="badge bg-primary">
+            {{ classItem.category }}
+          </span>
+        </div>
+      </div>
+      <div class="card-body d-flex flex-column">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+        </div>
+        <p class="card-text text-muted small flex-grow-1">
+          {{ truncateText(classItem.description, 100) }}
+        </p>
+        <div class="mt-auto">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <p class="card-text h5 text-primary mb-0">
+              ${{ classItem.price.toFixed(2) }}
+            </p>
+            <span class="badge bg-light text-dark">
+              <i class="bi bi-people-fill me-1"></i>
+              {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+            </span>
+          </div>
+          <div class="d-flex align-items-center mb-2">
+            <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+            <StarRating :rating="classItem.ratings_average" />
+            <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+          </div>
+          <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+            View Details
+          </router-link>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
     </div>
   </div>
 </template>
@@ -280,7 +283,6 @@ import { db } from "../firebase/firebase_config";
 import FBInstanceAuth from "../firebase/firebase_auth";
 import StarRating from "../components/StarRating.vue";
 
-
 export default {
   name: "HomePage",
   components: {
@@ -291,7 +293,6 @@ export default {
       type: String,
       default: "",
     },
-
   },
   setup(props) {
     const classes = ref([]);
@@ -304,6 +305,7 @@ export default {
     const userLocation = ref(null);
     const loadingNearby = ref(false);
     const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
 
 
 
@@ -359,13 +361,11 @@ export default {
     const filteredClasses = computed(() => {
       let filtered = classes.value;
 
-
       if (selectedCategory.value) {
         filtered = filtered.filter(
           (classItem) => classItem.category === selectedCategory.value
         );
       }
-
 
       if (props.searchQuery) {
         const query = props.searchQuery.toLowerCase();
@@ -376,9 +376,9 @@ export default {
         );
       }
 
-
       return filtered;
     });
+
 
 
     const availableClasses = computed(() => {
@@ -389,19 +389,21 @@ export default {
           const hasAvailability =
             classItem.max_capacity > classItem.current_enrollment;
           const isNotUserClass =
-            !currentUser.value.upcoming_classes_as_teacher?.includes(
+            !currentUser.value?.upcoming_classes_as_teacher?.includes(
               classItem.id
             );
 
-
           classItem.ratings_average = classItem.ratings_average || 0;
           classItem.reviews = classItem.reviews || [];
-
 
           return hasAvailability && startDate > currentDate && isNotUserClass;
         })
         .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
     });
+
+    const selectCategory = (category) => {
+      selectedCategory.value = category;
+    };
 
     const upcomingClassesAsStudent = computed(() => {
       if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
@@ -647,7 +649,7 @@ export default {
               classItem.latitude,
               classItem.longitude
             );
-            return distance <= 1; // Only classes within 1 km
+            return distance <= 5; // Only classes within 5 km
           }
           return false;
         });
@@ -684,12 +686,8 @@ export default {
       truncateText,
       nearbyClasses,
       loadingNearby,
-      filterClassesByCategory: (category) => {
-        selectedCategory.value = category;
-      },
-      clearCategorySelection: () => {
-        selectedCategory.value = null;
-      },
+      selectedCategory,
+      selectCategory,
     };
   },
   //SEARCH BAR (START)
@@ -728,6 +726,8 @@ export default {
 .card {
   border: 0;
   transition: all 0.3s ease;
+  border-radius: 15px;
+  overflow: hidden;
 }
 
 
@@ -740,7 +740,7 @@ export default {
 
 .hover-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
+  box-shadow: 0 0.5rem 1rem rgba(90, 124, 238, 0.356) !important;
 }
 
 
@@ -802,8 +802,8 @@ export default {
 
 
 .upcoming-list {
-  height: 170px;
-  max-height: 170px;
+  height: 180px;
+  max-height: 180px;
   overflow-y: auto;
 }
 
@@ -862,12 +862,11 @@ export default {
   gap: 10px;
   border-radius: 50px;
   padding: 5px;
-  background-color: #f1f3f5;
 }
 
 .category-btn {
   border: none;
-  background-color: transparent;
+  background-color: #ecf3fa;
   color: #333;
   padding: 10px 20px;
   cursor: pointer;
