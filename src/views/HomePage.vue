@@ -147,7 +147,7 @@
         </div>
       </div>
       <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
-        No classes found within 5km of your location.
+        No classes found within 2km of your location.
       </div>
       <div v-else class="row mb-5">
         <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
@@ -193,72 +193,64 @@
         </div>
       </div>
 
- <!-- Available Classes Section -->
- <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
+      <!-- Available Classes Section -->
+      <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
 
-<!-- Categories Section -->
-<div class="categories-section mb-4">
-  <div class="categories-btn-group">
-    <button 
-      class="category-btn" 
-      :class="{ active: selectedCategory === null }" 
-      @click="selectCategory(null)"
-    >
-      All
-    </button>
-    <button 
-      v-for="category in categories" 
-      :key="category.category_name" 
-      class="category-btn"
-      :class="{ active: selectedCategory === category.category_name }"
-      @click="selectCategory(category.category_name)"
-    >
-      {{ category.category_name }}
-    </button>
-  </div>
-</div>
-
-<div class="row mb-5">
-  <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-    <div class="card shadow-sm h-100 hover-card">
-      <div class="card-img-wrapper">
-        <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-        <div class="card-img-overlay-top">
-          <span class="badge bg-primary">
-            {{ classItem.category }}
-          </span>
+      <!-- Categories Section -->
+      <div class="categories-section mb-4">
+        <div class="categories-btn-group">
+          <button class="category-btn" :class="{ active: selectedCategory === null }" @click="selectCategory(null)">
+            All
+          </button>
+          <button v-for="category in categories" :key="category.category_name" class="category-btn"
+            :class="{ active: selectedCategory === category.category_name }"
+            @click="selectCategory(category.category_name)">
+            {{ category.category_name }}
+          </button>
         </div>
       </div>
-      <div class="card-body d-flex flex-column">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-        </div>
-        <p class="card-text text-muted small flex-grow-1">
-          {{ truncateText(classItem.description, 100) }}
-        </p>
-        <div class="mt-auto">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="card-text h5 text-primary mb-0">
-              ${{ classItem.price.toFixed(2) }}
-            </p>
-            <span class="badge bg-light text-dark">
-              <i class="bi bi-people-fill me-1"></i>
-              {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
-            </span>
+
+      <div class="row mb-5">
+        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card shadow-sm h-100 hover-card">
+            <div class="card-img-wrapper">
+              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+              <div class="card-img-overlay-top">
+                <span class="badge bg-primary">
+                  {{ classItem.category }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+              </div>
+              <p class="card-text text-muted small flex-grow-1">
+                {{ truncateText(classItem.description, 100) }}
+              </p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <p class="card-text h5 text-primary mb-0">
+                    ${{ classItem.price.toFixed(2) }}
+                  </p>
+                  <span class="badge bg-light text-dark">
+                    <i class="bi bi-people-fill me-1"></i>
+                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                  </span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                  <StarRating :rating="classItem.ratings_average" />
+                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                </div>
+                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                  View Details
+                </router-link>
+              </div>
+            </div>
           </div>
-          <div class="d-flex align-items-center mb-2">
-            <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-            <StarRating :rating="classItem.ratings_average" />
-            <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
-          </div>
-          <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-            View Details
-          </router-link>
         </div>
       </div>
-    </div>
-  </div>
-</div>
 
 
     </div>
@@ -386,19 +378,22 @@ export default {
       return filteredClasses.value
         .filter((classItem) => {
           const startDate = classItem.start_date.toDate();
+          const startTime = classItem.start_time.toDate();
           const hasAvailability =
             classItem.max_capacity > classItem.current_enrollment;
           const isNotUserClass =
             !currentUser.value?.upcoming_classes_as_teacher?.includes(
               classItem.id
             );
+          const isToday = startDate.toDateString() === currentDate.toDateString();
+          const isBeforeStartTime = currentDate < startTime;
 
           classItem.ratings_average = classItem.ratings_average || 0;
           classItem.reviews = classItem.reviews || [];
 
-          return hasAvailability && startDate > currentDate && isNotUserClass;
+          return hasAvailability && isNotUserClass && isToday && isBeforeStartTime;
         })
-        .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
+        .sort((a, b) => a.start_time.toDate() - b.start_time.toDate());
     });
 
     const selectCategory = (category) => {
@@ -649,7 +644,7 @@ export default {
               classItem.latitude,
               classItem.longitude
             );
-            return distance <= 5; // Only classes within 5 km
+            return distance <= 2; // Only classes within 2 km
           }
           return false;
         });
