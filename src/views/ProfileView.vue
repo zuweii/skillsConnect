@@ -22,7 +22,7 @@
                 <div class="text-center text-md-start">
                   <h2 class="card-title mb-2">{{ userProfile.username }}</h2>
                   <div class="d-flex align-items-center justify-content-center justify-content-md-start mb-2">
-                    <span class="me-2">Average Class Rating:</span>
+                    <span class="me-2">Average Ratings:</span>
                     <StarRating :rating="averageRating" readOnly />
                     <span class="ms-2">({{ averageRating.toFixed(1) }})</span>
                   </div>
@@ -86,11 +86,11 @@
                                   {{ classItem.max_capacity - classItem.current_enrollment }} spots left
                                 </span>
                               </div>
-                              <!-- Updated router-link with dynamic route to ClassDetails -->
-                              <!-- <router-link :to="{ name: 'ClassItem', params: { id: classItem.id } }"
+                              <!-- <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
                                 class="custom-button w-100">
                                 View Details
                               </router-link> -->
+                              <router-link class="custom-button w-100">View Details</router-link>
                             </div>
                           </div>
                         </div>
