@@ -128,6 +128,7 @@ import { db } from '../firebase/firebase_config';
 import FBInstanceAuth from '../firebase/firebase_auth';
 import StarRating from '../components/StarRating.vue';
 import { Timestamp } from 'firebase/firestore';
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 export default {
   name: 'Payment',
@@ -193,7 +194,7 @@ export default {
       await FBInstanceAuth.waitForAuthReady();
       await fetchClassDetails();
 
-      stripe.value = await loadStripe('pk_test_51QCeCgGrm7Jys6wXvdMZgzosRXmSwWseb8MfEFxGyhMB4bfLcNQK1mo7mtqbDhs2anZD2gCjACdmbGI9dtJteyI200oipnoSeV');
+      stripe.value = await loadStripe(stripePublishableKey);
       elements.value = stripe.value.elements();
       const cardElement = elements.value.create('card');
       cardElement.mount('#card-element');
