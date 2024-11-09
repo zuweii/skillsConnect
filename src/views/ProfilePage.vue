@@ -34,7 +34,7 @@
                   </router-link>
                 </div>
                 <div class="col-md-auto mt-3 mt-md-0">
-                  <button @click="showEditProfileModal = true" class="btn btn-primary">
+                  <button @click="openEditProfileModal" class="btn btn-primary">
                     Edit Profile Settings
                   </button>
                 </div>
@@ -201,7 +201,7 @@
                               <StarRating :rating="cls.ratings_average" readOnly />
                               <span class="text-muted ms-2 fs-6">({{ cls.reviews.length }})</span>
                             </div>
-                            <button v-if="cls.isActive" @click="openRelistModal(cls)"
+                            <button v-if="cls.isActive" @click="editClass(cls.id)"
                               class="btn btn-primary custom-button btn-sm w-100">Edit Class</button>
                             <button v-else @click="openRelistModal(cls)"
                               class="btn btn-secondary custom-button-relist btn-sm w-100">Relist Class</button>
@@ -259,7 +259,6 @@
                   </div>
                 </div>
 
-
                 <!-- Portfolio Uploads Tab -->
                 <div :class="{ 'active show': currentTab === 'portfolio' }" class="tab-pane fade" id="portfolio"
                   role="tabpanel" aria-labelledby="portfolio-tab">
@@ -267,30 +266,54 @@
                     <h3 class="mb-4">My Portfolio Projects</h3>
                     <div class="row row-cols-1 row-cols-md-2 g-4">
                       <div v-for="(project, index) in userProfile.portfolio" :key="index" class="col">
-                        <div class="card shadow-sm">
-                          <div class="portfolio-media">
-                            <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
-                              class="portfolio-image card-img-top">
-                            <div v-if="project.youtubeLink"
-                              class="embed-responsive embed-responsive-16by9 portfolio-video">
-                              <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen
-                                class="embed-responsive-item"></iframe>
+                        <div class="card shadow-sm h-100 portfolio-card">
+                          <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                              <div v-if="project.imageUrl" class="carousel-item active">
+                                <img :src="project.imageUrl" :alt="project.title" class="portfolio-image">
+                              </div>
+                              <div v-if="project.youtubeLink" class="carousel-item"
+                                :class="{ active: !project.imageUrl }">
+                                <div class="embed-responsive embed-responsive-16by9">
+                                  <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                    allowfullscreen class="embed-responsive-item"></iframe>
+                                </div>
+                              </div>
                             </div>
+                            <button v-if="project.imageUrl && project.youtubeLink"
+                              class="carousel-control carousel-control-prev" type="button"
+                              :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
+                              <span class="carousel-control-icon" aria-hidden="true">
+                                <i class="bi bi-chevron-left"></i>
+                              </span>
+                              <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button v-if="project.imageUrl && project.youtubeLink"
+                              class="carousel-control carousel-control-next" type="button"
+                              :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
+                              <span class="carousel-control-icon" aria-hidden="true">
+                                <i class="bi bi-chevron-right"></i>
+                              </span>
+                              <span class="visually-hidden">Next</span>
+                            </button>
                           </div>
-                          <div class="card-body">
+                          <div class="card-body d-flex flex-column">
                             <h5 class="card-title">{{ project.title }}</h5>
-                            <p class="card-text">{{ project.description }}</p>
-
-                            <button @click="openEditModal(project, index)" class="btn btn-secondary mt-2">Edit</button>
-                            <button @click="confirmDeleteProject(project, index)"
-                              class="btn btn-danger mt-2">Delete</button>
+                            <p class="card-text flex-grow-1">{{ project.description }}</p>
+                            <div class="mt-auto">
+                              <button @click="openEditModal(project, index)" class="btn btn-primary me-2">Edit</button>
+                              <button @click="confirmDeleteProject(project, index)"
+                                class="btn btn-outline-danger">Delete</button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div v-else class="text-muted text-center">
-                    No portfolio
+                    <i class="bi bi-folder-x fs-1 mb-3"></i>
+                    <p>No portfolio projects yet. Add your first project!</p>
                   </div>
                 </div>
 
@@ -361,11 +384,12 @@
     </div>
 
     <!-- Edit Portfolio Modal -->
-    <div class="modal fade" id="editPostModal" tabindex="-1" aria-labelledby="editPostModalLabel" aria-hidden="true">
+    <div class="modal fade" id="editPortfolioModal" tabindex="-1" aria-labelledby="editPortfolioModalLabel"
+      aria-hidden="true">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title" id="editPostModalLabel">Edit Portfolio Project</h5>
+            <h5 class="modal-title" id="editPortfolioModalLabel">Edit Portfolio Project</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body">
@@ -406,23 +430,41 @@
             Are you sure you want to delete this project? This action cannot be undone.
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" @click="showDeleteModal = false">Cancel</button>
             <button type="button" class="btn btn-danger" @click="deleteProject">Delete</button>
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Success Modal -->
+    <div v-if="showSuccessModal" class="modal fade show" tabindex="-1" style="display: block;" role="dialog">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Success</h5>
+            <button type="button" class="btn-close" @click="closeSuccessModal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <i class="bi bi-check-circle-fill text-success fs-1 d-block text-center mb-3"></i>
+            <p class="text-center">Your portfolio project has been successfully added!</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <EditProfileModal v-if="showEditProfileModal" :user-profile="userProfile" @close="closeEditProfileModal"
+      @update="updateUserProfile" />
   </div>
 </template>
 
 
 <script>
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
-import { Modal } from 'bootstrap';
+import { Modal, Carousel } from 'bootstrap';
+import { useRouter } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
 import EditProfileModal from './EditProfileModal.vue';
 
@@ -432,6 +474,7 @@ export default {
     EditProfileModal,
   },
   setup() {
+    const router = useRouter();
     const auth = getAuth();
     const userProfile = ref({});
     const upcomingClassesAsStudent = ref([]);
@@ -440,7 +483,11 @@ export default {
     const loading = ref(true);
     const error = ref(null);
     const currentTab = ref('student');
-    const defaultPhoto = ref('../assets/default-profile.png');
+    const showSuccessModal = ref(false);
+    const showDeleteModal = ref(false);
+    const projectToDelete = ref(null);
+    const projectIndexToDelete = ref(null);
+    const defaultPhoto = ref('/placeholder.svg?height=200&width=200');
     const showEditProfileModal = ref(false);
 
     const studentFilterType = ref('day');
@@ -458,16 +505,45 @@ export default {
       newEndTime: ''
     });
 
-    const showDeleteModal = ref(false);
-    const projectToDelete = ref(null);
-    const projectIndexToDelete = ref(null);
-
     const newProject = ref({
       title: '',
       description: '',
       youtubeLink: '',
       imageUrl: '',
     });
+
+    const editClass = (classId) => {
+      router.push({ name: 'ListClass', params: { classId: classId } });
+    };
+
+    const openEditProfileModal = () => {
+      showEditProfileModal.value = true;
+    };
+
+    const closeEditProfileModal = () => {
+      showEditProfileModal.value = false;
+      // Refresh the page when the modal is closed
+      window.location.reload();
+    };
+
+    const updateUserProfile = async (updatedProfile) => {
+      try {
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, updatedProfile);
+        userProfile.value = { ...userProfile.value, ...updatedProfile };
+      } catch (error) {
+        console.error('Error updating user profile:', error);
+      }
+    };
+
+    const initializeCarousels = () => {
+      userProfile.value.portfolio?.forEach((_, index) => {
+        const carouselElement = document.getElementById(`portfolioCarousel${index}`);
+        if (carouselElement && !Carousel.getInstance(carouselElement)) {
+          new Carousel(carouselElement);
+        }
+      });
+    };
 
     const addPortfolioProject = async () => {
       if (!newProject.value.title || !newProject.value.description) return;
@@ -485,31 +561,40 @@ export default {
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
         newProject.value = { title: '', description: '', youtubeLink: '', imageUrl: '' };
+        showSuccessModal.value = true;
+
+        nextTick(() => {
+          initializeCarousels();
+        });
       } catch (err) {
         console.error('Error updating portfolio:', err);
       }
     };
 
-    const handleImageUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          newProject.value.imageUrl = reader.result;
-        };
-        reader.readAsDataURL(file);
-      }
+    const closeSuccessModal = () => {
+      showSuccessModal.value = false;
     };
 
     const formatYouTubeEmbedUrl = (url) => {
-      const videoId = url.split('v=')[1];
-      return `https://www.youtube.com/embed/${videoId}`;
+      if (!url) return '';
+      let videoId = '';
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'youtu.be') {
+          videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+          videoId = urlObj.searchParams.get('v');
+        }
+      } catch (error) {
+        console.error('Invalid YouTube URL:', error);
+      }
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     };
 
     const openEditModal = (project, index) => {
       editProject.value = { ...project };
       editIndex.value = index;
-      const modal = new Modal(document.getElementById('editPostModal'));
+      const modal = new Modal(document.getElementById('editPortfolioModal'));
       modal.show();
     };
 
@@ -533,10 +618,43 @@ export default {
         const userRef = doc(db, 'users', auth.currentUser.uid);
         await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
-        const modal = Modal.getInstance(document.getElementById('editPostModal'));
+        const modal = Modal.getInstance(document.getElementById('editPortfolioModal'));
         modal.hide();
       } catch (err) {
         console.error('Error updating portfolio:', err);
+      }
+    };
+
+    const confirmDeleteProject = (project, index) => {
+      showDeleteModal.value = true;
+      editProject.value = project;
+      editIndex.value = index;
+    };
+
+    const deleteProject = async () => {
+      if (editIndex.value !== null) {
+        userProfile.value.portfolio.splice(editIndex.value, 1);
+
+        try {
+          const userRef = doc(db, 'users', auth.currentUser.uid);
+          await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
+          showDeleteModal.value = false;
+        } catch (err) {
+          console.error('Error deleting project:', err);
+        }
+      }
+    };
+
+
+
+    const handleImageUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          newProject.value.imageUrl = reader.result;
+        };
+        reader.readAsDataURL(file);
       }
     };
 
@@ -549,17 +667,17 @@ export default {
       const now = new Date();
       const filtered = filterClasses(teachingClasses.value, teachingFilterType.value, teachingFilterValue.value);
       return filtered.filter(cls => {
-        const isActive = new Date(cls.end_time.toDate()) > now;
+        const isActive = cls.end_time && new Date(cls.end_time) > now;
         cls.isActive = isActive;
         return teachingClassFilter.value === 'current' ? isActive : !isActive;
       });
     });
 
-
     const filterClasses = (classes, filterType, filterValue) => {
       if (!filterValue) return classes;
       return classes.filter(cls => {
-        const classDate = cls.start_date.toDate();
+        if (!cls.start_date) return false;
+        const classDate = cls.start_date instanceof Date ? cls.start_date : new Date(cls.start_date);
         switch (filterType) {
           case 'day':
             return classDate.toDateString() === new Date(filterValue).toDateString();
@@ -574,38 +692,60 @@ export default {
       });
     };
 
-
     const fetchUserProfile = async (userID) => {
       try {
         const userDoc = await getDoc(doc(db, 'users', userID));
         if (userDoc.exists()) {
           userProfile.value = { id: userDoc.id, ...userDoc.data() };
 
-          // Fetch upcoming classes where the user is a student
-          if (userProfile.value.upcoming_classes_as_student.length > 0) {
+          if (userProfile.value.upcoming_classes_as_student && userProfile.value.upcoming_classes_as_student.length > 0) {
             const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId =>
               getDoc(doc(db, 'classes', classId))
             );
 
             const upcomingClassesSnapshots = await Promise.all(upcomingClassesPromises);
 
-            // Map and filter the classes to get only future classes
             upcomingClassesAsStudent.value = upcomingClassesSnapshots
-              .filter(snapshot => snapshot.exists)
-              .map(snapshot => ({ id: snapshot.id, ...snapshot.data() }))
-              .filter(cls => new Date(cls.end_time.toDate()) > new Date());
+              .filter(snapshot => snapshot.exists())
+              .map(snapshot => {
+                const data = snapshot.data();
+                return {
+                  id: snapshot.id,
+                  ...data,
+                  start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+                  end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+                };
+              })
+              .filter(cls => cls.end_time && cls.end_time > new Date());
 
             const teachingClassesQuery = query(
               collection(db, 'classes'),
               where('teacher_username', '==', userID)
             );
             const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
-            teachingClasses.value = teachingClassesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            teachingClasses.value = teachingClassesSnapshot.docs.map(doc => {
+              const data = doc.data();
+              return {
+                id: doc.id,
+                ...data,
+                start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+                end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+              };
+            });
 
             classesToReview.value = await Promise.all(
               (userProfile.value.pending_reviews || []).map(async (classId) => {
                 const classDoc = await getDoc(doc(db, 'classes', classId));
-                return classDoc.exists() ? { id: classDoc.id, ...classDoc.data() } : null;
+                if (classDoc.exists()) {
+                  const data = classDoc.data();
+                  return {
+                    id: classDoc.id,
+                    ...data,
+                    start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+                    end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+                  };
+                }
+                return null;
               })
             );
             classesToReview.value = classesToReview.value.filter(cls => cls !== null);
@@ -620,7 +760,6 @@ export default {
         loading.value = false;
       }
     };
-
 
     const openRelistModal = (cls) => {
       relistData.value.classId = cls.id;
@@ -674,18 +813,12 @@ export default {
       }
     };
 
-    const calculateCompletionDate = (startDate, numberOfLessons) => {
-      const completionDate = new Date(startDate);
-      completionDate.setDate(completionDate.getDate() + ((numberOfLessons - 1) * 7));
-      return completionDate;
-    };
-
     const formatDate = (date) => {
-      return date.toDate().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      return date instanceof Date ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
     };
 
     const formatTime = (time) => {
-      return time.toDate().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+      return time instanceof Date ? time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : 'Invalid Time';
     };
 
     const truncateText = (text, length) => {
@@ -693,33 +826,18 @@ export default {
       return text.substring(0, length) + '...';
     };
 
-    function confirmDeleteProject(project, index) {
-      projectToDelete.value = project;
-      projectIndexToDelete.value = index;
-      showDeleteModal.value = true;
-    }
-
-    async function deleteProject() {
-      if (projectIndexToDelete.value !== null) {
-        userProfile.value.portfolio.splice(projectIndexToDelete.value, 1);
-
-        try {
-          const userRef = doc(db, 'users', auth.currentUser.uid);
-          await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
-          showDeleteModal.value = false;
-        } catch (err) {
-          console.error('Error deleting project:', err);
-        }
-      }
-    };
-
-    onMounted(async () => {
+    onMounted(() => {
       const user = auth.currentUser;
       if (user) {
-        await fetchUserProfile(user.uid);
-      } else {
-        error.value = "User not authenticated";
-        loading.value = false;
+        fetchUserProfile(user.uid);
+      }
+    });
+
+    watch(() => currentTab.value, (newTab) => {
+      if (newTab === 'portfolio') {
+        nextTick(() => {
+          initializeCarousels();
+        });
       }
     });
 
@@ -758,7 +876,14 @@ export default {
       projectIndexToDelete,
       confirmDeleteProject,
       deleteProject,
-      teachingClassFilter
+      teachingClassFilter,
+      showSuccessModal,
+      closeSuccessModal,
+      openEditModal,
+      openEditProfileModal,
+      closeEditProfileModal,
+      updateUserProfile,
+      editClass
     };
   },
 };
@@ -880,20 +1005,85 @@ h5 {
   transform: translateY(-1px);
 }
 
-.embed-responsive {
-  position: relative;
-  padding-bottom: 56.25%;
-  height: 0;
-  overflow: hidden;
-  max-width: 100%;
+.portfolio-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.embed-responsive .embed-responsive-item {
+.portfolio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+
+.carousel-inner {
+  border-radius: 0.5rem;
+}
+
+.portfolio-image {
+  height: 250px;
+  object-fit: cover;
+  width: 100%;
+  border-radius: 0.5rem;
+}
+
+.embed-responsive {
+  position: relative;
+  width: 100%;
+  padding-bottom: 56.25%;
+  /* 16:9 aspect ratio */
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.embed-responsive iframe {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+  border: 0;
+  border-radius: 0.5rem;
+}
+
+.carousel-control {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
+}
+
+.carousel-control-prev {
+  left: 10px;
+}
+
+.carousel-control-next {
+  right: 10px;
+}
+
+.portfolio-carousel:hover .carousel-control {
+  opacity: 1;
+}
+
+.carousel-control:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.carousel-control-icon {
+  color: #5a7dee;
+  font-size: 1.5rem;
+  transition: transform 0.3s ease;
+}
+
+.carousel-control:hover .carousel-control-icon {
+  transform: scale(1.2);
 }
 
 @media (max-width: 767.98px) {
@@ -902,27 +1092,7 @@ h5 {
   }
 }
 
-.portfolio-media {
-  width: 100%;
-  max-width: 500px;
-  margin: 0 auto;
-}
 
-.portfolio-image {
-  width: 100%;
-  max-height: 280px;
-  object-fit: cover;
-  border-radius: 5px;
-  display: block;
-  margin-bottom: 15px;
-}
-
-.portfolio-video iframe {
-  width: 100%;
-  height: 280px;
-  border-radius: 5px;
-  display: block;
-}
 
 .btn-group {
   width: 100%;
@@ -935,6 +1105,7 @@ h5 {
   flex: 1;
   border-radius: 25px;
 }
+
 .custom-button {
   display: inline-block;
   padding: 0.5rem 1rem;

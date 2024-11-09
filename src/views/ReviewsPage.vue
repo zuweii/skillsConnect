@@ -461,7 +461,6 @@ export default {
 
 .back-link:hover {
   color: #4e6dd2;
-  text-decoration: underline;
 }
 
 .modal-content {
