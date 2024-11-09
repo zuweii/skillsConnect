@@ -55,60 +55,68 @@
                 <!-- Classes Available Tab -->
                 <div :class="{ 'active show': currentTab === 'classes' }" class="tab-pane fade" id="classes"
                   role="tabpanel" aria-labelledby="classes-tab">
-                    <div class="card-body">
-                      <h3 class="card-title mb-4">Classes Available</h3>
-                      <div v-if="listings.length === 0" class="text-muted text-center">
-                        No listings available.
-                      </div>
-                      <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                        <div v-for="classItem in listings" :key="classItem.id" class="col">
-                          <div class="card h-100 shadow-sm hover-card">
-                            <div class="card-img-wrapper">
-                              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
-                              <div class="card-img-overlay-top">
-                                <span class="badge bg-primary">
-                                  {{ classItem.category }}
+                  <div class="card-body">
+                    <h3 class="card-title mb-4">Classes Available</h3>
+                    <div v-if="listings.length === 0" class="text-muted text-center">
+                      No listings available.
+                    </div>
+                    <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                      <div v-for="classItem in listings" :key="classItem.id" class="col">
+                        <div class="card h-100 shadow-sm hover-card">
+                          <div class="card-img-wrapper">
+                            <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
+                            <div class="card-img-overlay-top">
+                              <span class="badge bg-primary">
+                                {{ classItem.category }}
+                              </span>
+                            </div>
+                          </div>
+                          <div class="card-body d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                              <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+                            </div>
+                            <p class="card-text text-muted small flex-grow-1">
+                              {{ truncateText(classItem.description, 100) }}
+                            </p>
+                            <div class="mt-auto">
+                              <div class="d-flex justify-content-between align-items-center mb-3">
+                                <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
+                                <span class="badge bg-light text-dark">
+                                  <i class="bi bi-people-fill me-1"></i>
+                                  {{ classItem.max_capacity - classItem.current_enrollment }} spots left
                                 </span>
                               </div>
-                            </div>
-                            <div class="card-body d-flex flex-column">
-                              <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-                              </div>
-                              <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}
-                              </p>
-                              <div class="mt-auto">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                  <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
-                                  <span class="badge bg-light text-dark">
-                                    <i class="bi bi-people-fill me-1"></i>
-                                    {{ classItem.max_capacity - classItem.current_enrollment }} spots left
-                                  </span>
-                                </div>
-                                <router-link class="custom-button w-100">View Details</router-link>
-                              </div>
+                              <!-- Updated router-link with dynamic route to ClassDetails -->
+                              <!-- <router-link :to="{ name: 'ClassItem', params: { id: classItem.id } }"
+                                class="custom-button w-100">
+                                View Details
+                              </router-link> -->
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
 
-                <!-- Reviews Tab -->
-                <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
-                  role="tabpanel" aria-labelledby="reviews-tab">
-                  <div v-if="reviews.length === 0" class="text-muted text-center">
-                    No reviews yet.
-                  </div>
-                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                    <div v-for="review in reviews" :key="review.id" class="col">
-                      <div class="card h-100 border">
-                        <div class="card-body">
-                          <h5 class="card-title">{{ review.author }}</h5>
-                          <p class="card-text">{{ review.comment }}</p>
-                          <div class="d-flex justify-content-between align-items-center">
-                            <StarRating :rating="review.rating" readOnly />
-                            <small class="text-muted">{{ formatDate(review.date) }}</small>
+
+
+                  <!-- Reviews Tab -->
+                  <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
+                    role="tabpanel" aria-labelledby="reviews-tab">
+                    <div v-if="reviews.length === 0" class="text-muted text-center">
+                      No reviews yet.
+                    </div>
+                    <div v-else class="row row-cols-1 row-cols-md-2 g-4">
+                      <div v-for="review in reviews" :key="review.id" class="col">
+                        <div class="card h-100 border">
+                          <div class="card-body">
+                            <h5 class="card-title">{{ review.author }}</h5>
+                            <p class="card-text">{{ review.comment }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                              <StarRating :rating="review.rating" readOnly />
+                              <small class="text-muted">{{ formatDate(review.date) }}</small>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -118,43 +126,53 @@
               </div>
             </div>
           </div>
-        </div>
 
-        <!-- Right Column: Portfolio -->
-        <div class="col-lg-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">Portfolio</h3>
-                  <div v-if="portfolio.length === 0" class="text-muted text-center">
-                    No portfolio projects to display.
-                  </div>
-                  <div v-else class="portfolio-container">
-                    <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
-                      <div class="card">
-                        <div class="row g-0">
-                          <div class="col-md-12">
-                            <div class="portfolio-media h-100 position-relative">
-                              <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
-                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                              <div v-if="!project.imageUrl && project.youtubeLink" class="ratio ratio-16x9 h-100">
-                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen></iframe>
+          <!-- Right Column: Portfolio -->
+          <div class="col-lg-4">
+            <div class="row">
+              <div class="col-12">
+                <div class="card shadow-sm mb-4">
+                  <div class="card-body">
+                    <h3 class="card-title mb-4">Portfolio</h3>
+                    <div v-if="portfolio.length === 0" class="text-muted text-center">
+                      No portfolio projects to display.
+                    </div>
+                    <div v-else class="portfolio-container">
+                      <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
+                        <div class="card shadow-sm h-100 portfolio-card">
+                          <!-- Carousel for Image/Video Display -->
+                          <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
+                            <div class="carousel-inner">
+                              <div v-if="project.imageUrl" class="carousel-item active">
+                                <img :src="project.imageUrl" :alt="project.title"
+                                  class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
                               </div>
-                              <a v-if="project.imageUrl && project.youtubeLink" 
-                                 :href="project.youtubeLink" 
-                                 target="_blank" 
-                                 rel="noopener noreferrer" 
-                                 class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-50 text-white text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
-                              </a>
+                              <div v-if="project.youtubeLink" class="carousel-item"
+                                :class="{ active: !project.imageUrl }">
+                                <div class="ratio ratio-16x9">
+                                  <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
+                                    allowfullscreen class="embed-responsive-item"></iframe>
+                                </div>
+                              </div>
                             </div>
+                            <!-- Carousel Controls -->
+                            <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
+                              type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
+                              <span class="carousel-control-icon" aria-hidden="true"><i
+                                  class="bi bi-chevron-left"></i></span>
+                              <span class="visually-hidden">Previous</span>
+                            </button>
+                            <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
+                              type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
+                              <span class="carousel-control-icon" aria-hidden="true"><i
+                                  class="bi bi-chevron-right"></i></span>
+                              <span class="visually-hidden">Next</span>
+                            </button>
                           </div>
-                          <div class="col-md-12">
-                            <div class="card-body">
-                              <h5 class="card-title">{{ project.title }}</h5>
-                              <p class="card-text">{{ project.description }}</p>
-                            </div>
+                          <!-- Project Details -->
+                          <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ project.title }}</h5>
+                            <p class="card-text">{{ project.description }}</p>
                           </div>
                         </div>
                       </div>
@@ -167,7 +185,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
@@ -196,13 +213,12 @@ const fetchUserData = async (userID) => {
   try {
     const userDoc = await getDoc(doc(db, "users", userID));
     if (userDoc.exists()) {
-      userProfile.value = userDoc.data();
-      reviews.value = userProfile.value.reviews || [];
-      listings.value = userProfile.value.posted_classes || [];
-      portfolio.value = userProfile.value.portfolio?.project_images || [];
-
-      const totalRatings = listings.value.reduce((sum, cls) => sum + (cls.ratings_average || 0), 0);
-      averageRating.value = listings.value.length ? totalRatings / listings.value.length : 0;
+      const data = userDoc.data();
+      console.log("Fetched User Data:", data);  
+      userProfile.value = data;
+      listings.value = data.posted_classes || [];  
+      console.log("Listings Data:", listings.value);  
+      portfolio.value = data.portfolio || [];
     } else {
       error.value = "User profile not found.";
     }
@@ -213,6 +229,7 @@ const fetchUserData = async (userID) => {
     loading.value = false;
   }
 };
+
 
 const formatDate = (date) => {
   if (!date || !date.seconds) return 'Date not available';
@@ -243,6 +260,7 @@ onMounted(() => {
     loading.value = false;
   }
 });
+
 </script>
 
 <style scoped>
