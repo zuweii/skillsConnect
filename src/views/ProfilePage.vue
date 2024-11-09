@@ -610,20 +610,30 @@ export default {
     };
 
     const submitEditProject = async () => {
-      if (editIndex.value === null) return;
+    if (editIndex.value === null) return;
 
-      userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
+    userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
 
-      try {
-        const userRef = doc(db, 'users', auth.currentUser.uid);
-        await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
+    try {
+      const auth = getAuth();
+      const userRef = doc(db, 'users', auth.currentUser.uid);
+      await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
-        const modal = Modal.getInstance(document.getElementById('editPortfolioModal'));
+      const modalElement = document.getElementById('editPortfolioModal');
+      const modal = Modal.getInstance(modalElement);
+      if (modal) {
         modal.hide();
-      } catch (err) {
-        console.error('Error updating portfolio:', err);
+      } else {
+        console.error('Modal instance not found');
       }
-    };
+
+      // Reset edit state
+      editProject.value = {};
+      editIndex.value = null;
+    } catch (err) {
+      console.error('Error updating portfolio:', err);
+    }
+  };
 
     const confirmDeleteProject = (project, index) => {
       showDeleteModal.value = true;
@@ -876,7 +886,8 @@ export default {
       openEditProfileModal,
       closeEditProfileModal,
       updateUserProfile,
-      editClass
+      editClass,
+    editIndex,
     };
   },
 };
@@ -1007,7 +1018,6 @@ h5 {
   box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
-
 .carousel-inner {
   border-radius: 0.5rem;
 }
@@ -1049,8 +1059,8 @@ h5 {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease, background-color 0.3s ease;
+  opacity: 1; /* Changed from 0 to 1 */
+  transition: background-color 0.3s ease;
 }
 
 .carousel-control-prev {
@@ -1059,10 +1069,6 @@ h5 {
 
 .carousel-control-next {
   right: 10px;
-}
-
-.portfolio-carousel:hover .carousel-control {
-  opacity: 1;
 }
 
 .carousel-control:hover {
@@ -1084,8 +1090,6 @@ h5 {
     padding: 1rem;
   }
 }
-
-
 
 .btn-group {
   width: 100%;

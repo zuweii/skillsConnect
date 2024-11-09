@@ -313,8 +313,13 @@ export default {
       const userClassesAsTeacher = userData.upcoming_classes_as_teacher || [];
       const allUserClasses = [...userClassesAsStudent, ...userClassesAsTeacher];
 
-      for (const classId of allUserClasses) {
-        const classDoc = await getDoc(doc(db, 'classes', classId));
+      for (const existingClassId of allUserClasses) {
+        // Skip the current class if in edit mode
+        if (isEditMode.value && existingClassId === classId) {
+          continue;
+        }
+
+        const classDoc = await getDoc(doc(db, 'classes', existingClassId));
         if (classDoc.exists()) {
           const existingClass = classDoc.data();
           if (isTimeConflict(formData.value, existingClass)) {
