@@ -26,7 +26,7 @@
  
  <script>
  import { ref, watch } from "vue";
- 
+ import { useRouter } from "vue-router";
  
  export default {
   name: "SearchBar",
@@ -41,7 +41,7 @@
   setup(props, { emit }) {
     const searchQuery = ref("");
     const suggestions = ref([]);
- 
+    const router = useRouter();
  
     const onInput = () => {
       if (searchQuery.value.length > 2 && Array.isArray(props.classes)) {
@@ -59,7 +59,10 @@
     const selectSuggestion = (suggestion) => {
       searchQuery.value = suggestion.title;
       suggestions.value = [];
-      performSearch();
+      router.push({
+        name: "ClassDetails",
+        params: { id: suggestion.id },
+      });
     };
  
  
