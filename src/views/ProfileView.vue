@@ -28,75 +28,89 @@
                   </div>
                 </div>
               </div>
-              <!-- <button class="btn btn-primary btn-lg">Contact Me</button> -->
             </div>
           </div>
         </div>
       </div>
 
       <div class="row">
-        <!-- Left Column: Reviews and Classes -->
+        <!-- Left Column: Classes Available and Reviews -->
         <div class="col-lg-8 mb-4">
-          <!-- User Reviews Section -->
           <div class="card shadow-sm mb-4">
             <div class="card-body">
-              <h3 class="card-title mb-4">User Reviews</h3>
-              <div v-if="reviews.length === 0" class="text-muted text-center">
-                No reviews yet.
-              </div>
-              <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                <div v-for="review in reviews" :key="review.id" class="col">
-                  <div class="card h-100 border">
+              <ul class="nav nav-tabs" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'classes'" :class="{ active: currentTab === 'classes' }" class="nav-link"
+                    id="classes-tab" data-bs-toggle="tab" data-bs-target="#classes" type="button" role="tab"
+                    aria-controls="classes" aria-selected="true">Classes Available</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'reviews'" :class="{ active: currentTab === 'reviews' }" class="nav-link"
+                    id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews" type="button" role="tab"
+                    aria-controls="reviews" aria-selected="false">Reviews</button>
+                </li>
+              </ul>
+
+              <div class="tab-content mt-4" id="profileTabsContent">
+                <!-- Classes Available Tab -->
+                <div :class="{ 'active show': currentTab === 'classes' }" class="tab-pane fade" id="classes"
+                  role="tabpanel" aria-labelledby="classes-tab">
                     <div class="card-body">
-                      <h5 class="card-title">{{ review.author }}</h5>
-                      <p class="card-text">{{ review.comment }}</p>
-                      <div class="d-flex justify-content-between align-items-center">
-                        <StarRating :rating="review.rating" readOnly />
-                        <small class="text-muted">{{ formatDate(review.date) }}</small>
+                      <h3 class="card-title mb-4">Classes Available</h3>
+                      <div v-if="listings.length === 0" class="text-muted text-center">
+                        No listings available.
+                      </div>
+                      <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        <div v-for="classItem in listings" :key="classItem.id" class="col">
+                          <div class="card h-100 shadow-sm hover-card">
+                            <div class="card-img-wrapper">
+                              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
+                              <div class="card-img-overlay-top">
+                                <span class="badge bg-primary">
+                                  {{ classItem.category }}
+                                </span>
+                              </div>
+                            </div>
+                            <div class="card-body d-flex flex-column">
+                              <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+                              </div>
+                              <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}
+                              </p>
+                              <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                  <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
+                                  <span class="badge bg-light text-dark">
+                                    <i class="bi bi-people-fill me-1"></i>
+                                    {{ classItem.max_capacity - classItem.current_enrollment }} spots left
+                                  </span>
+                                </div>
+                                <router-link class="custom-button w-100">View Details</router-link>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Classes Offered Section -->
-          <div class="card shadow-sm">
-            <div class="card-body">
-              <h3 class="card-title mb-4">Classes Available</h3>
-              <div v-if="listings.length === 0" class="text-muted text-center">
-                No listings available.
-              </div>
-              <div v-else class="row row-cols-1 row-cols-md-2 g-4">
-                <div v-for="classItem in listings" :key="classItem.id" class="col">
-                  <div class="card h-100 shadow-sm hover-card">
-                    <div class="card-img-wrapper">
-                      <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
-                      <div class="card-img-overlay-top">
-                        <span class="badge bg-primary">
-                          {{ classItem.category }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                      <div class="d-flex justify-content-between align-items-start mb-2">
-                        <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-                      </div>
-                      <p class="card-text text-muted small flex-grow-1">{{ truncateText(classItem.description, 100) }}
-                      </p>
-                      <div class="mt-auto">
-                        <div class="d-flex justify-content-between align-items-center mb-3">
-                          <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
-                          <span class="badge bg-light text-dark">
-                            <i class="bi bi-people-fill me-1"></i>
-                            {{ classItem.max_capacity - classItem.current_enrollment }} spots left
-                          </span>
+                <!-- Reviews Tab -->
+                <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
+                  role="tabpanel" aria-labelledby="reviews-tab">
+                  <div v-if="reviews.length === 0" class="text-muted text-center">
+                    No reviews yet.
+                  </div>
+                  <div v-else class="row row-cols-1 row-cols-md-2 g-4">
+                    <div v-for="review in reviews" :key="review.id" class="col">
+                      <div class="card h-100 border">
+                        <div class="card-body">
+                          <h5 class="card-title">{{ review.author }}</h5>
+                          <p class="card-text">{{ review.comment }}</p>
+                          <div class="d-flex justify-content-between align-items-center">
+                            <StarRating :rating="review.rating" readOnly />
+                            <small class="text-muted">{{ formatDate(review.date) }}</small>
+                          </div>
                         </div>
-                        <!-- <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                          View Details
-                        </router-link> -->
-                        <router-link class="custom-button w-100">View Details</router-link>
                       </div>
                     </div>
                   </div>
@@ -106,55 +120,42 @@
           </div>
         </div>
 
+        <!-- Right Column: Portfolio -->
         <div class="col-lg-4">
           <div class="row">
             <div class="col-12">
               <div class="card shadow-sm mb-4">
                 <div class="card-body">
                   <h3 class="card-title mb-4">Portfolio</h3>
-                  <!-- Display message if no portfolio projects are available -->
                   <div v-if="portfolio.length === 0" class="text-muted text-center">
                     No portfolio projects to display.
                   </div>
-                  <!-- Display portfolio items if available -->
                   <div v-else class="portfolio-container">
                     <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
-                      <div class="card shadow-sm portfolio-card">
-                        <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
-                          <div class="carousel-inner">
-                            <!-- Display image as the first carousel item if it exists -->
-                            <div v-if="project.imageUrl" class="carousel-item active">
-                              <img :src="project.imageUrl" :alt="project.title" class="portfolio-image">
-                            </div>
-                            <!-- Display YouTube video as the second carousel item if it exists -->
-                            <div v-if="project.youtubeLink"
-                              :class="{ 'carousel-item': project.imageUrl, 'active': !project.imageUrl }">
-                              <div class="embed-responsive embed-responsive-16by9">
-                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
-                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                  allowfullscreen class="embed-responsive-item"></iframe>
+                      <div class="card">
+                        <div class="row g-0">
+                          <div class="col-md-12">
+                            <div class="portfolio-media h-100 position-relative">
+                              <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
+                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                              <div v-if="!project.imageUrl && project.youtubeLink" class="ratio ratio-16x9 h-100">
+                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen></iframe>
                               </div>
+                              <a v-if="project.imageUrl && project.youtubeLink" 
+                                 :href="project.youtubeLink" 
+                                 target="_blank" 
+                                 rel="noopener noreferrer" 
+                                 class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-50 text-white text-decoration-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
+                              </a>
                             </div>
                           </div>
-                          <!-- Carousel controls, only if both image and video are present -->
-                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
-                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
-                            <span class="carousel-control-icon" aria-hidden="true">
-                              <i class="bi bi-chevron-left"></i>
-                            </span>
-                            <span class="visually-hidden">Previous</span>
-                          </button>
-                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
-                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
-                            <span class="carousel-control-icon" aria-hidden="true">
-                              <i class="bi bi-chevron-right"></i>
-                            </span>
-                            <span class="visually-hidden">Next</span>
-                          </button>
-                        </div>
-                        <div class="card-body d-flex flex-column">
-                          <h5 class="card-title">{{ project.title }}</h5>
-                          <p class="card-text">{{ project.description }}</p>
+                          <div class="col-md-12">
+                            <div class="card-body">
+                              <h5 class="card-title">{{ project.title }}</h5>
+                              <p class="card-text">{{ project.description }}</p>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -173,10 +174,10 @@
 import { ref, onMounted, computed } from 'vue';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
-import { RouterLink, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
 
-const userProfile = ref(null);
+const userProfile = ref({});
 const reviews = ref([]);
 const listings = ref([]);
 const portfolio = ref([]);
@@ -184,7 +185,7 @@ const averageRating = ref(0);
 const loading = ref(true);
 const error = ref(null);
 const route = useRoute();
-const classId = route.params.id;
+const currentTab = ref('classes');
 
 const fetchUserData = async (userID) => {
   if (!userID) {
@@ -198,7 +199,7 @@ const fetchUserData = async (userID) => {
       userProfile.value = userDoc.data();
       reviews.value = userProfile.value.reviews || [];
       listings.value = userProfile.value.posted_classes || [];
-      portfolio.value = userProfile.value.portfolio || []; 
+      portfolio.value = userProfile.value.portfolio?.project_images || [];
 
       const totalRatings = listings.value.reduce((sum, cls) => sum + (cls.ratings_average || 0), 0);
       averageRating.value = listings.value.length ? totalRatings / listings.value.length : 0;
@@ -230,7 +231,7 @@ const truncateText = (text, length) => {
 const formatYouTubeEmbedUrl = (url) => {
   if (!url) return '';
   const videoId = url.split('v=')[1];
-  return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+  return `https://www.youtube.com/embed/${videoId}`;
 };
 
 onMounted(() => {
@@ -296,15 +297,17 @@ onMounted(() => {
 
 .gradient-border {
   position: relative;
-  background: linear-gradient(white, white) padding-box,
-              linear-gradient(45deg, #5a7dee, #4e6dd2) border-box;
-  border: 1px solid transparent;
+  border-top: 5px solid #5a7dee;
   border-radius: 0.375rem;
+}
+
+.hover-card {
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
 .hover-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 0.5rem 1rem rgba(90, 125, 238, 0.15) !important;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
 }
 
 .card-img-wrapper {
