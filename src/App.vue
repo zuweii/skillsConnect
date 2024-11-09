@@ -15,7 +15,7 @@
         @update:showSearchBar="updateShowSearchBar"
         :searchQuery="searchQuery"
       ></router-view>
-      <Footer v-if="shouldShowFooter" />
+      <!-- <Footer v-if="shouldShowFooter" /> -->
     </template>
   </div>
  </template>
