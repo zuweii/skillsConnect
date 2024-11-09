@@ -112,35 +112,49 @@
               <div class="card shadow-sm mb-4">
                 <div class="card-body">
                   <h3 class="card-title mb-4">Portfolio</h3>
+                  <!-- Display message if no portfolio projects are available -->
                   <div v-if="portfolio.length === 0" class="text-muted text-center">
                     No portfolio projects to display.
                   </div>
+                  <!-- Display portfolio items if available -->
                   <div v-else class="portfolio-container">
                     <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
-                      <div class="card">
-                        <div class="row g-0">
-                          <div class="col-md-12">
-                            <div class="portfolio-media h-100 position-relative">
-                              <img v-if="project.imageUrl" :src="project.imageUrl" alt="Project Image"
-                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                              <div v-if="!project.imageUrl && project.youtubeLink" class="ratio ratio-16x9 h-100">
-                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen></iframe>
+                      <div class="card shadow-sm portfolio-card">
+                        <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
+                          <div class="carousel-inner">
+                            <!-- Display image as the first carousel item if it exists -->
+                            <div v-if="project.imageUrl" class="carousel-item active">
+                              <img :src="project.imageUrl" :alt="project.title" class="portfolio-image">
+                            </div>
+                            <!-- Display YouTube video as the second carousel item if it exists -->
+                            <div v-if="project.youtubeLink"
+                              :class="{ 'carousel-item': project.imageUrl, 'active': !project.imageUrl }">
+                              <div class="embed-responsive embed-responsive-16by9">
+                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowfullscreen class="embed-responsive-item"></iframe>
                               </div>
-                              <a v-if="project.imageUrl && project.youtubeLink" 
-                                 :href="project.youtubeLink" 
-                                 target="_blank" 
-                                 rel="noopener noreferrer" 
-                                 class="position-absolute top-0 start-0 w-100 h-100 d-flex justify-content-center align-items-center bg-black bg-opacity-50 text-white text-decoration-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-play-circle"><circle cx="12" cy="12" r="10"></circle><polygon points="10 8 16 12 10 16 10 8"></polygon></svg>
-                              </a>
                             </div>
                           </div>
-                          <div class="col-md-12">
-                            <div class="card-body">
-                              <h5 class="card-title">{{ project.title }}</h5>
-                              <p class="card-text">{{ project.description }}</p>
-                            </div>
-                          </div>
+                          <!-- Carousel controls, only if both image and video are present -->
+                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
+                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
+                            <span class="carousel-control-icon" aria-hidden="true">
+                              <i class="bi bi-chevron-left"></i>
+                            </span>
+                            <span class="visually-hidden">Previous</span>
+                          </button>
+                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
+                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
+                            <span class="carousel-control-icon" aria-hidden="true">
+                              <i class="bi bi-chevron-right"></i>
+                            </span>
+                            <span class="visually-hidden">Next</span>
+                          </button>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                          <h5 class="card-title">{{ project.title }}</h5>
+                          <p class="card-text">{{ project.description }}</p>
                         </div>
                       </div>
                     </div>
