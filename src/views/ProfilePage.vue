@@ -698,6 +698,7 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = { id: userDoc.id, ...userDoc.data() };
 
+          // Fetch upcoming classes as student
           if (userProfile.value.upcoming_classes_as_student && userProfile.value.upcoming_classes_as_student.length > 0) {
             const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId =>
               getDoc(doc(db, 'classes', classId))
@@ -717,45 +718,33 @@ export default {
                 };
               })
               .filter(cls => cls.end_time && cls.end_time > new Date());
-
-            const teachingClassesQuery = query(
-              collection(db, 'classes'),
-              where('teacher_username', '==', userID)
-            );
-            const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
-            teachingClasses.value = teachingClassesSnapshot.docs.map(doc => {
-              const data = doc.data();
-              return {
-                id: doc.id,
-                ...data,
-                start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
-                end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
-              };
-            });
-
-            classesToReview.value = await Promise.all(
-              (userProfile.value.pending_reviews || []).map(async (classId) => {
-                const classDoc = await getDoc(doc(db, 'classes', classId));
-                if (classDoc.exists()) {
-                  const data = classDoc.data();
-                  return {
-                    id: classDoc.id,
-                    ...data,
-                    start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
-                    end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
-                  };
-                }
-                return null;
-              })
-            );
-            classesToReview.value = classesToReview.value.filter(cls => cls !== null);
-          } else {
-            console.log("No upcoming classes found in user's upcoming_classes_as_student array.");
           }
+
+          // Fetch teaching classes
+          const teachingClassesQuery = query(
+            collection(db, 'classes'),
+            where('teacher_username', '==', userID)
+          );
+          const teachingClassesSnapshot = await getDocs(teachingClassesQuery);
+          teachingClasses.value = teachingClassesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+              end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+            };
+          });
+
+          console.log('Upcoming classes as student:', upcomingClassesAsStudent.value);
+          console.log('Teaching classes:', teachingClasses.value);
+        } else {
+          console.error('User document does not exist');
+          error.value = 'User profile not found';
         }
       } catch (err) {
-        error.value = 'Failed to load user profile. Please try again later.';
         console.error('Error fetching user profile:', err);
+        error.value = 'Failed to load user profile. Please try again later.';
       } finally {
         loading.value = false;
       }
@@ -830,6 +819,10 @@ export default {
       const user = auth.currentUser;
       if (user) {
         fetchUserProfile(user.uid);
+      } else {
+        console.error('No authenticated user found');
+        error.value = 'Please log in to view your profile';
+        loading.value = false;
       }
     });
 
