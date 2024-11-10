@@ -79,9 +79,9 @@
                               {{ truncateText(classItem.description, 100) }}
                             </p>
                             <div class="mt-auto">
-                              <div class="d-flex justify-content-between align-items-center mb-3">
+                              <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                 <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
-                                <span class="badge bg-light text-dark">
+                                <span class="badge bg-light text-dark spots-remaining">
                                   <i class="bi bi-people-fill me-1"></i>
                                   {{ classItem.max_capacity - classItem.current_enrollment }} spots left
                                 </span>
@@ -110,7 +110,7 @@
                           <div class="reviewer-details">
                             <h3 class="reviewer-name">{{ review.username }}</h3>
                             <StarRating :rating="review.rating" readOnly />
-                            <p class="class-title text-muted">{{ review.classTitle }}</p> 
+                            <p class="class-title text-muted">{{ review.classTitle }}</p>
                           </div>
                         </div>
                         <span class="review-date">{{ formatDate(review.timestamp) }}</span>
@@ -211,6 +211,7 @@ const fetchUserData = async (userID) => {
       userProfile.value = data;
       listings.value = data.posted_classes || [];
       portfolio.value = data.portfolio || [];
+      console.log("Fetched user profile:", userProfile.value); 
     } else {
       error.value = "User profile not found.";
     }
@@ -222,7 +223,7 @@ const fetchUserData = async (userID) => {
   }
 };
 
-// fetch reviews for all classes taught by the instructor
+// Function to fetch reviews for all classes taught by the instructor
 const fetchReviewsByTeacher = async (teacherUsername) => {
   try {
     const q = query(collection(db, "classes"), where("teacher_username", "==", teacherUsername));
@@ -237,7 +238,7 @@ const fetchReviewsByTeacher = async (teacherUsername) => {
         allReviews.push(
           ...classData.reviews.map(review => ({
             ...review,
-            classTitle: classData.title, 
+            classTitle: classData.title, // Include class title for context
           }))
         );
         totalRating += classData.reviews.reduce((sum, review) => sum + review.rating, 0);
@@ -245,7 +246,7 @@ const fetchReviewsByTeacher = async (teacherUsername) => {
       }
     });
 
-    reviews.value = allReviews; 
+    reviews.value = allReviews;
     averageRating.value = reviewCount > 0 ? totalRating / reviewCount : 0;
   } catch (err) {
     console.error("Error fetching reviews:", err);
@@ -276,7 +277,7 @@ onMounted(() => {
   const userId = route.params.userId;
   if (userId) {
     fetchUserData(userId).then(() => {
-      // `userProfile.value.username` is the teacher's username
+      // Assuming `userProfile.value.username` is the teacher's username
       fetchReviewsByTeacher(userProfile.value.username);
     });
   } else {
@@ -456,9 +457,24 @@ h2, h3, h4, h5 {
   background: #555;
 }
 
+.spots-remaining {
+  flex-shrink: 0; 
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .spots-remaining {
+    font-size: 0.9rem;
+  }
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+
 @media (max-width: 767.98px) {
   .card-body {
     padding: 1rem;
   }
 }
-</style>
+</style> 
