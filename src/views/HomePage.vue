@@ -253,7 +253,14 @@
       </div>
 
 
-      <div class="row mb-5">
+      <div class="scroll-container row mb-5 position-relative">
+      <!-- Left Scroll Button -->
+      <button @click="scrollLeft" class="scroll-btn scroll-left">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <!-- Class Cards -->
+      <div ref="cardRow" class="card-row d-flex">
         <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-img-wrapper">
@@ -265,9 +272,7 @@
               </div>
             </div>
             <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
+              <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
               <p class="card-text text-muted small flex-grow-1">
                 {{ truncateText(classItem.description, 100) }}
               </p>
@@ -293,6 +298,12 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Right Scroll Button -->
+      <button @click="scrollRight" class="scroll-btn scroll-right">
+        <i class="bi bi-arrow-right"></i>
+      </button>
       </div>
 
 
@@ -330,6 +341,20 @@ export default {
       type: String,
       default: "",
     },
+  },
+  methods: {
+    scrollLeft() {
+      // Ensure the reference exists
+      if (this.$refs.cardRow) {
+        this.$refs.cardRow.scrollBy({ left: -800, behavior: 'smooth' });
+      }
+    },
+    scrollRight() {
+      // Ensure the reference exists
+      if (this.$refs.cardRow) {
+        this.$refs.cardRow.scrollBy({ left: 800, behavior: 'smooth' });
+      }
+    }
   },
   setup(props) {
     const classes = ref([]);
@@ -967,6 +992,45 @@ export default {
 .rating-text {
   font-size: 0.5rem;
   color: #6c757d;
+}
+
+.scroll-container {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.card-row {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-right: 40px; /* Space for scroll button */
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.scroll-left {
+  left: 10px;
+}
+
+.scroll-right {
+  right: 10px;
+}
+
+.scroll-btn i {
+  font-size: 1.5rem;
+  color: #007bff;
 }
 </style>
    
