@@ -1100,7 +1100,6 @@ h5 {
 
 .btn-group .btn {
   flex: 1;
-  border-radius: 25px;
 }
 
 .custom-button {
