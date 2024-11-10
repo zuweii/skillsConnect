@@ -62,13 +62,12 @@
           </li>
  
           <div v-if="!isAuthenticated" class="d-flex gap-2">
-            <button class="btn-auth" @click="onLogin">Login</button>
-            <button class="btn-auth" @click="onSignup">Sign Up</button>
+            <button class="teach btn btn-primary text-white ms-3" @click="onLogin">Login</button>
+            <button class="teach btn btn-primary text-white ms-3" @click="onSignup">Sign Up</button>
           </div>
-
-          <!-- Show profile icon if user is authenticated -->
-          <div v-else>
-            <!-- Profile link and dropdown -->
+          <!-- Profile dropdown and Teach button for authenticated users -->
+          <div v-else class="d-flex align-items-center">
+            <!-- Profile dropdown -->
             <li class="nav-item dropdown my-2 my-lg-0 mx-2">
               <a
                 class="nav-link d-flex align-items-center dropdown-toggle"
@@ -103,22 +102,20 @@
                 </li>
               </ul>
             </li>
-           </div>
 
- 
-          <!-- Teach link with full-width on mobile -->
-          <li class="nav-item my-2 my-lg-0 mx-2">
-            <router-link
-              class="teach btn btn-primary text-white w-100"
-              to="/list-class"
-              >Teach</router-link
-            >
-          </li>
+            <li class="nav-item my-2 my-lg-0 mx-2">
+              <router-link
+                class="teach btn btn-primary text-white"
+                to="/list-class"
+                >Teach</router-link
+              >
+            </li>
+          </div>
         </ul>
       </div>
     </div>
   </nav>
- </template>
+</template>
  
  
  <script>
@@ -293,19 +290,6 @@
 .btn-login:hover {
   background-color: #4e6dd2;
   border-color: #4e6dd2;
-}
-.btn-auth {
-  color: #5a7dee;
-  background-color: white;
-  border: 1px blue;
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
-  white-space: nowrap;
-}
-
-.btn-auth:hover {
-  background-color: #4e6dd2;
 }
  </style>
  
