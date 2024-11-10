@@ -244,9 +244,12 @@ export default {
         formData.value.subcategory &&
         formData.value.classTitle &&
         formData.value.price &&
+        formData.value.price > 0 &&
         formData.value.maxCapacity &&
+        formData.value.maxCapacity > 0 &&
         formData.value.skillLevel &&
         formData.value.numberOfLessons &&
+        formData.value.numberOfLessons > 0 &&
         formData.value.location &&
         formData.value.date &&
         formData.value.startTime &&
