@@ -86,8 +86,10 @@
                                   {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
                                 </span>
                               </div>
-                              <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
-                                class="custom-button w-100">
+                              <router-link 
+                                :to="{ name: 'ClassDetails', params: { id: classItem.id } }" 
+                                class="custom-button w-100"
+                              >
                                 View Details
                               </router-link>
                             </div>
@@ -127,8 +129,7 @@
                           <p class="card-text text-muted small flex-grow-1">
                             {{ truncateText(classItem.description, 100) }}
                           </p>
-                          <router-link :to="{ name: 'AllReviews', params: { classId: classItem.id } }"
-                            class="custom-button w-100 mt-auto">
+                          <router-link :to="{ name: 'AllReviews', params: { classId: classItem.id } }" class="custom-button w-100 mt-auto">
                             View Reviews
                           </router-link>
                         </div>
@@ -143,39 +144,30 @@
 
         <!-- Right Column: Portfolio -->
         <div class="col-lg-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">Portfolio</h3>
-                  <!-- Check if portfolio arrays are empty -->
-                  <div v-if="!portfolio.project_images?.length && !portfolio.youtube_links?.length"
-                    class="text-muted text-center">
-                    No portfolio projects to display.
-                  </div>
-                  <div v-else class="portfolio-container">
-                    <div v-for="(project, index) in portfolio.project_images" :key="'image' + index"
-                      class="portfolio-item mb-4">
-                      <div class="card shadow-sm h-100 portfolio-card">
-                        <img :src="project.imageUrl" alt="Project Image"
-                          class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                        <div class="card-body d-flex flex-column">
-                          <h5 class="card-title">{{ project.title }}</h5>
-                          <p class="card-text">{{ project.description }}</p>
-                        </div>
-                      </div>
+          <div class="card shadow-sm mb-4">
+            <div class="card-body">
+              <h3 class="card-title mb-4">Portfolio</h3>
+              <div v-if="portfolio.project_images.length === 0 && portfolio.youtube_links.length === 0" class="text-muted text-center">
+                No portfolio projects to display.
+              </div>
+              <div v-else class="portfolio-container">
+                <div v-for="(project, index) in portfolio.project_images" :key="'image' + index" class="portfolio-item mb-4">
+                  <div class="card shadow-sm h-100 portfolio-card">
+                    <img :src="project.imageUrl" alt="Project Image" class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title">{{ project.title }}</h5>
+                      <p class="card-text">{{ project.description }}</p>
                     </div>
-                    <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index"
-                      class="portfolio-item mb-4">
-                      <div class="card shadow-sm h-100 portfolio-card">
-                        <div class="ratio ratio-16x9">
-                          <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
-                        </div>
-                        <div class="card-body d-flex flex-column">
-                          <h5 class="card-title">{{ link.title }}</h5>
-                          <p class="card-text">{{ link.description }}</p>
-                        </div>
-                      </div>
+                  </div>
+                </div>
+                <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index" class="portfolio-item mb-4">
+                  <div class="card shadow-sm h-100 portfolio-card">
+                    <div class="ratio ratio-16x9">
+                      <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                      <h5 class="card-title">{{ link.title }}</h5>
+                      <p class="card-text">{{ link.description }}</p>
                     </div>
                   </div>
                 </div>
@@ -197,7 +189,7 @@ import StarRating from '../components/StarRating.vue';
 
 const userProfile = ref({});
 const listings = ref([]);
-const portfolio = ref([]);
+const portfolio = ref({ project_images: [], youtube_links: [] });
 const averageRating = ref(0);
 const loading = ref(true);
 const error = ref(null);
@@ -219,10 +211,45 @@ const fetchUserData = async (userID) => {
         ...classItem,
         id: classItem.class_id
       }));
-      portfolio.value = {
-        project_images: data.portfolio?.project_images || [],
-        youtube_links: data.portfolio?.youtube_links || []
-      };
+      
+      // Fix: Correctly structure portfolio data from Firestore
+      if (data.portfolio && Array.isArray(data.portfolio)) {
+        // Handle case where portfolio is an array
+        portfolio.value = {
+          project_images: data.portfolio.map(item => ({
+            imageUrl: item.imageUrl,
+            title: item.title,
+            description: item.description
+          })),
+          youtube_links: data.portfolio.filter(item => item.youtubeLink).map(item => ({
+            url: item.youtubeLink,
+            title: item.title,
+            description: item.description
+          }))
+        };
+      } else if (data.portfolio) {
+        // Handle case where portfolio is an object with numbered keys
+        const portfolioItems = Object.values(data.portfolio);
+        portfolio.value = {
+          project_images: portfolioItems.filter(item => item.imageUrl).map(item => ({
+            imageUrl: item.imageUrl,
+            title: item.title,
+            description: item.description
+          })),
+          youtube_links: portfolioItems.filter(item => item.youtubeLink).map(item => ({
+            url: item.youtubeLink,
+            title: item.title,
+            description: item.description
+          }))
+        };
+      } else {
+        // Reset to empty arrays if no portfolio data
+        portfolio.value = {
+          project_images: [],
+          youtube_links: []
+        };
+      }
+      
       averageRating.value = data.teacher_average || 0;
     } else {
       error.value = "User profile not found.";
@@ -235,26 +262,26 @@ const fetchUserData = async (userID) => {
   }
 };
 
+const formatYouTubeEmbedUrl = (url) => {
+  if (!url) return '';
+  let videoId = '';
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === 'youtu.be') {
+      videoId = urlObj.pathname.slice(1);
+    } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+      videoId = urlObj.searchParams.get('v');
+    }
+  } catch (error) {
+    console.error('Invalid YouTube URL:', error);
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+};
+
 const truncateText = (text, length) => {
   if (text.length <= length) return text;
   return text.substring(0, length) + '...';
 };
-
-const formatYouTubeEmbedUrl = (url) => {
-      if (!url) return '';
-      let videoId = '';
-      try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname === 'youtu.be') {
-          videoId = urlObj.pathname.slice(1);
-        } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
-          videoId = urlObj.searchParams.get('v');
-        }
-      } catch (error) {
-        console.error('Invalid YouTube URL:', error);
-      }
-      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
-    };
 
 const availableClasses = computed(() => {
   const currentTime = new Date();
