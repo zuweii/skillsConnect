@@ -86,10 +86,8 @@
                                   {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
                                 </span>
                               </div>
-                              <router-link 
-                                :to="{ name: 'ClassDetails', params: { id: classItem.id } }" 
-                                class="custom-button w-100"
-                              >
+                              <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
+                                class="custom-button w-100">
                                 View Details
                               </router-link>
                             </div>
@@ -129,7 +127,8 @@
                           <p class="card-text text-muted small flex-grow-1">
                             {{ truncateText(classItem.description, 100) }}
                           </p>
-                          <router-link :to="{ name: 'AllReviews', params: { classId: classItem.id } }" class="custom-button w-100 mt-auto">
+                          <router-link :to="{ name: 'AllReviews', params: { classId: classItem.id } }"
+                            class="custom-button w-100 mt-auto">
                             View Reviews
                           </router-link>
                         </div>
@@ -144,42 +143,46 @@
 
         <!-- Right Column: Portfolio -->
         <div class="col-lg-4">
-  <div class="row">
-    <div class="col-12">
-      <div class="card shadow-sm mb-4">
-        <div class="card-body">
-          <h3 class="card-title mb-4">Portfolio</h3>
-          <!-- Check if portfolio arrays are empty -->
-          <div v-if="!portfolio.project_images?.length && !portfolio.youtube_links?.length" class="text-muted text-center">
-            No portfolio projects to display.
-          </div>
-          <div v-else class="portfolio-container">
-            <div v-for="(project, index) in portfolio.project_images" :key="'image' + index" class="portfolio-item mb-4">
-              <div class="card shadow-sm h-100 portfolio-card">
-                <img :src="project.imageUrl" alt="Project Image" class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                <div class="card-body d-flex flex-column">
-                  <h5 class="card-title">{{ project.title }}</h5>
-                  <p class="card-text">{{ project.description }}</p>
-                </div>
-              </div>
-            </div>
-            <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index" class="portfolio-item mb-4">
-              <div class="card shadow-sm h-100 portfolio-card">
-                <div class="ratio ratio-16x9">
-                  <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
-                </div>
-                <div class="card-body d-flex flex-column">
-                  <h5 class="card-title">{{ link.title }}</h5>
-                  <p class="card-text">{{ link.description }}</p>
+          <div class="row">
+            <div class="col-12">
+              <div class="card shadow-sm mb-4">
+                <div class="card-body">
+                  <h3 class="card-title mb-4">Portfolio</h3>
+                  <!-- Check if portfolio arrays are empty -->
+                  <div v-if="!portfolio.project_images?.length && !portfolio.youtube_links?.length"
+                    class="text-muted text-center">
+                    No portfolio projects to display.
+                  </div>
+                  <div v-else class="portfolio-container">
+                    <div v-for="(project, index) in portfolio.project_images" :key="'image' + index"
+                      class="portfolio-item mb-4">
+                      <div class="card shadow-sm h-100 portfolio-card">
+                        <img :src="project.imageUrl" alt="Project Image"
+                          class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                        <div class="card-body d-flex flex-column">
+                          <h5 class="card-title">{{ project.title }}</h5>
+                          <p class="card-text">{{ project.description }}</p>
+                        </div>
+                      </div>
+                    </div>
+                    <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index"
+                      class="portfolio-item mb-4">
+                      <div class="card shadow-sm h-100 portfolio-card">
+                        <div class="ratio ratio-16x9">
+                          <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                        <div class="card-body d-flex flex-column">
+                          <h5 class="card-title">{{ link.title }}</h5>
+                          <p class="card-text">{{ link.description }}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
       </div>
     </div>
   </div>
@@ -252,15 +255,6 @@ const formatYouTubeEmbedUrl = (url) => {
       }
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     };
-
-  const initializeCarousels = () => {
-    userProfile.value.portfolio?.forEach((_, index) => {
-      const carouselElement = document.getElementById(`portfolioCarousel${index}`);
-      if (carouselElement && !Carousel.getInstance(carouselElement)) {
-        new Carousel(carouselElement);
-      }
-    });
-  };
 
 const availableClasses = computed(() => {
   const currentTime = new Date();
