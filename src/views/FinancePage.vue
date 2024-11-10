@@ -81,9 +81,9 @@
                 <!-- <li class="mb-3">
                   <strong>Earnings to Date: </strong> ${{ totalEarnings.toFixed(2) }}
                 </li> -->
-                <li class="mb-3">
+                <!-- <li class="mb-3">
                   <strong> Active Classes Listed: </strong> {{ totalClasses }}
-                </li>
+                </li> -->
                 <li class="mb-3">
                   <strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}
                 </li>

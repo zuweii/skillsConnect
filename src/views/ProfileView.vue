@@ -209,9 +209,11 @@ const fetchUserData = async (userID) => {
     if (userDoc.exists()) {
       const data = userDoc.data();
       userProfile.value = data;
-      listings.value = data.posted_classes || [];
+      listings.value = (data.posted_classes || []).filter(classItem => {
+        return classItem.end_time && new Date(classItem.end_time.seconds * 1000) > new Date();
+      });
       portfolio.value = data.portfolio || [];
-      console.log("Fetched user profile:", userProfile.value); 
+      console.log("Fetched user profile:", userProfile.value);
     } else {
       error.value = "User profile not found.";
     }
