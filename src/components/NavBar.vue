@@ -61,43 +61,50 @@
             </router-link>
           </li>
  
- 
-          <!-- Profile link and dropdown -->
-          <li class="nav-item dropdown my-2 my-lg-0 mx-2">
-            <a
-              class="nav-link d-flex align-items-center dropdown-toggle"
-              href="#"
-              id="navbarDropdown"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              <img
-                :src="userProfilePhoto"
-                alt="Profile"
-                class="profile-photo rounded-circle me-2"
-                width="35"
-                height="35"
-              />
-              Profile
-            </a>
-            <ul
-              class="dropdown-menu dropdown-menu-end"
-              aria-labelledby="navbarDropdown"
-            >
-              <li>
-                <router-link class="dropdown-item" to="/profile-page"
-                  >View Profile</router-link
-                >
-              </li>
-              <li>
-                <button class="dropdown-item text-danger" @click="handleLogout">
-                  Logout <i class="bi bi-box-arrow-right text-danger"></i>
-                </button>
-              </li>
-            </ul>
-          </li>
- 
+          <div v-if="!isAuthenticated" class="d-flex gap-2">
+            <button class="btn-auth" @click="onLogin">Login</button>
+            <button class="btn-auth" @click="onSignup">Sign Up</button>
+          </div>
+
+          <!-- Show profile icon if user is authenticated -->
+          <div v-else>
+            <!-- Profile link and dropdown -->
+            <li class="nav-item dropdown my-2 my-lg-0 mx-2">
+              <a
+                class="nav-link d-flex align-items-center dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <img
+                  :src="userProfilePhoto"
+                  alt="Profile"
+                  class="profile-photo rounded-circle me-2"
+                  width="35"
+                  height="35"
+                />
+                Profile
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="navbarDropdown"
+              >
+                <li>
+                  <router-link class="dropdown-item" to="/profile-page"
+                    >View Profile</router-link
+                  >
+                </li>
+                <li>
+                  <button class="dropdown-item text-danger" @click="handleLogout">
+                    Logout <i class="bi bi-box-arrow-right text-danger"></i>
+                  </button>
+                </li>
+              </ul>
+            </li>
+           </div>
+
  
           <!-- Teach link with full-width on mobile -->
           <li class="nav-item my-2 my-lg-0 mx-2">
@@ -137,6 +144,10 @@
       type: Array,
       required: true,
     },
+    isAuthenticated: {
+      type: Boolean,
+      required: true,
+    },
   },
   emits: ["search"],
   data() {
@@ -171,6 +182,12 @@
     },
     handleSearch(query) {
       this.$emit("search", query);
+    },
+    onLogin() {
+      this.$emit("login"); // Emit login event for parent component handling
+    },
+    onSignup() {
+      this.$emit("signup"); // Emit signup event for parent component handling
     },
   },
  };
@@ -266,5 +283,29 @@
     margin-left: 0;
   }
  }
+ .btn-login {
+  background-color: #5a7dee;
+  border-color: #5a7dee;
+  white-space: nowrap;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #4e6dd2;
+  border-color: #4e6dd2;
+}
+.btn-auth {
+  color: #5a7dee;
+  background-color: white;
+  border: 1px blue;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+  white-space: nowrap;
+}
+
+.btn-auth:hover {
+  background-color: #4e6dd2;
+}
  </style>
  
