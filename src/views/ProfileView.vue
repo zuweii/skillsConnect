@@ -55,7 +55,7 @@
                 <!-- Classes Available Tab -->
                 <div :class="{ 'active show': currentTab === 'classes' }" class="tab-pane fade" id="classes"
                   role="tabpanel" aria-labelledby="classes-tab">
-                  <div class="card-body">
+                  <!-- <div class="card-body"> -->
                     <h3 class="card-title mb-4">Classes Available</h3>
                     <div v-if="availableClasses.length === 0" class="text-muted text-center">
                       No listings available.
@@ -97,7 +97,7 @@
                         </div>
                       </div>
                     </div>
-                  </div>
+                  <!-- </div> -->
                 </div>
 
                 <!-- Reviews Tab -->
