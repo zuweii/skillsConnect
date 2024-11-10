@@ -848,6 +848,7 @@ export default {
           start_time: startDate,
           end_time: endTime,
           completion_date: completionDate,
+          current_enrollment: 0
         });
 
         const userRef = doc(db, 'users', userId);

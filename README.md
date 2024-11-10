@@ -15,9 +15,6 @@
  Email: joseph@gmail.com
  PW: joseph123
 
- Email: rose@gmail.com
- PW: rose123
-
  Email: jennie@gmail.com
  PW: jennie123
 
