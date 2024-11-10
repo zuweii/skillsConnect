@@ -324,7 +324,6 @@ onMounted(() => {
 }
 
 .portfolio-container {
-  max-height: 800px; 
   overflow-y: auto;
   padding-right: 10px;
 }
