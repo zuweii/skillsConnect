@@ -102,14 +102,15 @@
                     No reviews yet.
                   </div>
                   <div v-else class="reviews-list">
-                    <!-- Display each review related to classes taught by the user -->
                     <div v-for="review in reviews" :key="review.id" class="review-card">
                       <div class="review-header">
                         <div class="reviewer-info">
-                          <img :src="review.userPhoto || '/placeholder.svg?height=60&width=60'" :alt="review.username" class="reviewer-avatar">
+                          <img :src="review.userPhoto || '/placeholder.svg?height=60&width=60'" :alt="review.username"
+                            class="reviewer-avatar">
                           <div class="reviewer-details">
                             <h3 class="reviewer-name">{{ review.username }}</h3>
                             <StarRating :rating="review.rating" readOnly />
+                            <p class="class-title text-muted">{{ review.classTitle }}</p> 
                           </div>
                         </div>
                         <span class="review-date">{{ formatDate(review.timestamp) }}</span>
@@ -221,7 +222,7 @@ const fetchUserData = async (userID) => {
   }
 };
 
-// New function to fetch reviews for all classes taught by the instructor
+// fetch reviews for all classes taught by the instructor
 const fetchReviewsByTeacher = async (teacherUsername) => {
   try {
     const q = query(collection(db, "classes"), where("teacher_username", "==", teacherUsername));
@@ -233,13 +234,18 @@ const fetchReviewsByTeacher = async (teacherUsername) => {
     querySnapshot.forEach((doc) => {
       const classData = doc.data();
       if (classData.reviews) {
-        allReviews.push(...classData.reviews);
+        allReviews.push(
+          ...classData.reviews.map(review => ({
+            ...review,
+            classTitle: classData.title, 
+          }))
+        );
         totalRating += classData.reviews.reduce((sum, review) => sum + review.rating, 0);
         reviewCount += classData.reviews.length;
       }
     });
 
-    reviews.value = allReviews;
+    reviews.value = allReviews; 
     averageRating.value = reviewCount > 0 ? totalRating / reviewCount : 0;
   } catch (err) {
     console.error("Error fetching reviews:", err);
@@ -270,7 +276,7 @@ onMounted(() => {
   const userId = route.params.userId;
   if (userId) {
     fetchUserData(userId).then(() => {
-      // Assuming `userProfile.value.username` is the teacher's username
+      // `userProfile.value.username` is the teacher's username
       fetchReviewsByTeacher(userProfile.value.username);
     });
   } else {
