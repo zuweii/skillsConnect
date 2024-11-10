@@ -610,30 +610,30 @@ export default {
     };
 
     const submitEditProject = async () => {
-    if (editIndex.value === null) return;
+      if (editIndex.value === null) return;
 
-    userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
+      userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
 
-    try {
-      const auth = getAuth();
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
+      try {
+        const auth = getAuth();
+        const userRef = doc(db, 'users', auth.currentUser.uid);
+        await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
 
-      const modalElement = document.getElementById('editPortfolioModal');
-      const modal = Modal.getInstance(modalElement);
-      if (modal) {
-        modal.hide();
-      } else {
-        console.error('Modal instance not found');
+        const modalElement = document.getElementById('editPortfolioModal');
+        const modal = Modal.getInstance(modalElement);
+        if (modal) {
+          modal.hide();
+        } else {
+          console.error('Modal instance not found');
+        }
+
+        // Reset edit state
+        editProject.value = {};
+        editIndex.value = null;
+      } catch (err) {
+        console.error('Error updating portfolio:', err);
       }
-
-      // Reset edit state
-      editProject.value = {};
-      editIndex.value = null;
-    } catch (err) {
-      console.error('Error updating portfolio:', err);
-    }
-  };
+    };
 
     const confirmDeleteProject = (project, index) => {
       showDeleteModal.value = true;
@@ -708,6 +708,32 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = { id: userDoc.id, ...userDoc.data() };
 
+          // Fetch classes to review
+          if (userProfile.value.pending_reviews && userProfile.value.pending_reviews.length > 0) {
+            const classPromises = userProfile.value.pending_reviews.map(classId =>
+              getDoc(doc(db, 'classes', classId))
+            );
+
+            const classSnapshots = await Promise.all(classPromises);
+
+            classesToReview.value = classSnapshots
+              .filter(snapshot => snapshot.exists())
+              .map(snapshot => {
+                const data = snapshot.data();
+                return {
+                  id: snapshot.id,
+                  ...data,
+                  start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+                  end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+                };
+              });
+
+            console.log('Classes to review:', classesToReview.value);
+          } else {
+            console.log('No pending reviews found for the user');
+            classesToReview.value = [];
+          }
+
           // Fetch upcoming classes as student
           if (userProfile.value.upcoming_classes_as_student && userProfile.value.upcoming_classes_as_student.length > 0) {
             const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId =>
@@ -728,6 +754,9 @@ export default {
                 };
               })
               .filter(cls => cls.end_time && cls.end_time > new Date());
+          } else {
+            console.log('No upcoming classes as student found for the user');
+            upcomingClassesAsStudent.value = [];
           }
 
           // Fetch teaching classes
@@ -759,7 +788,7 @@ export default {
         loading.value = false;
       }
     };
-
+    
     const openRelistModal = (cls) => {
       relistData.value.classId = cls.id;
       const modal = new Modal(document.getElementById('relistModal'));
@@ -887,7 +916,7 @@ export default {
       closeEditProfileModal,
       updateUserProfile,
       editClass,
-    editIndex,
+      editIndex,
     };
   },
 };
@@ -1059,7 +1088,8 @@ h5 {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 1; /* Changed from 0 to 1 */
+  opacity: 1;
+  /* Changed from 0 to 1 */
   transition: background-color 0.3s ease;
 }
 
