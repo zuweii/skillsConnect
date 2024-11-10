@@ -39,6 +39,7 @@
                 </button>
               </template>
             </div>
+            <div v-if="formErrors.image" class="text-danger mt-2">{{ formErrors.image }}</div>
           </div>
         </div>
       </div>
@@ -58,12 +59,14 @@
                     {{ category.category_name }}
                   </option>
                 </select>
+                <div v-if="formErrors.mainCategory" class="text-danger">{{ formErrors.mainCategory }}</div>
                 <select v-if="subcategories.length > 0" v-model="formData.subcategory" class="form-select p-2">
                   <option value="" disabled>Select a subcategory</option>
                   <option v-for="subcategory in subcategories" :key="subcategory" :value="subcategory">
                     {{ subcategory }}
                   </option>
                 </select>
+                <div v-if="formErrors.subcategory" class="text-danger">{{ formErrors.subcategory }}</div>
               </div>
             </div>
           </div>
@@ -75,18 +78,21 @@
                 <label for="classTitle" class="form-label fs-5"><b>Class Title</b> <span
                     class="text-danger">*</span></label>
                 <input type="text" id="classTitle" v-model="formData.classTitle" class="form-control p-2">
+                <div v-if="formErrors.classTitle" class="text-danger">{{ formErrors.classTitle }}</div>
               </div>
               <div class="mb-3">
                 <label for="price" class="form-label fs-5"><b>Price</b> <span class="text-danger">*</span></label>
-                <input type="number" id="price" v-model="formData.price" @input="formatPrice" step="0.01" min="0"
+                <input type="number" id="price" v-model.number="formData.price" step="0.01" min="0"
                   class="form-control p-2">
+                <div v-if="formErrors.price" class="text-danger">{{ formErrors.price }}</div>
               </div>
               <!-- Capacity and Skill Level -->
               <div class="row mb-3">
                 <div class="col">
                   <label for="maxCapacity" class="form-label fs-5"><b>Max. Capacity</b> <span
                       class="text-danger">*</span></label>
-                  <input type="number" id="maxCapacity" v-model="formData.maxCapacity" class="form-control p-2">
+                  <input type="number" id="maxCapacity" v-model.number="formData.maxCapacity" min="1" class="form-control p-2">
+                  <div v-if="formErrors.maxCapacity" class="text-danger">{{ formErrors.maxCapacity }}</div>
                 </div>
                 <div class="col">
                   <label for="skillLevel" class="form-label fs-5"><b>Skill Level</b> <span
@@ -97,16 +103,19 @@
                     <option value="intermediate">Intermediate</option>
                     <option value="advanced">Advanced</option>
                   </select>
+                  <div v-if="formErrors.skillLevel" class="text-danger">{{ formErrors.skillLevel }}</div>
                 </div>
               </div>
               <div class="mb-3">
                 <label for="numberOfLessons" class="form-label fs-5"><b>Number of Lessons</b> <span
                     class="text-danger">*</span></label>
-                <input type="number" id="numberOfLessons" v-model="formData.numberOfLessons" class="form-control p-2">
+                <input type="number" id="numberOfLessons" v-model.number="formData.numberOfLessons" min="1" class="form-control p-2">
+                <div v-if="formErrors.numberOfLessons" class="text-danger">{{ formErrors.numberOfLessons }}</div>
               </div>
               <div class="mb-3">
                 <label for="location" class="form-label fs-5"><b>Location</b> <span class="text-danger">*</span></label>
                 <input type="text" id="location" v-model="formData.location" class="form-control p-2">
+                <div v-if="formErrors.location" class="text-danger">{{ formErrors.location }}</div>
               </div>
               <!-- Schedule Section -->
               <div class="mb-3">
@@ -115,14 +124,17 @@
                   <div class="col">
                     <label for="date" class="form-label">Start Date</label>
                     <input type="date" v-model="formData.date" class="form-control p-2" id="date" :min="minDate">
+                    <div v-if="formErrors.date" class="text-danger">{{ formErrors.date }}</div>
                   </div>
                   <div class="col">
                     <label for="start_time" class="form-label">Start Time</label>
                     <input type="time" v-model="formData.startTime" class="form-control p-2" id="start_time">
+                    <div v-if="formErrors.startTime" class="text-danger">{{ formErrors.startTime }}</div>
                   </div>
                   <div class="col">
                     <label for="end_time" class="form-label">End Time</label>
                     <input type="time" v-model="formData.endTime" class="form-control p-2" id="end_time">
+                    <div v-if="formErrors.endTime" class="text-danger">{{ formErrors.endTime }}</div>
                   </div>
                 </div>
               </div>
@@ -135,6 +147,7 @@
                 <label for="description" class="form-label fs-5"><b>Description</b> <span
                     class="text-danger">*</span></label>
                 <textarea id="description" v-model="formData.description" class="form-control p-2" rows="5"></textarea>
+                <div v-if="formErrors.description" class="text-danger">{{ formErrors.description }}</div>
               </div>
               <div>
                 <span class="text-danger">*</span> Compulsory
@@ -201,6 +214,7 @@ export default {
     const route = useRoute();
     let classId = route.params.classId;
     const isEditMode = ref(Boolean(classId));
+    const formSubmitAttempted = ref(false);
 
     const formData = ref({
       mainCategory: '',
@@ -239,21 +253,33 @@ export default {
       }
     });
 
-    const isFormValid = computed(() => {
-      return formData.value.mainCategory &&
-        formData.value.subcategory &&
-        formData.value.classTitle &&
-        formData.value.price &&
-        formData.value.maxCapacity &&
-        formData.value.skillLevel &&
-        formData.value.numberOfLessons &&
-        formData.value.location &&
-        formData.value.date &&
-        formData.value.startTime &&
-        formData.value.endTime &&
-        formData.value.description &&
-        (imageFile.value || previewImage.value);
+    const formErrors = computed(() => {
+      if (!formSubmitAttempted.value) return {};
+
+      const errors = {};
+      
+      if (!formData.value.mainCategory) errors.mainCategory = 'Please select a main category';
+      if (!formData.value.subcategory) errors.subcategory = 'Please select a subcategory';
+      if (!formData.value.classTitle) errors.classTitle = 'Class title is required';
+      if (formData.value.price === null || formData.value.price < 0) errors.price = 'Price must be 0 or greater';
+      if (!formData.value.maxCapacity || formData.value.maxCapacity <= 0) errors.maxCapacity = 'Max capacity must be greater than 0';
+      if (!formData.value.skillLevel) errors.skillLevel = 'Please select a skill level';
+      if (!formData.value.numberOfLessons || formData.value.numberOfLessons <= 0) errors.numberOfLessons = 'Number of lessons must be greater than 0';
+      if (!formData.value.location) errors.location = 'Location is required';
+      if (!formData.value.date) errors.date = 'Start date is required';
+      if (!formData.value.startTime) errors.startTime = 'Start time is required';
+      if (!formData.value.endTime) errors.endTime = 'End time is required';
+      if (formData.value.startTime && formData.value.endTime && 
+          new Date(`${formData.value.date}T${formData.value.endTime}`) <= new Date(`${formData.value.date}T${formData.value.startTime}`)) {
+        errors.endTime = 'End time must be after start time';
+      }
+      if (!formData.value.description) errors.description = 'Description is required';
+      if (!imageFile.value && !previewImage.value) errors.image = 'Please upload an image';
+
+      return errors;
     });
+
+    const isFormValid = computed(() => Object.keys(formErrors.value).length === 0);
 
     const fetchCategories = async () => {
       try {
@@ -349,8 +375,9 @@ export default {
     };
 
     const submitForm = async () => {
+      formSubmitAttempted.value = true;
       if (!isFormValid.value) {
-        alert('Please fill in all required fields and upload an image.');
+        error.value = 'Please correct the errors in the form before submitting.';
         return;
       }
 
@@ -463,6 +490,8 @@ export default {
       isFormValid,
       isEditMode,
       minDate,
+      formErrors,
+      formSubmitAttempted,
       handleFileUpload(event) {
         const file = event.target.files[0];
         if (file) {
