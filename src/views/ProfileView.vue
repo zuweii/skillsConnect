@@ -57,11 +57,11 @@
                   role="tabpanel" aria-labelledby="classes-tab">
                   <div class="card-body">
                     <h3 class="card-title mb-4">Classes Available</h3>
-                    <div v-if="listings.length === 0" class="text-muted text-center">
+                    <div v-if="availableClasses.length === 0" class="text-muted text-center">
                       No listings available.
                     </div>
                     <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                      <div v-for="classItem in listings" :key="classItem.id" class="col">
+                      <div v-for="classItem in availableClasses" :key="classItem.id" class="col">
                         <div class="card h-100 shadow-sm hover-card">
                           <div class="card-img-wrapper">
                             <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
@@ -83,10 +83,15 @@
                                 <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
                                 <span class="badge bg-light text-dark spots-remaining">
                                   <i class="bi bi-people-fill me-1"></i>
-                                  {{ classItem.max_capacity - classItem.current_enrollment }} spots left
+                                  {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
                                 </span>
                               </div>
-                              <router-link class="custom-button w-100">View Details</router-link>
+                              <router-link 
+                                :to="{ name: 'ClassDetails', params: { id: classItem.id } }" 
+                                class="custom-button w-100"
+                              >
+                                View Details
+                              </router-link>
                             </div>
                           </div>
                         </div>
@@ -98,24 +103,37 @@
                 <!-- Reviews Tab -->
                 <div :class="{ 'active show': currentTab === 'reviews' }" class="tab-pane fade" id="reviews"
                   role="tabpanel" aria-labelledby="reviews-tab">
-                  <div v-if="reviews.length === 0" class="text-muted text-center">
-                    No reviews yet.
+                  <h3 class="card-title mb-4">Reviews</h3>
+                  <div v-if="listings.length === 0" class="text-muted text-center">
+                    No classes available for review.
                   </div>
-                  <div v-else class="reviews-list">
-                    <div v-for="review in reviews" :key="review.id" class="review-card">
-                      <div class="review-header">
-                        <div class="reviewer-info">
-                          <img :src="review.userPhoto || '/placeholder.svg?height=60&width=60'" :alt="review.username"
-                            class="reviewer-avatar">
-                          <div class="reviewer-details">
-                            <h3 class="reviewer-name">{{ review.username }}</h3>
-                            <StarRating :rating="review.rating" readOnly />
-                            <p class="class-title text-muted">{{ review.classTitle }}</p>
+                  <div v-else class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                    <div v-for="classItem in listings" :key="classItem.id" class="col">
+                      <div class="card h-100 shadow-sm hover-card">
+                        <div class="card-img-wrapper">
+                          <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image">
+                          <div class="card-img-overlay-top">
+                            <span class="badge bg-primary">
+                              {{ classItem.category }}
+                            </span>
                           </div>
                         </div>
-                        <span class="review-date">{{ formatDate(review.timestamp) }}</span>
+                        <div class="card-body d-flex flex-column">
+                          <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+                          </div>
+                          <div class="d-flex align-items-center mb-2">
+                            <StarRating :rating="classItem.ratings_average" readOnly />
+                            <span class="ms-2">({{ classItem.reviews ? classItem.reviews.length : 0 }} reviews)</span>
+                          </div>
+                          <p class="card-text text-muted small flex-grow-1">
+                            {{ truncateText(classItem.description, 100) }}
+                          </p>
+                          <router-link :to="{ name: 'AllReviews', params: { classId: classItem.id } }" class="custom-button w-100 mt-auto">
+                            View Reviews
+                          </router-link>
+                        </div>
                       </div>
-                      <p class="review-text">{{ review.text }}</p>
                     </div>
                   </div>
                 </div>
@@ -183,13 +201,12 @@
 
 <script setup>
 import { ref, onMounted, computed } from 'vue';
-import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { useRoute } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
 
 const userProfile = ref({});
-const reviews = ref([]);
 const listings = ref([]);
 const portfolio = ref([]);
 const averageRating = ref(0);
@@ -209,11 +226,12 @@ const fetchUserData = async (userID) => {
     if (userDoc.exists()) {
       const data = userDoc.data();
       userProfile.value = data;
-      listings.value = (data.posted_classes || []).filter(classItem => {
-        return classItem.end_time && new Date(classItem.end_time.seconds * 1000) > new Date();
-      });
+      listings.value = (data.posted_classes || []).map(classItem => ({
+        ...classItem,
+        id: classItem.class_id // Handle potential different id field names
+      }));
       portfolio.value = data.portfolio || [];
-      console.log("Fetched user profile:", userProfile.value);
+      averageRating.value = data.teacher_average || 0;
     } else {
       error.value = "User profile not found.";
     }
@@ -223,45 +241,6 @@ const fetchUserData = async (userID) => {
   } finally {
     loading.value = false;
   }
-};
-
-// Function to fetch reviews for all classes taught by the instructor
-const fetchReviewsByTeacher = async (teacherUsername) => {
-  try {
-    const q = query(collection(db, "classes"), where("teacher_username", "==", teacherUsername));
-    const querySnapshot = await getDocs(q);
-    const allReviews = [];
-    let totalRating = 0;
-    let reviewCount = 0;
-
-    querySnapshot.forEach((doc) => {
-      const classData = doc.data();
-      if (classData.reviews) {
-        allReviews.push(
-          ...classData.reviews.map(review => ({
-            ...review,
-            classTitle: classData.title, // Include class title for context
-          }))
-        );
-        totalRating += classData.reviews.reduce((sum, review) => sum + review.rating, 0);
-        reviewCount += classData.reviews.length;
-      }
-    });
-
-    reviews.value = allReviews;
-    averageRating.value = reviewCount > 0 ? totalRating / reviewCount : 0;
-  } catch (err) {
-    console.error("Error fetching reviews:", err);
-  }
-};
-
-const formatDate = (date) => {
-  if (!date || !date.seconds) return 'Date not available';
-  return new Date(date.seconds * 1000).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
 };
 
 const truncateText = (text, length) => {
@@ -275,19 +254,23 @@ const formatYouTubeEmbedUrl = (url) => {
   return `https://www.youtube.com/embed/${videoId}`;
 };
 
+const availableClasses = computed(() => {
+  const currentTime = new Date();
+  return listings.value.filter(classItem => {
+    const startTime = classItem.start_time.toDate();
+    return currentTime < startTime;
+  });
+});
+
 onMounted(() => {
   const userId = route.params.userId;
   if (userId) {
-    fetchUserData(userId).then(() => {
-      // Assuming `userProfile.value.username` is the teacher's username
-      fetchReviewsByTeacher(userProfile.value.username);
-    });
+    fetchUserData(userId);
   } else {
     error.value = "User ID not found in route parameters.";
     loading.value = false;
   }
 });
-
 </script>
 
 <style scoped>
@@ -318,15 +301,6 @@ onMounted(() => {
   border: none;
   border-radius: 0.5rem;
   overflow: hidden;
-}
-
-.chart-placeholder {
-  height: 200px;
-  background-color: #e9ecef;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #6c757d;
 }
 
 .text-primary {
@@ -397,8 +371,9 @@ h2, h3, h4, h5 {
 .text-muted {
   color: #6c757d !important;
 }
+
 .bg-primary {
-    background-color: #5a7dee !important;
+  background-color: #5a7dee !important;
 }
 
 .portfolio-container {
@@ -440,7 +415,6 @@ h2, h3, h4, h5 {
   opacity: 0.8;
 }
 
-/* Customizing the scrollbar */
 .portfolio-container::-webkit-scrollbar {
   width: 8px;
 }
