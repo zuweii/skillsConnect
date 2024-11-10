@@ -90,7 +90,6 @@
               <h3 class="card-title mb-4">Quick Stats</h3>
               <ul class="list-unstyled">
                 <li class="mb-3"><strong>Current Month Earnings:</strong> ${{ currentMonthEarnings.toFixed(2) }}</li>
-                <!-- <li class="mb-3"><strong>Active Classes Listed:</strong> {{ totalClasses }}</li> -->
                 <li class="mb-3"><strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}</li>
               </ul>
             </div>
@@ -124,19 +123,17 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
 
-// Initialize data and state variables
 const auth = getAuth();
 const userProfile = ref({});
 const earningsData = ref([]);
 const classesData = ref([]);
 const loading = ref(true);
 const error = ref(null);
-const currentTab = ref('earningsGraph'); // Default to earnings graph
+const currentTab = ref('earningsGraph');
 
 const earningsGraphRef = ref(null);
 const summaryGraphRef = ref(null);
 
-// Computed properties
 const totalEarnings = computed(() => earningsData.value.reduce((sum, earning) => sum + earning.amount, 0));
 const totalClasses = computed(() => classesData.value.length);
 const averageEarningsPerClass = computed(() => totalClasses.value > 0 ? totalEarnings.value / totalClasses.value : 0);
@@ -155,7 +152,6 @@ const recentEarnings = computed(() => {
     .slice(0, 5);
 });
 
-// Helper function to get earnings for specific months
 function getMonthlyEarnings(monthOffset) {
   const now = new Date();
   const month = now.getMonth() - monthOffset;
@@ -170,11 +166,9 @@ function getMonthlyEarnings(monthOffset) {
     .reduce((sum, earning) => sum + earning.amount, 0);
 }
 
-// Functions to draw the graphs
 function drawEarningsGraph() {
   if (!earningsGraphRef.value || loading.value) return;
 
-  // Clear previous SVG elements
   const container = d3.select(earningsGraphRef.value);
   container.selectAll("*").remove();
 
@@ -188,6 +182,10 @@ function drawEarningsGraph() {
 
   const chart = svg.append("g")
     .attr("transform", `translate(60,40)`);
+
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
 
   const x = d3.scaleBand()
     .domain(earningsData.value.map(d => d.transactionDate))
@@ -207,9 +205,17 @@ function drawEarningsGraph() {
     .attr("width", x.bandwidth())
     .attr("y", d => y(d.amount))
     .attr("height", d => height - y(d.amount))
-    .attr("fill", "steelblue");
+    .attr("fill", "steelblue")
+    .on("mouseover", (event, d) => {
+      tooltip.transition().duration(200).style("opacity", .9);
+      tooltip.html(`$${d.amount.toFixed(2)}`)
+        .style("left", `${event.pageX}px`)
+        .style("top", `${event.pageY - 28}px`);
+    })
+    .on("mouseout", () => {
+      tooltip.transition().duration(500).style("opacity", 0);
+    });
 
-  // Adding X-axis
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b %d")))
@@ -219,7 +225,6 @@ function drawEarningsGraph() {
     .attr("dy", ".15em")
     .attr("transform", "rotate(-45)");
 
-  // Adding Y-axis
   chart.append("g")
     .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d.toLocaleString()}`));
 }
@@ -227,7 +232,6 @@ function drawEarningsGraph() {
 function drawSummaryGraph() {
   if (!summaryGraphRef.value || loading.value) return;
 
-  // Clear previous SVG elements
   const container = d3.select(summaryGraphRef.value);
   container.selectAll("*").remove();
 
@@ -257,6 +261,10 @@ function drawSummaryGraph() {
     .domain([0, d3.max(summaryData, d => d.amount) * 1.1])
     .range([height, 0]);
 
+  const tooltip = d3.select("body").append("div")
+    .attr("class", "tooltip")
+    .style("opacity", 0);
+
   chart.selectAll(".bar")
     .data(summaryData)
     .enter().append("rect")
@@ -265,21 +273,27 @@ function drawSummaryGraph() {
     .attr("width", x.bandwidth())
     .attr("y", d => y(d.amount))
     .attr("height", d => height - y(d.amount))
-    .attr("fill", "steelblue");
+    .attr("fill", "steelblue")
+    .on("mouseover", (event, d) => {
+      tooltip.transition().duration(200).style("opacity", .9);
+      tooltip.html(`$${d.amount.toFixed(2)}`)
+        .style("left", `${event.pageX}px`)
+        .style("top", `${event.pageY - 28}px`);
+    })
+    .on("mouseout", () => {
+      tooltip.transition().duration(500).style("opacity", 0);
+    });
 
-  // Adding X-axis
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x))
     .selectAll("text")
     .style("text-anchor", "middle");
 
-  // Adding Y-axis
   chart.append("g")
     .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d.toLocaleString()}`));
 }
 
-// Helper function to get month name for a specific offset
 function getMonthName(monthOffset) {
   const now = new Date();
   const month = now.getMonth() - monthOffset;
@@ -295,7 +309,6 @@ function formatDate(date) {
   });
 }
 
-// Lifecycle hooks
 onMounted(async () => {
   await refreshUserProfile();
   drawEarningsGraph();
