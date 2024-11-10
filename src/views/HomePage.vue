@@ -443,16 +443,6 @@ export default {
           (classItem) => classItem.category === selectedCategory.value
         );
       }
-
-      if (props.searchQuery) {
-        const query = props.searchQuery.toLowerCase();
-        filtered = filtered.filter(
-          (classItem) =>
-            classItem.title.toLowerCase().includes(query) ||
-            classItem.description.toLowerCase().includes(query)
-        );
-      }
-
       return filtered;
     });
 
