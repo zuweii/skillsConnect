@@ -147,27 +147,42 @@
           <div class="card shadow-sm mb-4">
             <div class="card-body">
               <h3 class="card-title mb-4">Portfolio</h3>
-              <div v-if="portfolio.project_images.length === 0 && portfolio.youtube_links.length === 0" class="text-muted text-center">
+              <div v-if="portfolioItems.length === 0" class="text-muted text-center">
                 No portfolio projects to display.
               </div>
               <div v-else class="portfolio-container">
-                <div v-for="(project, index) in portfolio.project_images" :key="'image' + index" class="portfolio-item mb-4">
-                  <div class="card shadow-sm h-100 portfolio-card">
-                    <img :src="project.imageUrl" alt="Project Image" class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                <div v-for="(project, index) in portfolioItems" :key="'carousel' + index" class="portfolio-item mb-4">
+                  <div class="card shadow-sm h-100 portfolio-card hover-card">
+                    <!-- Carousel -->
+                    <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
+                      <div class="carousel-inner">
+                        <!-- Image Slide -->
+                        <div v-if="project.imageUrl" class="carousel-item active">
+                          <img :src="project.imageUrl" :alt="project.title" class="portfolio-image img-fluid w-100">
+                        </div>
+                        <!-- Video Slide -->
+                        <div v-if="project.youtubeLink" class="carousel-item" :class="{ active: !project.imageUrl }">
+                          <div class="ratio ratio-16x9">
+                            <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0" allowfullscreen></iframe>
+                          </div>
+                        </div>
+                      </div>
+                      <!-- Carousel Controls -->
+                      <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev" type="button"
+                        :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Previous</span>
+                      </button>
+                      <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next" type="button"
+                        :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Next</span>
+                      </button>
+                    </div>
+                    <!-- Project Details -->
                     <div class="card-body d-flex flex-column">
                       <h5 class="card-title">{{ project.title }}</h5>
                       <p class="card-text">{{ project.description }}</p>
-                    </div>
-                  </div>
-                </div>
-                <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index" class="portfolio-item mb-4">
-                  <div class="card shadow-sm h-100 portfolio-card">
-                    <div class="ratio ratio-16x9">
-                      <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
-                    </div>
-                    <div class="card-body d-flex flex-column">
-                      <h5 class="card-title">{{ link.title }}</h5>
-                      <p class="card-text">{{ link.description }}</p>
                     </div>
                   </div>
                 </div>
@@ -189,7 +204,7 @@ import StarRating from '../components/StarRating.vue';
 
 const userProfile = ref({});
 const listings = ref([]);
-const portfolio = ref({ project_images: [], youtube_links: [] });
+const portfolioItems = ref([]);
 const averageRating = ref(0);
 const loading = ref(true);
 const error = ref(null);
@@ -214,40 +229,28 @@ const fetchUserData = async (userID) => {
       
       // Fix: Correctly structure portfolio data from Firestore
       if (data.portfolio && Array.isArray(data.portfolio)) {
-        // Handle case where portfolio is an array
-        portfolio.value = {
-          project_images: data.portfolio.map(item => ({
-            imageUrl: item.imageUrl,
-            title: item.title,
-            description: item.description
-          })),
-          youtube_links: data.portfolio.filter(item => item.youtubeLink).map(item => ({
-            url: item.youtubeLink,
-            title: item.title,
-            description: item.description
-          }))
-        };
+        portfolioItems.value = data.portfolio.map(item => ({
+          imageUrl: item.imageUrl || null,
+          youtubeLink: item.youtubeLink || null,
+          title: item.title,
+          description: item.description,
+          category: item.category || null,
+          skills: item.skills || [],
+          tools: item.tools || []
+        }));
       } else if (data.portfolio) {
-        // Handle case where portfolio is an object with numbered keys
-        const portfolioItems = Object.values(data.portfolio);
-        portfolio.value = {
-          project_images: portfolioItems.filter(item => item.imageUrl).map(item => ({
-            imageUrl: item.imageUrl,
-            title: item.title,
-            description: item.description
-          })),
-          youtube_links: portfolioItems.filter(item => item.youtubeLink).map(item => ({
-            url: item.youtubeLink,
-            title: item.title,
-            description: item.description
-          }))
-        };
+        const portfolioEntries = Object.values(data.portfolio);
+        portfolioItems.value = portfolioEntries.map(item => ({
+          imageUrl: item.imageUrl || null,
+          youtubeLink: item.youtubeLink || null,
+          title: item.title,
+          description: item.description,
+          category: item.category || null,
+          skills: item.skills || [],
+          tools: item.tools || []
+        }));
       } else {
-        // Reset to empty arrays if no portfolio data
-        portfolio.value = {
-          project_images: [],
-          youtube_links: []
-        };
+        portfolioItems.value = [];
       }
       
       averageRating.value = data.teacher_average || 0;
@@ -303,8 +306,6 @@ onMounted(() => {
 </script>
 
 <style scoped>
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
 .profile-view {
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -316,31 +317,70 @@ onMounted(() => {
   max-width: 1400px;
 }
 
-.btn-primary {
-  background-color: #5a7dee;
-  border-color: #5a7dee;
-}
-
-.btn-primary:hover, .btn-primary:focus {
-  background-color: #4e6dd2;
-  border-color: #4e6dd2;
-}
-
 .card {
   border: none;
   border-radius: 0.5rem;
   overflow: hidden;
 }
 
-.text-primary {
-  color: #5a7dee !important;
+.portfolio-container {
+  max-height: 800px; 
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.portfolio-item {
+  margin-bottom: 1rem;
+}
+
+.portfolio-image {
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.hover-card:hover .portfolio-image {
+  transform: scale(1.05);
+}
+
+/* .carousel-control-prev-icon,
+.carousel-control-next-icon {
+  background-color: #5a7dee;
+} */
+
+.portfolio-image {
+  object-fit: cover;
+  transition: transform 0.3s ease;
+  aspect-ratio: 16 / 9;
+}
+
+.additional-details p {
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+}
+
+.category, .skills, .tools {
+  color: #6c757d;
 }
 
 .class-image {
   width: 100%;
-  height: 200px;
+  height: auto;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
-  object-position: center;
+}
+
+@media (max-width: 768px) {
+  .portfolio-image {
+    height: auto;
+  }
+  .carousel {
+    height: 300px;
+  }
+}
+
+.spots-remaining {
+  flex-shrink: 0; 
+  white-space: nowrap;
 }
 
 .gradient-border {
@@ -405,45 +445,6 @@ h2, h3, h4, h5 {
   background-color: #5a7dee !important;
 }
 
-.portfolio-container {
-  max-height: 800px; 
-  overflow-y: auto;
-  padding-right: 10px;
-}
-
-.portfolio-item {
-  margin-bottom: 1rem;
-}
-
-.portfolio-media {
-  height: 200px;
-}
-
-.portfolio-image {
-  object-fit: cover;
-}
-
-.portfolio-video {
-  height: 200px;
-}
-
-.embed-responsive-item {
-  width: 100%;
-  height: 100%;
-}
-
-.ratio-16x9 {
-  aspect-ratio: 16 / 9;
-}
-
-.portfolio-media .position-absolute {
-  transition: opacity 0.3s ease;
-}
-
-.portfolio-media:hover .position-absolute {
-  opacity: 0.8;
-}
-
 .portfolio-container::-webkit-scrollbar {
   width: 8px;
 }
@@ -462,11 +463,6 @@ h2, h3, h4, h5 {
   background: #555;
 }
 
-.spots-remaining {
-  flex-shrink: 0; 
-  white-space: nowrap;
-}
-
 @media (max-width: 768px) {
   .spots-remaining {
     font-size: 0.9rem;
@@ -475,5 +471,4 @@ h2, h3, h4, h5 {
     padding: 1rem;
   }
 }
-
-</style> 
+</style>
