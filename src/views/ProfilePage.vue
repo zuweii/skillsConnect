@@ -383,7 +383,7 @@
       </div>
     </div>
 
-    <!-- Edit Portfolio Modal -->
+  <!-- Edit Portfolio Modal -->
   <div class="modal fade" id="editPortfolioModal" tabindex="-1" aria-labelledby="editPortfolioModalLabel"
     aria-hidden="true">
     <div class="modal-dialog">
@@ -412,7 +412,6 @@
               <input type="file" @change="handleEditImageUpload" id="editProjectImage" class="form-control">
               <div v-if="editProject.imageUrl" class="mt-2">
                 <img :src="editProject.imageUrl" alt="Current project image" class="img-thumbnail" style="max-height: 100px;">
-                <br>
                 <button @click.prevent="removeEditImage" class="btn btn-danger btn-sm ms-2">Remove Image</button>
               </div>
             </div>
@@ -575,8 +574,13 @@ export default {
           userProfile.value.portfolio = updatedPortfolio;
 
           // Close the modal
-          const modal = Modal.getInstance(document.getElementById('editPortfolioModal'));
-          modal.hide();
+          const modalElement = document.getElementById('editPortfolioModal');
+          const modalInstance = Modal.getInstance(modalElement);
+          if (modalInstance) {
+            modalInstance.hide();
+          } else {
+            console.error('Modal instance not found');
+          }
 
           // Reset the edit state
           editProject.value = {};
