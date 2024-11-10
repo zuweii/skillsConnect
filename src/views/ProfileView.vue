@@ -144,56 +144,42 @@
 
         <!-- Right Column: Portfolio -->
         <div class="col-lg-4">
-          <div class="row">
-            <div class="col-12">
-              <div class="card shadow-sm mb-4">
-                <div class="card-body">
-                  <h3 class="card-title mb-4">Portfolio</h3>
-                  <div v-if="portfolio.length === 0" class="text-muted text-center">
-                    No portfolio projects to display.
-                  </div>
-                  <div v-else class="portfolio-container">
-                    <div v-for="(project, index) in portfolio" :key="index" class="portfolio-item mb-4">
-                      <div class="card shadow-sm h-100 portfolio-card">
-                        <div :id="'portfolioCarousel' + index" class="carousel slide" data-bs-ride="carousel">
-                          <div class="carousel-inner">
-                            <div v-if="project.imageUrl" class="carousel-item active">
-                              <img :src="project.imageUrl" :alt="project.title"
-                                class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
-                            </div>
-                            <div v-if="project.youtubeLink" class="carousel-item"
-                              :class="{ active: !project.imageUrl }">
-                              <div class="ratio ratio-16x9">
-                                <iframe :src="formatYouTubeEmbedUrl(project.youtubeLink)" frameborder="0"
-                                  allowfullscreen class="embed-responsive-item"></iframe>
-                              </div>
-                            </div>
-                          </div>
-                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-prev"
-                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="prev">
-                            <span class="carousel-control-icon" aria-hidden="true"><i
-                                class="bi bi-chevron-left"></i></span>
-                            <span class="visually-hidden">Previous</span>
-                          </button>
-                          <button v-if="project.imageUrl && project.youtubeLink" class="carousel-control-next"
-                            type="button" :data-bs-target="'#portfolioCarousel' + index" data-bs-slide="next">
-                            <span class="carousel-control-icon" aria-hidden="true"><i
-                                class="bi bi-chevron-right"></i></span>
-                            <span class="visually-hidden">Next</span>
-                          </button>
-                        </div>
-                        <div class="card-body d-flex flex-column">
-                          <h5 class="card-title">{{ project.title }}</h5>
-                          <p class="card-text">{{ project.description }}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h3 class="card-title mb-4">Portfolio</h3>
+          <!-- Check if portfolio arrays are empty -->
+          <div v-if="!portfolio.project_images?.length && !portfolio.youtube_links?.length" class="text-muted text-center">
+            No portfolio projects to display.
+          </div>
+          <div v-else class="portfolio-container">
+            <div v-for="(project, index) in portfolio.project_images" :key="'image' + index" class="portfolio-item mb-4">
+              <div class="card shadow-sm h-100 portfolio-card">
+                <img :src="project.imageUrl" alt="Project Image" class="portfolio-image img-fluid h-100 w-100 object-fit-cover">
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title">{{ project.title }}</h5>
+                  <p class="card-text">{{ project.description }}</p>
+                </div>
+              </div>
+            </div>
+            <div v-for="(link, index) in portfolio.youtube_links" :key="'video' + index" class="portfolio-item mb-4">
+              <div class="card shadow-sm h-100 portfolio-card">
+                <div class="ratio ratio-16x9">
+                  <iframe :src="formatYouTubeEmbedUrl(link)" frameborder="0" allowfullscreen></iframe>
+                </div>
+                <div class="card-body d-flex flex-column">
+                  <h5 class="card-title">{{ link.title }}</h5>
+                  <p class="card-text">{{ link.description }}</p>
                 </div>
               </div>
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+</div>
       </div>
     </div>
   </div>
@@ -228,9 +214,12 @@ const fetchUserData = async (userID) => {
       userProfile.value = data;
       listings.value = (data.posted_classes || []).map(classItem => ({
         ...classItem,
-        id: classItem.class_id // Handle potential different id field names
+        id: classItem.class_id
       }));
-      portfolio.value = data.portfolio || [];
+      portfolio.value = {
+        project_images: data.portfolio?.project_images || [],
+        youtube_links: data.portfolio?.youtube_links || []
+      };
       averageRating.value = data.teacher_average || 0;
     } else {
       error.value = "User profile not found.";
@@ -249,10 +238,29 @@ const truncateText = (text, length) => {
 };
 
 const formatYouTubeEmbedUrl = (url) => {
-  if (!url) return '';
-  const videoId = url.split('v=')[1];
-  return `https://www.youtube.com/embed/${videoId}`;
-};
+      if (!url) return '';
+      let videoId = '';
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.hostname === 'youtu.be') {
+          videoId = urlObj.pathname.slice(1);
+        } else if (urlObj.hostname === 'www.youtube.com' || urlObj.hostname === 'youtube.com') {
+          videoId = urlObj.searchParams.get('v');
+        }
+      } catch (error) {
+        console.error('Invalid YouTube URL:', error);
+      }
+      return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
+    };
+
+  const initializeCarousels = () => {
+    userProfile.value.portfolio?.forEach((_, index) => {
+      const carouselElement = document.getElementById(`portfolioCarousel${index}`);
+      if (carouselElement && !Carousel.getInstance(carouselElement)) {
+        new Carousel(carouselElement);
+      }
+    });
+  };
 
 const availableClasses = computed(() => {
   const currentTime = new Date();
@@ -447,10 +455,4 @@ h2, h3, h4, h5 {
   }
 }
 
-
-@media (max-width: 767.98px) {
-  .card-body {
-    padding: 1rem;
-  }
-}
 </style> 

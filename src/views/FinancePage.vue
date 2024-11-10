@@ -90,6 +90,7 @@
               <h3 class="card-title mb-4">Quick Stats</h3>
               <ul class="list-unstyled">
                 <li class="mb-3"><strong>Current Month Earnings:</strong> ${{ currentMonthEarnings.toFixed(2) }}</li>
+                <!-- <li class="mb-3"><strong>Active Classes Listed:</strong> {{ totalClasses }}</li> -->
                 <li class="mb-3"><strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}</li>
               </ul>
             </div>
@@ -98,7 +99,7 @@
           <!-- Earnings Details Section -->
           <div class="card shadow-sm">
             <div class="card-body">
-              <h3 class="card-title mb-4">Recent Earnings</h3>
+              <h3 class="card-title mb-4">Recent Transactions</h3>
               <ul class="list-group list-group-flush">
                 <li v-for="(earning, index) in recentEarnings" :key="index"
                   class="list-group-item d-flex justify-content-between align-items-center">
@@ -123,17 +124,19 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
 
+// Initialize data and state variables
 const auth = getAuth();
 const userProfile = ref({});
 const earningsData = ref([]);
 const classesData = ref([]);
 const loading = ref(true);
 const error = ref(null);
-const currentTab = ref('earningsGraph');
+const currentTab = ref('earningsGraph'); // Default to earnings graph
 
 const earningsGraphRef = ref(null);
 const summaryGraphRef = ref(null);
 
+// Computed properties
 const totalEarnings = computed(() => earningsData.value.reduce((sum, earning) => sum + earning.amount, 0));
 const totalClasses = computed(() => classesData.value.length);
 const averageEarningsPerClass = computed(() => totalClasses.value > 0 ? totalEarnings.value / totalClasses.value : 0);
@@ -152,6 +155,7 @@ const recentEarnings = computed(() => {
     .slice(0, 5);
 });
 
+// Helper function to get earnings for specific months
 function getMonthlyEarnings(monthOffset) {
   const now = new Date();
   const month = now.getMonth() - monthOffset;
@@ -166,9 +170,11 @@ function getMonthlyEarnings(monthOffset) {
     .reduce((sum, earning) => sum + earning.amount, 0);
 }
 
+// Functions to draw the graphs
 function drawEarningsGraph() {
   if (!earningsGraphRef.value || loading.value) return;
 
+  // Clear previous SVG elements
   const container = d3.select(earningsGraphRef.value);
   container.selectAll("*").remove();
 
@@ -182,10 +188,6 @@ function drawEarningsGraph() {
 
   const chart = svg.append("g")
     .attr("transform", `translate(60,40)`);
-
-  const tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
 
   const x = d3.scaleBand()
     .domain(earningsData.value.map(d => d.transactionDate))
@@ -205,17 +207,9 @@ function drawEarningsGraph() {
     .attr("width", x.bandwidth())
     .attr("y", d => y(d.amount))
     .attr("height", d => height - y(d.amount))
-    .attr("fill", "steelblue")
-    .on("mouseover", (event, d) => {
-      tooltip.transition().duration(200).style("opacity", .9);
-      tooltip.html(`$${d.amount.toFixed(2)}`)
-        .style("left", `${event.pageX}px`)
-        .style("top", `${event.pageY - 28}px`);
-    })
-    .on("mouseout", () => {
-      tooltip.transition().duration(500).style("opacity", 0);
-    });
+    .attr("fill", "steelblue");
 
+  // Adding X-axis
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x).tickFormat(d3.timeFormat("%b %d")))
@@ -225,6 +219,7 @@ function drawEarningsGraph() {
     .attr("dy", ".15em")
     .attr("transform", "rotate(-45)");
 
+  // Adding Y-axis
   chart.append("g")
     .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d.toLocaleString()}`));
 }
@@ -232,6 +227,7 @@ function drawEarningsGraph() {
 function drawSummaryGraph() {
   if (!summaryGraphRef.value || loading.value) return;
 
+  // Clear previous SVG elements
   const container = d3.select(summaryGraphRef.value);
   container.selectAll("*").remove();
 
@@ -261,10 +257,6 @@ function drawSummaryGraph() {
     .domain([0, d3.max(summaryData, d => d.amount) * 1.1])
     .range([height, 0]);
 
-  const tooltip = d3.select("body").append("div")
-    .attr("class", "tooltip")
-    .style("opacity", 0);
-
   chart.selectAll(".bar")
     .data(summaryData)
     .enter().append("rect")
@@ -273,27 +265,21 @@ function drawSummaryGraph() {
     .attr("width", x.bandwidth())
     .attr("y", d => y(d.amount))
     .attr("height", d => height - y(d.amount))
-    .attr("fill", "steelblue")
-    .on("mouseover", (event, d) => {
-      tooltip.transition().duration(200).style("opacity", .9);
-      tooltip.html(`$${d.amount.toFixed(2)}`)
-        .style("left", `${event.pageX}px`)
-        .style("top", `${event.pageY - 28}px`);
-    })
-    .on("mouseout", () => {
-      tooltip.transition().duration(500).style("opacity", 0);
-    });
+    .attr("fill", "steelblue");
 
+  // Adding X-axis
   chart.append("g")
     .attr("transform", `translate(0,${height})`)
     .call(d3.axisBottom(x))
     .selectAll("text")
     .style("text-anchor", "middle");
 
+  // Adding Y-axis
   chart.append("g")
     .call(d3.axisLeft(y).ticks(5).tickFormat(d => `$${d.toLocaleString()}`));
 }
 
+// Helper function to get month name for a specific offset
 function getMonthName(monthOffset) {
   const now = new Date();
   const month = now.getMonth() - monthOffset;
@@ -309,6 +295,7 @@ function formatDate(date) {
   });
 }
 
+// Lifecycle hooks
 onMounted(async () => {
   await refreshUserProfile();
   drawEarningsGraph();
@@ -406,7 +393,7 @@ async function fetchFinancialData(userId) {
 }
 
 .container-fluid {
-  max-width: 1200px;
+  max-width: 1400px;
 }
 
 .card {
@@ -416,20 +403,26 @@ async function fetchFinancialData(userId) {
   transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.card:hover {
+/* .card:hover {
   transform: translateY(-5px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
+} */
 
 .card-title {
   color: #333;
   font-weight: 600;
 }
 
-.gradient-border {
+/* .gradient-border {
   border-top: 4px solid;
   border-image-slice: 1;
   border-image-source: linear-gradient(to right, #5a7dee, #4e6dd2);
+} */
+
+.gradient-border {
+  position: relative;
+  border-top: 5px solid #5a7dee;
+  border-radius: 0.375rem;
 }
 
 .text-primary {
@@ -450,7 +443,7 @@ async function fetchFinancialData(userId) {
 
 .chart-container {
   width: 100%;
-  height: 350px;
+  height: 400px;
 }
 
 .svg-content {
