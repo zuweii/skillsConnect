@@ -79,9 +79,9 @@
                               {{ truncateText(classItem.description, 100) }}
                             </p>
                             <div class="mt-auto">
-                              <div class="d-flex justify-content-between align-items-center mb-3">
+                              <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
                                 <p class="card-text h5 text-primary mb-0">${{ classItem.price.toFixed(2) }}</p>
-                                <span class="badge bg-light text-dark">
+                                <span class="badge bg-light text-dark spots-remaining">
                                   <i class="bi bi-people-fill me-1"></i>
                                   {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
                                 </span>
@@ -433,9 +433,24 @@ h2, h3, h4, h5 {
   background: #555;
 }
 
+.spots-remaining {
+  flex-shrink: 0; 
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .spots-remaining {
+    font-size: 0.9rem;
+  }
+  .card-body {
+    padding: 1rem;
+  }
+}
+
+
 @media (max-width: 767.98px) {
   .card-body {
     padding: 1rem;
   }
 }
-</style>
+</style> 
