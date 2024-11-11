@@ -12,9 +12,10 @@ import ProfileView from '../views/ProfileView.vue'
 import ProfilePage from '../views/ProfilePage.vue'
 import ReviewsPage from '../views/ReviewsPage.vue'
 import SignupPage from '../views/SignupPage.vue'
-import Settings from '../views/Settings.vue'
 import AllReviews from '../views/AllReviews.vue'
-
+import Calendar from '../views/Calendar.vue'
+import FinancePage from '../views/FinancePage.vue'
+import ViewAllReviews from '../views/ViewAllReviews.vue'
 
 const routes = [
   {
@@ -68,6 +69,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/finances-page',
+    name: 'Finance',
+    component: FinancePage,
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/reviews-page/:classId',
     name: 'ReviewsPage',
     component: ReviewsPage,
@@ -81,15 +88,21 @@ const routes = [
     component: SignupPage,
   },
   {
-    path: '/settings',
-    name: 'Settings',
-    component: Settings,
-    meta: { requiresAuth: true },
-  },
-  {
     path: '/class/:classId/reviews',
     name: 'AllReviews',
     component: AllReviews,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: Calendar,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/view-all-reviews/:userId',
+    name: 'ViewAllReviews',
+    component: ViewAllReviews,
     meta: { requiresAuth: true }
   }
 ]

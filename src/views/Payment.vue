@@ -35,12 +35,6 @@
       </div>
       <div class="col-md-6">
         <h1 class="h2 mb-3 fw-bold">Payment for: {{ classDetails.title }}</h1>
-        <div class="d-flex align-items-center mb-2">
-          <span class="me-2">{{ classDetails.ratings_average.toFixed(1) }}</span>
-          <StarRating :rating="classDetails.ratings_average" readOnly />
-          <span class="text-muted ms-2">({{ reviewCount }} Reviews)</span>
-          <span class="ms-3 badge bg-primary">Available: {{ classDetails.max_capacity - classDetails.current_enrollment }}/{{ classDetails.max_capacity }}</span>
-        </div>
         <h2 class="h3 mb-3 text-colour">${{ classDetails.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classDetails.description }}</p>
         <div v-if="!enrollmentSuccess">
@@ -61,7 +55,7 @@
       </div>
     </div>
 
-    <div class="card mt-4 shadow">
+    <div class="card my-5 shadow">
       <div class="card-body">
         <h3 class="card-title fw-bold">Class Details</h3>
         <div class="row mt-4">
@@ -122,51 +116,6 @@
         </div>
       </div>
     </div>
-
-    <div class="card mt-4 p-2 shadow">
-      <div class="card-body">
-        <h3 class="card-title fw-bold mt-2">
-          Meet the Instructor
-        </h3>
-        <div class="row my-4">
-          <div class="col-md-4">
-            <div class="d-flex flex-column align-items-center">
-              <div class="instructor-image-container mb-3">
-                <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
-              </div>
-              <h4 class="h5 mb-1 text-colour fw-bold">{{ instructorData.username.toUpperCase() }}</h4>
-            </div>
-          </div>
-          <div class="col-md-8">
-            <div v-if="classDetails.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center" style="height: 200px;">
-              No reviews yet
-            </div>
-            <div v-else>
-              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm" style="border:1px solid lightgray">
-                <div class="card-body">
-                  <div class="d-flex align-items-center mb-2">
-                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                    <div>
-                      <h5 class="card-title mb-0">{{ review.username }}</h5>
-                      <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
-                    </div>
-                  </div>
-                  <div class="d-flex align-items-center mb-2">
-                    <StarRating :rating="review.rating" />
-                  </div>
-                  <p class="card-text">{{ review.text }}</p>
-                </div>
-              </div>
-              <div v-if="classDetails.reviews.length > 3" class="text-end mt-3">
-                <router-link :to="{ name: 'AllReviews', params: { classId: classDetails.id } }" class="btn btn-outline-primary">
-                  Read All Reviews
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
@@ -179,6 +128,7 @@ import { db } from '../firebase/firebase_config';
 import FBInstanceAuth from '../firebase/firebase_auth';
 import StarRating from '../components/StarRating.vue';
 import { Timestamp } from 'firebase/firestore';
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
 export default {
   name: 'Payment',
@@ -244,7 +194,7 @@ export default {
       await FBInstanceAuth.waitForAuthReady();
       await fetchClassDetails();
 
-      stripe.value = await loadStripe('pk_test_51QCeCgGrm7Jys6wXvdMZgzosRXmSwWseb8MfEFxGyhMB4bfLcNQK1mo7mtqbDhs2anZD2gCjACdmbGI9dtJteyI200oipnoSeV');
+      stripe.value = await loadStripe(stripePublishableKey);
       elements.value = stripe.value.elements();
       const cardElement = elements.value.create('card');
       cardElement.mount('#card-element');

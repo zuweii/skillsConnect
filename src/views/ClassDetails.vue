@@ -48,10 +48,12 @@
           {{ isEnrolled ? 'Already Enrolled' : 'Enrol Now' }}
         </button>
         <p v-if="isEnrolled" class="text-success mt-2 text-center">You have already enrolled in this class!</p>
+        <p v-if="hasConflict && !isEnrolled" class="text-danger mt-2 text-center">This class conflicts with your existing
+          schedule.</p>
       </div>
     </div>
 
-    <div class="card mt-4 shadow">
+    <div class="card mt-5 shadow">
       <div class="card-body">
         <h3 class="card-title fw-bold">Class Details</h3>
         <div class="row mt-4">
@@ -96,7 +98,7 @@
               <i class="bi bi-geo-alt text-colour me-2 fs-4"></i>
               <div>
                 <p class="mb-0 fw-bold">Location</p>
-                <p class="mb-0">{{ classData.location }}</p>
+                <p class="mb-0">{{ classData.location }} <span class="location-link text-decoration-none" @click="showMap">(View on Map)</span> </p> 
               </div>
             </div>
           </div>
@@ -113,71 +115,84 @@
       </div>
     </div>
 
-    <div class="card mt-4 shadow">
+    <div class="card my-5 shadow">
       <div class="card-body">
         <h3 class="card-title fw-bold">Meet The Instructor</h3>
         <div class="row my-4">
-      <div class="col-md-4">
-        <div class="d-flex flex-column align-items-center">
-          <!-- Router link wrapping the instructor image and name to navigate to ProfileView -->
-          <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }" class="text-decoration-none">
-            <div class="instructor-image-container mb-3">
-              <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+          <div class="col-md-4">
+            <div class="d-flex flex-column align-items-center">
+              <router-link :to="{ name: 'ProfileView', params: { userId: instructorData.id } }"
+                class="text-decoration-none">
+                <div class="instructor-image-container mb-3">
+                  <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
+                </div>
+                <h4 class="h5 mb-1 text-colour fw-bold text-center">{{ instructorData.username }}</h4>
+                <p class="mb-0 text-muted text-center">Average Rating: {{ instructorData.teacher_average.toFixed(1) }}</p>
+              </router-link>
             </div>
-            <h4 class="h5 mb-1 text-colour fw-bold text-center">{{ instructorData.username.toUpperCase() }}</h4>
-            <!-- Display the instructor's average rating under their name -->
-            <p class="mb-0 text-muted text-center">Average Rating: {{ instructorData.teacher_average.toFixed(1) }}</p>
-          </router-link>
-        </div>
-      </div>
-      <div class="col-md-8">
-        <h5 class="text-colour">Reviews for {{ classData.title }}</h5>
-        <div v-if="classData.reviews.length === 0" class="text-muted d-flex justify-content-center align-items-center"
-          style="height: 200px;">
-          No reviews yet
-        </div>
-        <!-- Reviews section -->
-        <div v-else>
-          <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm"
-            style="border:1px solid lightgray">
-            <div class="card-body">
-              <div class="d-flex align-items-center mb-2">
-                <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username"
-                  class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
-                <div>
-                  <h5 class="card-title mb-0">{{ review.username }}</h5>
-                  <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
+          </div>
+          <div class="col-md-8">
+            <h5 class="text-colour">Reviews for {{ classData.title }}</h5>
+            <div v-if="classData.reviews.length === 0"
+              class="card shadow-sm mb-3 text-muted d-flex justify-content-center align-items-center"
+              style="height: 200px; background-color: rgb(246, 246, 246);">
+              No reviews yet
+            </div>
+            <div v-else>
+              <div v-for="review in limitedReviews" :key="review.id" class="card mb-3 shadow-sm"
+                style="border:1px solid lightgray">
+                <div class="card-body">
+                  <div class="d-flex align-items-center mb-2">
+                    <img :src="review.userPhoto || '/placeholder.svg?height=40&width=40'" :alt="review.username"
+                      class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;">
+                    <div>
+                      <h5 class="card-title mb-0">{{ review.username }}</h5>
+                      <small class="text-muted">{{ formatDate(review.timestamp) }}</small>
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <StarRating :rating="review.rating" />
+                  </div>
+                  <p class="card-text">{{ review.text }}</p>
                 </div>
               </div>
-              <div class="d-flex align-items-center mb-2">
-                <StarRating :rating="review.rating" />
+              <div v-if="classData.reviews.length > 3" class="text-end mt-3">
+                <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }"
+                  class="btn btn-outline-primary">
+                  Read All Reviews
+                </router-link>
               </div>
-              <p class="card-text">{{ review.text }}</p>
             </div>
-          </div>
-          <div v-if="classData.reviews.length > 3" class="text-end mt-3">
-            <router-link :to="{ name: 'AllReviews', params: { classId: classData.id } }" class="btn btn-outline-primary">
-              Read All Reviews
-            </router-link>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- Map Modal -->
+    <div class="modal fade" id="mapModal" tabindex="-1" aria-labelledby="mapModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="mapModalLabel">Class Location</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div id="map" style="height: 400px;"></div>
+          </div>
+        </div>
       </div>
     </div>
-    
-
-
   </div>
 </template>
 
 <script>
 import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import StarRating from '../components/StarRating.vue';
 import FBInstanceAuth from '../firebase/firebase_auth';
+import { Modal } from 'bootstrap';
 
 export default {
   name: 'ClassDetails',
@@ -192,6 +207,78 @@ export default {
     const loading = ref(true);
     const error = ref(null);
     const currentUser = ref(null);
+    const hasConflict = ref(false);
+    const mapModal = ref(null);
+
+    const showMap = async () => {
+      if (!mapModal.value) {
+        mapModal.value = new Modal(document.getElementById('mapModal'));
+      }
+      mapModal.value.show();
+
+      // Wait for the modal to be shown before initializing the map
+      await new Promise(resolve => setTimeout(resolve, 300));
+
+      const mapElement = document.getElementById('map');
+      if (mapElement && classData.value && classData.value.location) {
+        const map = new google.maps.Map(mapElement, {
+          center: { lat: 0, lng: 0 },
+          zoom: 15
+        });
+
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: classData.value.location }, (results, status) => {
+          if (status === 'OK' && results[0]) {
+            map.setCenter(results[0].geometry.location);
+            new google.maps.Marker({
+              map: map,
+              position: results[0].geometry.location
+            });
+          } else {
+            console.error('Geocode was not successful for the following reason: ' + status);
+          }
+        });
+      }
+    };
+
+    const checkForConflicts = async () => {
+      if (!currentUser.value || !classData.value) return;
+
+      const userClassesAsStudent = currentUser.value.upcoming_classes_as_student || [];
+      const userClassesAsTeacher = currentUser.value.upcoming_classes_as_teacher || [];
+      const allUserClasses = [...userClassesAsStudent, ...userClassesAsTeacher];
+
+      for (const classId of allUserClasses) {
+        const classDoc = await getDoc(doc(db, 'classes', classId));
+        if (classDoc.exists()) {
+          const existingClass = classDoc.data();
+          if (isTimeConflict(classData.value, existingClass)) {
+            hasConflict.value = true;
+            break;
+          }
+        }
+      }
+    };
+
+    const isTimeConflict = (newClass, existingClass) => {
+      const newStart = newClass.start_time.seconds;
+      const newEnd = newClass.end_time.seconds;
+      const existingStart = existingClass.start_time.seconds;
+      const existingEnd = existingClass.end_time.seconds;
+
+      const newDate = new Date(newClass.start_date.seconds * 1000).toDateString();
+      const existingDate = new Date(existingClass.start_date.seconds * 1000).toDateString();
+
+      if (newDate !== existingDate) {
+        return false;
+      }
+
+      return (
+        (newStart < existingEnd && newEnd > existingStart) ||
+        (newEnd > existingStart && newEnd <= existingEnd) ||
+        (newStart >= existingStart && newStart < existingEnd)
+      );
+    };
 
     const isEnrolled = computed(() => {
       if (!currentUser.value || !classData.value) return false;
@@ -236,7 +323,7 @@ export default {
         const instructorDoc = await getDoc(doc(db, 'users', instructorId));
         if (instructorDoc.exists()) {
           instructorData.value = { id: instructorDoc.id, ...instructorDoc.data() };
-          console.log('Instructor data:', instructorData.value); // Check if `id` exists
+          console.log('Instructor data:', instructorData.value);
         } else {
           console.error('Instructor not found');
         }
@@ -313,8 +400,17 @@ export default {
     };
 
     onMounted(() => {
-      fetchClassData();
-      fetchCurrentUserData();
+      fetchClassData().then(() => {
+        fetchCurrentUserData().then(() => {
+          checkForConflicts();
+        });
+      });
+
+      // Load Google Maps API
+      const script = document.createElement('script');
+      const YOUR_GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${YOUR_GOOGLE_MAPS_API_KEY}`;
+      document.head.appendChild(script);
     });
 
     return {
@@ -330,7 +426,9 @@ export default {
       capitalizeMode,
       capitalizeLevel,
       goBack,
-      isEnrolled
+      isEnrolled,
+      hasConflict,
+      showMap
     };
   },
   created() {
@@ -408,5 +506,33 @@ export default {
 .btn-outline-primary:hover {
   background-color: #5a7dee;
   color: white;
+}
+
+.location-link {
+  color: #5a7dee;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.location-link:hover {
+  color: #4e6dd2;
+}
+
+.modal-content {
+  border-radius: 15px;
+}
+
+.modal-header {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+#map {
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 </style>

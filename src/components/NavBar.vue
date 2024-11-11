@@ -44,6 +44,13 @@
  
  
         <ul class="navbar-nav ms-auto align-items-center">
+          <!-- Calendar link -->
+          <li class="nav-item my-2 my-lg-0 mx-2">
+            <router-link class="nav-link d-flex align-items-center" to="/calendar">
+              <i class="bi bi-calendar me-2"></i> Calendar
+            </router-link>
+          </li>
+
           <!-- Finances link -->
           <li class="nav-item my-2 my-lg-0 mx-2">
             <router-link
@@ -54,62 +61,61 @@
             </router-link>
           </li>
  
- 
-          <!-- Profile link and dropdown -->
-          <li class="nav-item dropdown my-2 my-lg-0 mx-2">
-            <a
-              class="nav-link d-flex align-items-center dropdown-toggle"
-              href="#"
-              id="navbarDropdown"
-              role="button"
-              data-bs-toggle="dropdown"
-              aria-expanded="false"
-            >
-              <img
-                :src="userProfilePhoto"
-                alt="Profile"
-                class="profile-photo rounded-circle me-2"
-                width="35"
-                height="35"
-              />
-              Profile
-            </a>
-            <ul
-              class="dropdown-menu dropdown-menu-end"
-              aria-labelledby="navbarDropdown"
-            >
-              <li>
-                <router-link class="dropdown-item" to="/profile-page"
-                  >View Profile</router-link
-                >
-              </li>
-              <li>
-                <router-link class="dropdown-item" to="/settings"
-                  >Settings</router-link
-                >
-              </li>
-              <li>
-                <button class="dropdown-item text-danger" @click="handleLogout">
-                  Logout <i class="bi bi-box-arrow-right text-danger"></i>
-                </button>
-              </li>
-            </ul>
-          </li>
- 
- 
-          <!-- Teach link with full-width on mobile -->
-          <li class="nav-item my-2 my-lg-0 mx-2">
-            <router-link
-              class="teach btn btn-primary text-white w-100"
-              to="/list-class"
-              >Teach</router-link
-            >
-          </li>
+          <div v-if="!isAuthenticated" class="d-flex gap-2">
+            <button class="teach btn btn-primary text-white ms-3" @click="onLogin">Login</button>
+            <button class="teach btn btn-primary text-white ms-3" @click="onSignup">Sign Up</button>
+          </div>
+          <!-- Profile dropdown and Teach button for authenticated users -->
+          <div v-else class="d-flex align-items-center">
+            <!-- Profile dropdown -->
+            <li class="nav-item dropdown my-2 my-lg-0 mx-2">
+              <a
+                class="nav-link d-flex align-items-center dropdown-toggle"
+                href="#"
+                id="navbarDropdown"
+                role="button"
+                data-bs-toggle="dropdown"
+                aria-expanded="false"
+              >
+                <img
+                  :src="userProfilePhoto"
+                  alt="Profile"
+                  class="profile-photo rounded-circle me-2"
+                  width="35"
+                  height="35"
+                />
+                Profile
+              </a>
+              <ul
+                class="dropdown-menu dropdown-menu-end"
+                aria-labelledby="navbarDropdown"
+              >
+                <li>
+                  <router-link class="dropdown-item" to="/profile-page"
+                    >View Profile</router-link
+                  >
+                </li>
+                <li>
+                  <button class="dropdown-item text-danger" @click="handleLogout">
+                    Logout <i class="bi bi-box-arrow-right text-danger"></i>
+                  </button>
+                </li>
+              </ul>
+            </li>
+
+            <li class="nav-item my-2 my-lg-0 mx-2">
+              <router-link
+                class="teach btn btn-primary text-white"
+                to="/list-class"
+                >Teach</router-link
+              >
+            </li>
+          </div>
         </ul>
       </div>
     </div>
   </nav>
- </template>
+</template>
  
  
  <script>
@@ -133,6 +139,10 @@
     },
     classes: {
       type: Array,
+      required: true,
+    },
+    isAuthenticated: {
+      type: Boolean,
       required: true,
     },
   },
@@ -169,6 +179,12 @@
     },
     handleSearch(query) {
       this.$emit("search", query);
+    },
+    onLogin() {
+      this.$emit("login"); // Emit login event for parent component handling
+    },
+    onSignup() {
+      this.$emit("signup"); // Emit signup event for parent component handling
     },
   },
  };
@@ -264,5 +280,16 @@
     margin-left: 0;
   }
  }
+ .btn-login {
+  background-color: #5a7dee;
+  border-color: #5a7dee;
+  white-space: nowrap;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.btn-login:hover {
+  background-color: #4e6dd2;
+  border-color: #4e6dd2;
+}
  </style>
  

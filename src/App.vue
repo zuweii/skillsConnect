@@ -7,6 +7,9 @@
       <LandingNavBar v-if="isLandingPage" @google-login="handleGoogleLogin" />
       <Navbar
         v-else-if="!isLoginPage && !isSignupPage"
+        :isAuthenticated="isAuthenticated" 
+        @signup="navigateToSignup"
+        @login="navigateToLogin" 
         :showSearchBar="showSearchBar"
         :classes="classes"
         @search="handleSearch"
@@ -15,7 +18,7 @@
         @update:showSearchBar="updateShowSearchBar"
         :searchQuery="searchQuery"
       ></router-view>
-      <Footer v-if="shouldShowFooter" />
+      <!-- <Footer v-if="shouldShowFooter" /> -->
     </template>
   </div>
  </template>
@@ -23,14 +26,15 @@
  
  <script>
  import { ref, onMounted } from "vue";
+ import { useRouter } from "vue-router";
  import { db } from "./firebase/firebase_config";
  import { collection, getDocs } from "firebase/firestore";
  import Navbar from "./components/NavBar.vue";
  import LandingNavBar from "./components/LandingNavBar.vue";
  import Footer from "./components/Footer.vue";
  import { auth, googleProvider } from "./firebase/firebase_config";
- import { signInWithPopup } from "firebase/auth";
  import FBInstanceAuth from "./firebase/firebase_auth";
+import { signInWithPopup, onAuthStateChanged } from "firebase/auth";
  
  
  export default {
@@ -50,8 +54,9 @@
  
   setup() {
     const classes = ref([]);
+    const router = useRouter();
     const searchQuery = ref("");
- 
+    const isAuthenticated = ref(false);
  
     const fetchClasses = async () => {
       try {
@@ -70,10 +75,20 @@
     const handleSearch = (query) => {
       searchQuery.value = query;
     };
- 
+     // Define navigateToLogin and navigateToSignup functions
+     const navigateToLogin = () => {
+      router.push({ name: "LoginPage" });
+    };
+
+    const navigateToSignup = () => {
+      router.push({ name: "SignupPage" });
+    };
  
     onMounted(() => {
       fetchClasses();
+      onAuthStateChanged(auth, (user) => {
+        isAuthenticated.value = !!user; // Update isAuthenticated based on login state
+      });
     });
  
  
@@ -81,6 +96,9 @@
       classes,
       searchQuery,
       handleSearch,
+      isAuthenticated, // Return isAuthenticated for Navbar prop binding
+      navigateToLogin,
+      navigateToSignup,
     };
   },
  
