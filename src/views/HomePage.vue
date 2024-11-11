@@ -254,64 +254,64 @@
 
 
       <div class="scroll-container row mb-5 position-relative">
-      <!-- Left Scroll Button -->
-      <button @click="scrollLeft" class="scroll-btn scroll-left">
-        <i class="bi bi-arrow-left"></i>
-      </button>
+        <!-- Left Scroll Button -->
+        <button @click="scrollLeft" class="scroll-btn scroll-left">
+          <i class="bi bi-arrow-left"></i>
+        </button>
 
-      <!-- Class Cards -->
-      <div ref="cardRow" class="card-row d-flex">
-        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+        <!-- Class Cards -->
+        <div ref="cardRow" class="card-row d-flex">
+          <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
+            <div class="card shadow-sm h-100 hover-card">
+              <div class="card-img-wrapper">
+                <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+                <div class="card-img-overlay-top">
+                  <span class="badge bg-primary">
+                    {{ classItem.category }}
                   </span>
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
+                <p class="card-text text-muted small flex-grow-1">
+                  {{ truncateText(classItem.description, 100) }}
+                </p>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="card-text h5 text-primary mb-0">
+                      ${{ classItem.price.toFixed(2) }}
+                    </p>
+                    <span class="badge bg-light text-dark">
+                      <i class="bi bi-people-fill me-1"></i>
+                      {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                    <StarRating :rating="classItem.ratings_average" />
+                    <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                  </div>
+                  <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                    View Details
+                  </router-link>
                 </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Right Scroll Button -->
-      <button @click="scrollRight" class="scroll-btn scroll-right">
-        <i class="bi bi-arrow-right"></i>
-      </button>
+        <!-- Right Scroll Button -->
+        <button @click="scrollRight" class="scroll-btn scroll-right">
+          <i class="bi bi-arrow-right"></i>
+        </button>
       </div>
 
 
     </div>
   </div>
 </template>
-   
-   
+     
+     
 <script>
 import { ref, computed, onMounted, watch } from "vue";
 import {
@@ -389,6 +389,7 @@ export default {
         .sort((a, b) => b.ratings_average - a.ratings_average)
         .slice(0, 4);
     });
+
 
 
 
@@ -497,14 +498,8 @@ export default {
         .filter((classItem) => {
           const startDate = classItem.start_date.toDate();
           const startTime = classItem.start_time.toDate();
-          const hasAvailability =
-            classItem.max_capacity > classItem.current_enrollment;
-          const isNotUserClass =
-            !currentUser.value?.upcoming_classes_as_teacher?.includes(
-              classItem.id
-            );
-
-          // Combine date and time for accurate comparison
+          const hasAvailability = classItem.max_capacity > classItem.current_enrollment;
+          const isNotUserClass = !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id);
           const classStartDateTime = new Date(
             startDate.getFullYear(),
             startDate.getMonth(),
@@ -513,21 +508,19 @@ export default {
             startTime.getMinutes(),
             startTime.getSeconds()
           );
-
-          classItem.ratings_average = classItem.ratings_average || 0;
-          classItem.reviews = classItem.reviews || [];
-
           return hasAvailability && classStartDateTime > currentDate && isNotUserClass;
         })
         .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
     });
+
+
 
     const selectCategory = (category) => {
       selectedCategory.value = category;
     };
 
     const calculateLessonDate = (classItem, lessonNumber) => {
-      const startDate = classItem.start_date.toDate();
+      const startDate = new Date(classItem.start_date.toDate());
       const lessonDate = new Date(startDate);
       lessonDate.setDate(startDate.getDate() + ((lessonNumber - 1) * 7));
       return lessonDate;
@@ -535,22 +528,22 @@ export default {
 
     const getCurrentLessonInfo = (classItem) => {
       const currentDate = new Date();
-      const startDate = classItem.start_date.toDate();
-      const weeksPassed = Math.floor(
-        (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
-      );
+      const startDate = new Date(classItem.start_date.toDate());
+
+      let weeksPassed = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+      if (weeksPassed < 0) weeksPassed = 0;  // Prevent negative weeksPassed
+
       const currentLessonNumber = weeksPassed + 1;
-      
+
       // Get the date for the current lesson
       const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
-      
-      // Set the time for comparison
-      const startTime = classItem.start_time.toDate();
-      const endTime = classItem.end_time.toDate();
-      
+
+      const startTime = new Date(classItem.start_time.toDate());
+      const endTime = new Date(classItem.end_time.toDate());
+
       const lessonStartDateTime = new Date(currentLessonDate);
       lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
-      
+
       const lessonEndDateTime = new Date(currentLessonDate);
       lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
 
@@ -562,43 +555,29 @@ export default {
       };
     };
 
-    const upcomingClassesAsStudent = computed(() => {
-      if (!currentUser.value?.upcoming_classes_as_student) return [];
 
-      const currentDateTime = new Date();
+    const upcomingClassesAsStudent = computed(() => {
+      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student) return [];
+      const currentDate = new Date();
       return classes.value
         .filter((classItem) => {
-          if (!currentUser.value.upcoming_classes_as_student.includes(classItem.id)) return false;
-          
-          const lessonInfo = getCurrentLessonInfo(classItem);
-          return lessonInfo.endDateTime >= currentDateTime && 
-                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+          const endTime = classItem.end_time.toDate();
+          return endTime > currentDate && currentUser.value.upcoming_classes_as_student.includes(classItem.id);
         })
-        .sort((a, b) => {
-          const aInfo = getCurrentLessonInfo(a);
-          const bInfo = getCurrentLessonInfo(b);
-          return aInfo.startDateTime - bInfo.startDateTime;
-        });
+        .sort((a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b));
     });
 
     const upcomingClassesAsTeacher = computed(() => {
-      if (!currentUser.value?.upcoming_classes_as_teacher) return [];
-
-      const currentDateTime = new Date();
+      if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher) return [];
+      const currentDate = new Date();
       return classes.value
         .filter((classItem) => {
-          if (!currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)) return false;
-          
-          const lessonInfo = getCurrentLessonInfo(classItem);
-          return lessonInfo.endDateTime >= currentDateTime && 
-                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+          const endTime = classItem.end_time.toDate();
+          return endTime > currentDate && currentUser.value.upcoming_classes_as_teacher.includes(classItem.id);
         })
-        .sort((a, b) => {
-          const aInfo = getCurrentLessonInfo(a);
-          const bInfo = getCurrentLessonInfo(b);
-          return aInfo.startDateTime - bInfo.startDateTime;
-        });
+        .sort((a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b));
     });
+
 
     const calculateNextLessonDate = (classItem) => {
       const lessonInfo = getCurrentLessonInfo(classItem);
@@ -606,9 +585,15 @@ export default {
     };
 
     const getCurrentLessonNumber = (classItem) => {
-      const lessonInfo = getCurrentLessonInfo(classItem);
-      return Math.min(lessonInfo.lessonNumber, classItem.number_of_lessons);
+      const currentDate = new Date();
+      const startDate = classItem.start_date.toDate();
+      const weeksPassed = Math.floor((currentDate - startDate) / (7 * 24 * 60 * 60 * 1000));
+      const currentLessonNumber = Math.max(1, weeksPassed + 1); // Ensure we don't go below lesson 1
+
+      return Math.min(currentLessonNumber, classItem.number_of_lessons);
     };
+
+
 
 
     const formatDate = (date) => {
@@ -836,8 +821,8 @@ export default {
   //SEARCH BAR (END)
 };
 </script>
-   
-   
+     
+     
 <style scoped>
 .home {
   background-color: #f8f9fa;
@@ -1062,7 +1047,8 @@ export default {
   display: flex;
   overflow-x: auto;
   scroll-behavior: smooth;
-  padding-right: 40px; /* Space for scroll button */
+  padding-right: 40px;
+  /* Space for scroll button */
 }
 
 .scroll-btn {
@@ -1094,4 +1080,4 @@ export default {
 
 
 </style>
-   
+     

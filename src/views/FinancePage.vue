@@ -15,7 +15,7 @@
     </div>
 
     <!-- Main Content -->
-    <div v-else class="container-fluid px-4">
+    <div v-else class="container-fluid px-4" ref="financeContent">
       <!-- Finance Header -->
       <div class="row mb-4">
         <div class="col-12">
@@ -32,6 +32,7 @@
                   </div>
                 </div>
               </div>
+              <!-- <button class="btn btn-primary" @click="exportToPDF">Export as PDF</button> -->
             </div>
           </div>
         </div>
@@ -53,12 +54,18 @@
                     class="nav-link" id="earnings-summary-tab" data-bs-toggle="tab" type="button" role="tab"
                     aria-controls="earnings-summary" aria-selected="false">Earnings Summary</button>
                 </li>
+                <li class="nav-item" role="presentation">
+                  <button @click="currentTab = 'transactionsByMonth'"
+                    :class="{ active: currentTab === 'transactionsByMonth' }" class="nav-link"
+                    id="transactions-by-month-tab" data-bs-toggle="tab" type="button" role="tab"
+                    aria-controls="transactions-by-month" aria-selected="false">Transactions by Month</button>
+                </li>
               </ul>
 
               <div class="tab-content mt-4" id="financeTabsContent">
                 <!-- Earnings Graph Section -->
-                <div :class="{ 'active show': currentTab === 'earningsGraph' }" class="tab-pane fade" id="earnings-graph"
-                  role="tabpanel" aria-labelledby="earnings-graph-tab">
+                <div :class="{ 'active show': currentTab === 'earningsGraph' }" class="tab-pane fade"
+                  id="earnings-graph" role="tabpanel" aria-labelledby="earnings-graph-tab">
                   <div class="card shadow-sm mb-4">
                     <div class="card-body">
                       <h3 class="card-title mb-4">Recent Earnings</h3>
@@ -68,12 +75,42 @@
                 </div>
 
                 <!-- Earnings Summary Section -->
-                <div :class="{ 'active show': currentTab === 'earningsSummary' }" class="tab-pane fade" id="earnings-summary"
-                  role="tabpanel" aria-labelledby="earnings-summary-tab">
+                <div :class="{ 'active show': currentTab === 'earningsSummary' }" class="tab-pane fade"
+                  id="earnings-summary" role="tabpanel" aria-labelledby="earnings-summary-tab">
                   <div class="card shadow-sm mb-4">
                     <div class="card-body">
                       <h3 class="card-title mb-4">Earnings by Months</h3>
                       <div ref="summaryGraphRef" class="chart-container"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div :class="{ 'active show': currentTab === 'transactionsByMonth' }" class="tab-pane fade"
+                  id="transactions-by-month" role="tabpanel" aria-labelledby="transactions-by-month-tab">
+                  <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                      <h3 class="card-title mb-4">Transactions by Month</h3>
+                      <div class="mb-4">
+                        <label for="monthSelect" class="form-label">Select Month</label>
+                        <select id="monthSelect" class="form-select" v-model="selectedMonth"
+                          @change="filterTransactionsByMonth">
+                          <option v-for="month in availableMonths" :key="month" :value="month">{{ month }}</option>
+                        </select>
+                      </div>
+                      <table class="table table-striped mt-3">
+                        <thead>
+                          <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr v-for="(transaction, index) in filteredTransactions" :key="index">
+                            <td>{{ formatDate(transaction.transactionDate) }}</td>
+                            <td>${{ transaction.amount.toFixed(2) }}</td>
+                          </tr>
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -90,7 +127,8 @@
               <h3 class="card-title mb-4">Quick Stats</h3>
               <ul class="list-unstyled">
                 <li class="mb-3"><strong>Current Month Earnings:</strong> ${{ currentMonthEarnings.toFixed(2) }}</li>
-                <li class="mb-3"><strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}</li>
+                <li class="mb-3"><strong>Average Earning per Class:</strong> ${{ averageEarningsPerClass.toFixed(2) }}
+                </li>
               </ul>
             </div>
           </div>
@@ -123,6 +161,7 @@ import { gsap } from 'gsap';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
+// import html2pdf from 'html2pdf.js';
 
 // Initialize data and state variables
 const auth = getAuth();
@@ -132,6 +171,7 @@ const classesData = ref([]);
 const loading = ref(true);
 const error = ref(null);
 const currentTab = ref('earningsGraph'); // Default to earnings graph
+const finances = ref([]); // Store finance array 
 
 const earningsGraphRef = ref(null);
 const summaryGraphRef = ref(null);
@@ -140,6 +180,35 @@ const summaryGraphRef = ref(null);
 const totalEarnings = computed(() => earningsData.value.reduce((sum, earning) => sum + earning.amount, 0));
 const totalClasses = computed(() => classesData.value.length);
 const averageEarningsPerClass = computed(() => totalClasses.value > 0 ? totalEarnings.value / totalClasses.value : 0);
+
+// For filtering transactions by month
+const selectedMonth = ref('');
+const availableMonths = ref([]);
+const filteredTransactions = ref([]);
+
+const initializeAvailableMonths = () => {
+  const monthSet = new Set();
+  finances.value.forEach(finance => {
+    const date = finance.transactionDate instanceof Date ? finance.transactionDate : new Date(finance.transactionDate); // Ensure it's a Date object
+    if (!isNaN(date)) {
+      const month = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      monthSet.add(month);
+    }
+  });
+  availableMonths.value = Array.from(monthSet).sort((a, b) => new Date(a) - new Date(b));
+};
+
+const filterTransactionsByMonth = () => {
+  filteredTransactions.value = finances.value.filter(finance => {
+    const date = finance.transactionDate instanceof Date ? finance.transactionDate : new Date(finance.transactionDate);
+    if (!isNaN(date)) {
+      const month = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+      return month === selectedMonth.value;
+    }
+    return false;
+  });
+};
+
 
 const currentMonthEarnings = computed(() => {
   const now = new Date();
@@ -468,6 +537,13 @@ async function refreshUserProfile() {
         earningsData.value = financialData.finances;
         classesData.value = financialData.classes;
         loading.value = false;
+
+        finances.value = financialData.finances;
+        initializeAvailableMonths(); 
+        filterTransactionsByMonth(); 
+
+        loading.value = false;
+
         await nextTick();
         drawEarningsGraph();
         drawSummaryGraph();
@@ -525,6 +601,19 @@ async function fetchFinancialData(userId) {
     throw error;
   }
 }
+
+// async function exportToPDF() {
+//   const element = this.$refs.financeContent;
+//   const options = {
+//     margin: 1,
+//     filename: `${userProfile.value.username}_Finance_Report.pdf`,
+//     image: { type: 'jpeg', quality: 0.98 },
+//     html2canvas: { scale: 2 },
+//     jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+//   };
+  
+//   html2pdf().set(options).from(element).save();
+// }
 
 // Watch for changes in currentTab and redraw graphs accordingly
 watch(currentTab, (newTab) => {

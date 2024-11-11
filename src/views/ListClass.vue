@@ -238,6 +238,7 @@ export default {
     const imageFile = ref(null);
     const error = ref(null);
     const loading = ref(true);
+    const hasConflict = ref(false);
     const conflictModal = ref(null);
     const successModal = ref(null);
 
@@ -329,33 +330,52 @@ export default {
     };
 
     const checkForConflicts = async () => {
-      if (!auth.currentUser) return false;
+  if (!auth.currentUser) return false;
 
-      const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
-      if (!userDoc.exists()) return false;
+  try {
+    // Retrieve the user's document
+    const userDoc = await getDoc(doc(db, 'users', auth.currentUser.uid));
+    if (!userDoc.exists()) return false;
 
-      const userData = userDoc.data();
-      const userClassesAsStudent = userData.upcoming_classes_as_student || [];
-      const userClassesAsTeacher = userData.upcoming_classes_as_teacher || [];
-      const allUserClasses = [...userClassesAsStudent, ...userClassesAsTeacher];
+    const userData = userDoc.data();
+    const userClassesAsStudent = userData.upcoming_classes_as_student || [];
+    const userClassesAsTeacher = userData.upcoming_classes_as_teacher || [];
+    const allUserClasses = [...userClassesAsStudent, ...userClassesAsTeacher];
 
-      for (const existingClassId of allUserClasses) {
-        // Skip the current class if in edit mode
-        if (isEditMode.value && existingClassId === classId) {
-          continue;
-        }
-
-        const classDoc = await getDoc(doc(db, 'classes', existingClassId));
-        if (classDoc.exists()) {
-          const existingClass = classDoc.data();
-          if (isTimeConflict(formData.value, existingClass)) {
-            return true;
-          }
-        }
+    for (const existingClassId of allUserClasses) {
+      // Skip the current class if in edit mode
+      if (isEditMode.value && existingClassId === classId) {
+        continue;
       }
 
-      return false;
-    };
+      // Ensure existingClassId is a valid string before using it
+      if (typeof existingClassId !== 'string' || !existingClassId) {
+        console.error('Invalid existingClassId:', existingClassId);
+        continue; // Skip invalid IDs
+      }
+
+      // Fetch the class document and check for conflicts
+      const classDoc = await getDoc(doc(db, 'classes', existingClassId));
+      if (classDoc.exists()) {
+        const existingClass = classDoc.data();
+
+        // Check if there is a time conflict
+        if (isTimeConflict(formData.value, existingClass)) {
+          hasConflict.value = true;
+          return true; // Conflict found, exit early
+        }
+      }
+    }
+
+    hasConflict.value = false; // No conflicts found
+    return false;
+
+  } catch (error) {
+    console.error("Error in checkForConflicts:", error);
+    return false;
+  }
+};
+
 
     const isTimeConflict = (newClass, existingClass) => {
       const newStart = new Date(`${newClass.date}T${newClass.startTime}`);
@@ -510,6 +530,7 @@ export default {
       isFormValid,
       isEditMode,
       minDate,
+      hasConflict,
       formErrors,
       formSubmitAttempted,
       handleFileUpload(event) {
