@@ -11,6 +11,50 @@
       </div>
     </div>
     <div v-else class="container-fluid px-4 mt-4">
+      <!-- Top Rated Classes Section -->
+      <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
+      <div class="row mb-5">
+        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+          <div class="card shadow-sm h-100 hover-card">
+            <div class="card-img-wrapper">
+              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+              <div class="card-img-overlay-top">
+                <span class="badge bg-primary">
+                  {{ classItem.category }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+              </div>
+              <p class="card-text text-muted small flex-grow-1">
+                {{ truncateText(classItem.description, 100) }}
+              </p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <p class="card-text h5 text-primary mb-0">
+                    ${{ classItem.price.toFixed(2) }}
+                  </p>
+                  <span class="badge bg-light text-dark">
+                    <i class="bi bi-people-fill me-1"></i>
+                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                  </span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                  <StarRating :rating="classItem.ratings_average" />
+                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                </div>
+                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                  View Details
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Nearby Classes Section -->
       <h2 class="h3 mb-4 fw-bold">Nearby Classes</h2>
       <div v-if="loadingNearby" class="text-center">
@@ -88,64 +132,57 @@
         </div>
       </div>
 
-      <div class="row mb-5">
-        <div
-          v-for="classItem in availableClasses"
-          :key="classItem.id"
-          class="col-lg-3 col-md-4 col-sm-6 mb-4"
-        >
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img
-                :src="classItem.image"
-                :alt="classItem.title"
-                class="card-img-top class-image"
-              />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div
-                  class="d-flex justify-content-between align-items-center mb-3"
-                >
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} /
-                    {{ classItem.max_capacity }} enrolled
+      <div class="scroll-container row mb-5 position-relative">
+        <!-- Left Scroll Button -->
+        <button @click="scrollLeft" class="scroll-btn scroll-left">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+
+        <!-- Class Cards -->
+        <div ref="cardRow" class="card-row d-flex">
+          <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
+            <div class="card shadow-sm h-100 hover-card">
+              <div class="card-img-wrapper">
+                <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+                <div class="card-img-overlay-top">
+                  <span class="badge bg-primary">
+                    {{ classItem.category }}
                   </span>
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{
-                    classItem.ratings_average.toFixed(1)
-                  }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6"
-                    >({{ classItem.reviews.length }})</span
-                  >
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
+                <p class="card-text text-muted small flex-grow-1">
+                  {{ truncateText(classItem.description, 100) }}
+                </p>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="card-text h5 text-primary mb-0">
+                      ${{ classItem.price.toFixed(2) }}
+                    </p>
+                    <span class="badge bg-light text-dark">
+                      <i class="bi bi-people-fill me-1"></i>
+                      {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                    <StarRating :rating="classItem.ratings_average" />
+                    <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                  </div>
+                  <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                    View Details
+                  </router-link>
                 </div>
-                <router-link
-                  :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
-                  class="custom-button w-100"
-                >
-                  View Details
-                </router-link>
               </div>
             </div>
           </div>
         </div>
+
+        <!-- Right Scroll Button -->
+        <button @click="scrollRight" class="scroll-btn scroll-right">
+          <i class="bi bi-arrow-right"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -153,7 +190,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "../firebase/firebase_config";
 import StarRating from "../components/StarRating.vue";
 
@@ -193,6 +230,22 @@ const filteredClasses = computed(() => {
   return filtered;
 });
 
+const topRatedClasses = computed(() => {
+  const currentDate = new Date();
+  return classes.value
+    .filter(classItem => {
+      const startDate = classItem.start_date.toDate();
+      const endDate = classItem.end_time.toDate();
+      return (
+        startDate <= currentDate &&
+        endDate > currentDate &&
+        classItem.max_capacity > classItem.current_enrollment
+      );
+    })
+    .sort((a, b) => b.ratings_average - a.ratings_average)
+    .slice(0, 4);
+});
+
 const selectCategory = (category) => {
   selectedCategory.value = category;
 };
@@ -205,7 +258,8 @@ const truncateText = (text, length) => {
 const fetchData = async () => {
   try {
     const classCollection = collection(db, "classes");
-    const classSnapshot = await getDocs(classCollection);
+    const classQuery = query(classCollection, orderBy("ratings_average", "desc"), limit(50));
+    const classSnapshot = await getDocs(classQuery);
     classes.value = classSnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -246,6 +300,18 @@ const findNearbyClasses = async () => {
     console.error("Error finding nearby classes:", error);
   } finally {
     loadingNearby.value = false;
+  }
+};
+
+const scrollLeft = () => {
+  if (document.querySelector('.card-row')) {
+    document.querySelector('.card-row').scrollBy({ left: -800, behavior: 'smooth' });
+  }
+};
+
+const scrollRight = () => {
+  if (document.querySelector('.card-row')) {
+    document.querySelector('.card-row').scrollBy({ left: 800, behavior: 'smooth' });
   }
 };
 
@@ -334,7 +400,6 @@ onMounted(() => {
 .categories-section {
   margin-bottom: 2rem;
   overflow-x: auto;
-  /* Allow horizontal scrolling on very small screens */
 }
 
 .categories-btn-group {
@@ -343,7 +408,6 @@ onMounted(() => {
   gap: 10px;
   padding: 5px;
   min-width: min-content;
-  /* Ensure buttons don't shrink below their content width */
 }
 
 .category-btn {
@@ -356,9 +420,7 @@ onMounted(() => {
   border-radius: 25px;
   font-weight: 500;
   white-space: nowrap;
-  /* Prevent text wrapping inside buttons */
   flex: 0 0 auto;
-  /* Don't allow buttons to grow or shrink */
 }
 
 .category-btn:hover {
@@ -370,10 +432,42 @@ onMounted(() => {
   color: white;
 }
 
-/* Optional - Adjust the spacing in the category container */
-.category-container {
+.scroll-container {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.card-row {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-right: 40px;
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.scroll-left {
+  left: 10px;
+}
+
+.scroll-right {
+  right: 10px;
+}
+
+.scroll-btn i {
+  font-size: 1.5rem;
+  color: #007bff;
 }
 </style>
