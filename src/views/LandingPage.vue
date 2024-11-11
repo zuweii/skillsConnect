@@ -157,7 +157,11 @@ const loading = ref(true);
 const error = ref(null);
 const selectedCategory = ref(null);
 const nearbyClasses = ref([]);
+const userLocation = ref(null);
 const loadingNearby = ref(false);
+const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+const currentUser = ref(null);
+
 
 const availableClasses = computed(() => {
   const currentDate = new Date();
@@ -246,19 +250,151 @@ const fetchCategories = async () => {
   }
 };
 
+
+const getUserLocation = () => {
+      return new Promise((resolve, reject) => {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              userLocation.value = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+              };
+              resolve(userLocation.value);
+            },
+            (error) => {
+              console.error("Error getting user location:", error);
+              reject(error);
+            }
+          );
+        } else {
+          reject(new Error("Geolocation is not supported by this browser."));
+        }
+      });
+    };
+
+
+    const geocodeAddress = async (address) => {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+            address
+          )}&key=${GOOGLE_MAPS_API_KEY}`
+        );
+        const data = await response.json();
+        if (data.results && data.results.length > 0) {
+          return data.results[0].geometry.location;
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      }
+      return null;
+    };
+
+
+    const calculateDistance = (lat1, lon1, lat2, lon2) => {
+      const R = 6371; // Radius of Earth in km
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+
 const findNearbyClasses = async () => {
-  loadingNearby.value = true;
-  try {
-    // Simulating nearby classes for the landing page
-    nearbyClasses.value = classes.value
-      .sort(() => 0.5 - Math.random())
-      .slice(0, 4);
-  } catch (error) {
-    console.error("Error finding nearby classes:", error);
-  } finally {
-    loadingNearby.value = false;
-  }
-};
+      loadingNearby.value = true;
+      try {
+        const location = await getUserLocation();
+        const currentDate = new Date();
+        const classesWithCoordinates = await Promise.all(
+          classes.value.map(async (classItem) => {
+            if (!classItem.latitude || !classItem.longitude) {
+              const coordinates = await geocodeAddress(classItem.location);
+              if (coordinates) {
+                return {
+                  ...classItem,
+                  latitude: coordinates.lat,
+                  longitude: coordinates.lng,
+                };
+              }
+            }
+            return classItem;
+          })
+        );
+
+        const nearbyClassesAll = classesWithCoordinates.filter((classItem) => {
+          if (classItem.latitude && classItem.longitude) {
+            const distance = calculateDistance(
+              location.latitude,
+              location.longitude,
+              classItem.latitude,
+              classItem.longitude
+            );
+
+            // Safely get start and end dates
+            const startDate = classItem.start_date?.toDate?.() || new Date(0);
+            const startTime = classItem.start_time?.toDate?.() || new Date(0);
+            const endDate = classItem.end_date?.toDate?.() || new Date(0);
+            const endTime = classItem.end_time?.toDate?.() || new Date(0);
+
+            const classStartDateTime = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth(),
+              startDate.getDate(),
+              startTime.getHours(),
+              startTime.getMinutes(),
+              startTime.getSeconds()
+            );
+            const classEndDateTime = new Date(
+              endDate.getFullYear(),
+              endDate.getMonth(),
+              endDate.getDate(),
+              endTime.getHours(),
+              endTime.getMinutes(),
+              endTime.getSeconds()
+            );
+
+            return (
+              distance <= 5 &&
+              !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+              classStartDateTime > currentDate &&
+              classItem.max_capacity > classItem.current_enrollment
+
+            );
+          }
+          return false;
+        });
+
+        // Sort nearby classes by distance and limit to 4
+        nearbyClasses.value = nearbyClassesAll
+          .sort((a, b) => {
+            const distanceA = calculateDistance(
+              location.latitude,
+              location.longitude,
+              a.latitude,
+              a.longitude
+            );
+            const distanceB = calculateDistance(
+              location.latitude,
+              location.longitude,
+              b.latitude,
+              b.longitude
+            );
+            return distanceA - distanceB;
+          })
+          .slice(0, 4);
+      } catch (error) {
+        console.error("Error finding nearby classes:", error);
+        nearbyClasses.value = []; // Set to empty array in case of error
+      } finally {
+        loadingNearby.value = false;
+      }
+    };
 
 const scrollLeft = () => {
   if (document.querySelector('.card-row')) {

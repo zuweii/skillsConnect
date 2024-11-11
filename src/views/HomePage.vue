@@ -708,6 +708,7 @@ export default {
       loadingNearby.value = true;
       try {
         const location = await getUserLocation();
+        const currentDate = new Date();
         const classesWithCoordinates = await Promise.all(
           classes.value.map(async (classItem) => {
             if (!classItem.latitude || !classItem.longitude) {
@@ -732,7 +733,37 @@ export default {
               classItem.latitude,
               classItem.longitude
             );
-            return distance <= 5; // Only classes within 5 km
+
+            // Safely get start and end dates
+            const startDate = classItem.start_date?.toDate?.() || new Date(0);
+            const startTime = classItem.start_time?.toDate?.() || new Date(0);
+            const endDate = classItem.end_date?.toDate?.() || new Date(0);
+            const endTime = classItem.end_time?.toDate?.() || new Date(0);
+
+            const classStartDateTime = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth(),
+              startDate.getDate(),
+              startTime.getHours(),
+              startTime.getMinutes(),
+              startTime.getSeconds()
+            );
+            const classEndDateTime = new Date(
+              endDate.getFullYear(),
+              endDate.getMonth(),
+              endDate.getDate(),
+              endTime.getHours(),
+              endTime.getMinutes(),
+              endTime.getSeconds()
+            );
+
+            return (
+              distance <= 5 &&
+              !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+              classStartDateTime > currentDate &&
+              classItem.max_capacity > classItem.current_enrollment
+
+            );
           }
           return false;
         });
@@ -757,10 +788,12 @@ export default {
           .slice(0, 4);
       } catch (error) {
         console.error("Error finding nearby classes:", error);
+        nearbyClasses.value = []; // Set to empty array in case of error
       } finally {
         loadingNearby.value = false;
       }
     };
+
 
 
     onMounted(() => {
