@@ -160,13 +160,17 @@ export default {
     const handleGoogleLogin = async () => {
       error.value = null;
       isLoading.value = true;
-
+        
       try {
         const result = await FBInstanceAuth.loginWithGoogle();
         const user = result.user;
-
+      
+        if (!user) {
+          throw new Error("Google login did not return a user.");
+        }
+      
         await ensureUserDocument(user);
-
+      
         const redirectPath = route.query.redirect || '/home-page';
         router.push(redirectPath);
       } catch (err) {
@@ -176,6 +180,7 @@ export default {
         isLoading.value = false;
       }
     };
+
 
     const togglePassword = () => {
       showPassword.value = !showPassword.value;
