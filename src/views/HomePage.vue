@@ -367,8 +367,18 @@ export default {
     const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
 
     const topRatedClasses = computed(() => {
+      const currentDate = new Date();
       return classes.value
-        .filter(classItem => !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id))
+        .filter(classItem => {
+          const startDate = classItem.start_date.toDate();
+          const endDate = classItem.end_time.toDate();
+          return (
+            !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+            startDate <= currentDate &&
+            endDate > currentDate &&
+            classItem.max_capacity > classItem.current_enrollment
+          );
+        })
         .sort((a, b) => b.ratings_average - a.ratings_average)
         .slice(0, 4);
     });
@@ -508,82 +518,88 @@ export default {
       selectedCategory.value = category;
     };
 
-    const upcomingClassesAsStudent = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
-        return [];
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_student.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-
-    const upcomingClassesAsTeacher = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
-        return [];
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-
-
-    const calculateNextLessonDate = (classItem) => {
-      const currentDate = new Date();
+    const calculateLessonDate = (classItem, lessonNumber) => {
       const startDate = classItem.start_date.toDate();
-      const numberOfLessons = classItem.number_of_lessons;
-
-
-      for (let i = 0; i < numberOfLessons; i++) {
-        const lessonDate = new Date(startDate);
-        lessonDate.setDate(lessonDate.getDate() + i * 7);
-        if (lessonDate > currentDate) {
-          return lessonDate;
-        }
-      }
-      return startDate;
+      const lessonDate = new Date(startDate);
+      lessonDate.setDate(startDate.getDate() + ((lessonNumber - 1) * 7));
+      return lessonDate;
     };
 
-
-    const getCurrentLessonNumber = (classItem) => {
+    const getCurrentLessonInfo = (classItem) => {
       const currentDate = new Date();
       const startDate = classItem.start_date.toDate();
-
-
-      // If the class hasn't started yet, return 1
-      if (currentDate < startDate) {
-        return 1;
-      }
-
-
-      // Calculate weeks passed since start date
       const weeksPassed = Math.floor(
         (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
       );
+      const currentLessonNumber = weeksPassed + 1;
+      
+      // Get the date for the current lesson
+      const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
+      
+      // Set the time for comparison
+      const startTime = classItem.start_time.toDate();
+      const endTime = classItem.end_time.toDate();
+      
+      const lessonStartDateTime = new Date(currentLessonDate);
+      lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
+      
+      const lessonEndDateTime = new Date(currentLessonDate);
+      lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
 
+      return {
+        lessonNumber: currentLessonNumber,
+        lessonDate: currentLessonDate,
+        startDateTime: lessonStartDateTime,
+        endDateTime: lessonEndDateTime
+      };
+    };
 
-      // Return current lesson number (minimum 1, maximum number_of_lessons)
-      return Math.min(
-        Math.max(weeksPassed + 2, 1),
-        classItem.number_of_lessons
-      );
+    const upcomingClassesAsStudent = computed(() => {
+      if (!currentUser.value?.upcoming_classes_as_student) return [];
+
+      const currentDateTime = new Date();
+      return classes.value
+        .filter((classItem) => {
+          if (!currentUser.value.upcoming_classes_as_student.includes(classItem.id)) return false;
+          
+          const lessonInfo = getCurrentLessonInfo(classItem);
+          return lessonInfo.endDateTime >= currentDateTime && 
+                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+        })
+        .sort((a, b) => {
+          const aInfo = getCurrentLessonInfo(a);
+          const bInfo = getCurrentLessonInfo(b);
+          return aInfo.startDateTime - bInfo.startDateTime;
+        });
+    });
+
+    const upcomingClassesAsTeacher = computed(() => {
+      if (!currentUser.value?.upcoming_classes_as_teacher) return [];
+
+      const currentDateTime = new Date();
+      return classes.value
+        .filter((classItem) => {
+          if (!currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)) return false;
+          
+          const lessonInfo = getCurrentLessonInfo(classItem);
+          return lessonInfo.endDateTime >= currentDateTime && 
+                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+        })
+        .sort((a, b) => {
+          const aInfo = getCurrentLessonInfo(a);
+          const bInfo = getCurrentLessonInfo(b);
+          return aInfo.startDateTime - bInfo.startDateTime;
+        });
+    });
+
+    const calculateNextLessonDate = (classItem) => {
+      const lessonInfo = getCurrentLessonInfo(classItem);
+      return lessonInfo.lessonDate;
+    };
+
+    const getCurrentLessonNumber = (classItem) => {
+      const lessonInfo = getCurrentLessonInfo(classItem);
+      return Math.min(lessonInfo.lessonNumber, classItem.number_of_lessons);
     };
 
 
@@ -623,10 +639,6 @@ export default {
         error.value = "Error loading categories";
       }
     };
-
-
-
-
 
     const getUserLocation = () => {
       return new Promise((resolve, reject) => {
