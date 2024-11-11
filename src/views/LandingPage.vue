@@ -231,20 +231,28 @@ const filteredClasses = computed(() => {
 });
 
 const topRatedClasses = computed(() => {
-  const currentDate = new Date();
-  return classes.value
-    .filter(classItem => {
-      const startDate = classItem.start_date.toDate();
-      const endDate = classItem.end_time.toDate();
-      return (
-        startDate <= currentDate &&
-        endDate > currentDate &&
-        classItem.max_capacity > classItem.current_enrollment
-      );
-    })
-    .sort((a, b) => b.ratings_average - a.ratings_average)
-    .slice(0, 4);
-});
+      const currentDate = new Date();
+      return classes.value
+        .filter(classItem => {
+          const startDate = classItem.start_date.toDate();
+          const startTime = classItem.start_time.toDate();
+          const classStartDateTime = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            startTime.getHours(),
+            startTime.getMinutes(),
+            startTime.getSeconds()
+          );
+          return (
+            !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+            classStartDateTime > currentDate &&
+            classItem.max_capacity > classItem.current_enrollment
+          );
+        })
+        .sort((a, b) => b.ratings_average - a.ratings_average)
+        .slice(0, 4);
+    });
 
 const selectCategory = (category) => {
   selectedCategory.value = category;
