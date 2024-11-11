@@ -15,12 +15,12 @@
       <div class="row mb-5">
         <!-- Student Classes -->
         <div class="col-md-6 mb-4">
-          <div class="card shadow-sm gradient-border">
+          <div class="card shadow-sm student-border">
             <div class="card-header bg-white border-0 shadow-sm py-3">
               <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
-                <i class="bi bi-journal-text me-2 text-primary"></i>
+                <i class="bi bi-journal-text me-2 text-danger"></i>
                 My Upcoming Classes as Student
-                <span class="badge bg-primary ms-2 rounded-pill">
+                <span class="badge bg-danger ms-2 rounded-pill">
                   {{ upcomingClassesAsStudent.length }}
                 </span>
               </h2>
@@ -37,7 +37,7 @@
                     <div class="flex-grow-1">
                       <h6 class="mb-2 fw-bold">{{ classItem.title }}</h6>
                       <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-geo-alt me-2 text-primary"></i>
+                        <i class="bi bi-geo-alt me-2 text-danger"></i>
                         <span>{{
                           classItem.location === "N.A."
                           ? "Online"
@@ -45,18 +45,18 @@
                         }}</span>
                       </div>
                       <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-calendar3 me-2 text-primary"></i>
+                        <i class="bi bi-calendar3 me-2 text-danger"></i>
                         <span>{{
                           formatDate(calculateNextLessonDate(classItem))
                         }}</span>
                       </div>
                       <div class="d-flex align-items-center">
-                        <i class="bi bi-clock me-2 text-primary"></i>
+                        <i class="bi bi-clock me-2 text-danger"></i>
                         <span>{{ formatTime(classItem.start_time) }} -
                           {{ formatTime(classItem.end_time) }}</span>
                       </div>
                       <div class="mt-2">
-                        <span class="badge bg-primary">
+                        <span class="badge bg-danger">
                           <i class="bi bi-book me-1"></i>
                           Lesson {{ getCurrentLessonNumber(classItem) }} of
                           {{ classItem.number_of_lessons }}
@@ -64,7 +64,7 @@
                       </div>
                     </div>
                     <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
-                      class="btn btn-outline-primary btn-sm ms-3">
+                      class="btn btn-outline-danger btn-sm ms-3">
                       Details
                     </router-link>
                   </div>
@@ -873,6 +873,14 @@ export default {
   border-radius: 0.375rem;
 }
 
+.student-border {
+  position: relative;
+  border-left: 5px solid rgb(255, 80, 80);
+  border-radius: 0.375rem;
+}
+
+
+
 
 .hover-card:hover {
   transform: translateY(-5px);
@@ -1083,5 +1091,7 @@ export default {
   font-size: 1.5rem;
   color: #007bff;
 }
+
+
 </style>
    
