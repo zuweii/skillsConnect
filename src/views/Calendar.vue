@@ -473,7 +473,7 @@
   }
   
   .student-event {
-    background-color: #ff7f50;
+    background-color: rgb(255, 80, 80);
   }
   
   .more-events {

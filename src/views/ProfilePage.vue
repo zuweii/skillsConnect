@@ -52,7 +52,7 @@
             <div class="card-body">
               <ul class="nav nav-tabs" id="profileTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                  <button @click="currentTab = 'student'" :class="{ active: currentTab === 'student' }" class="nav-link"
+                  <button @click="currentTab = 'student'" :class="{ active: currentTab === 'student' }" class="nav-link text-danger"
                     id="student-tab" data-bs-toggle="tab" data-bs-target="#student" type="button" role="tab"
                     aria-controls="student" aria-selected="true">Upcoming Classes as Student</button>
                 </li>
