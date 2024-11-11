@@ -1,566 +1,612 @@
 <template>
-  <div class="home">
-    <div v-if="loading" class="container mt-4 text-center">
-      <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">Loading...</span>
-      </div>
-    </div>
-    <div v-else-if="error" class="container mt-4">
-      <div class="alert alert-danger" role="alert">
-        {{ error }}
-      </div>
-    </div>
-    <div v-else class="container-fluid px-4 mt-4">
-      <!-- Upcoming Classes Sections -->
-      <div class="row mb-5">
-        <!-- Student Classes -->
-        <div class="col-md-6 mb-4">
-          <div class="card shadow-sm student-border">
-            <div class="card-header bg-white border-0 shadow-sm py-3">
-              <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
-                <i class="bi bi-journal-text me-2 text-danger"></i>
-                My Upcoming Classes as Student
-                <span class="badge bg-danger ms-2 rounded-pill">
-                  {{ upcomingClassesAsStudent.length }}
-                </span>
-              </h2>
-            </div>
-            <div class="card-body p-0">
-              <div v-if="upcomingClassesAsStudent.length === 0"
-                class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
-                No upcoming classes as student
-              </div>
-              <div v-else class="upcoming-list">
-                <div v-for="classItem in upcomingClassesAsStudent" :key="classItem.id"
-                  class="upcoming-item p-3 border-bottom">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                      <h6 class="mb-2 fw-bold">{{ classItem.title }}</h6>
-                      <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-geo-alt me-2 text-danger"></i>
-                        <span>{{
-                          classItem.location === "N.A."
-                          ? "Online"
-                          : classItem.location
-                        }}</span>
-                      </div>
-                      <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-calendar3 me-2 text-danger"></i>
-                        <span>{{
-                          formatDate(calculateNextLessonDate(classItem))
-                        }}</span>
-                      </div>
-                      <div class="d-flex align-items-center">
-                        <i class="bi bi-clock me-2 text-danger"></i>
-                        <span>{{ formatTime(classItem.start_time) }} -
-                          {{ formatTime(classItem.end_time) }}</span>
-                      </div>
-                      <div class="mt-2">
-                        <span class="badge bg-danger">
-                          <i class="bi bi-book me-1"></i>
-                          Lesson {{ getCurrentLessonNumber(classItem) }} of
-                          {{ classItem.number_of_lessons }}
-                        </span>
-                      </div>
-                    </div>
-                    <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
-                      class="btn btn-outline-danger btn-sm ms-3">
-                      Details
-                    </router-link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-
-        <!-- Teacher Classes -->
-        <div class="col-md-6 mb-4">
-          <div class="card shadow-sm gradient-border">
-            <div class="card-header bg-white border-0 shadow-sm py-3">
-              <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
-                <i class="bi bi-easel me-2 text-primary"></i>
-                My Upcoming Classes as Teacher
-                <span class="badge bg-primary ms-2 rounded-pill">
-                  {{ upcomingClassesAsTeacher.length }}
-                </span>
-              </h2>
-            </div>
-            <div class="card-body p-0">
-              <div v-if="upcomingClassesAsTeacher.length === 0"
-                class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
-                No upcoming classes as teacher
-              </div>
-              <div v-else class="upcoming-list">
-                <div v-for="classItem in upcomingClassesAsTeacher" :key="classItem.id"
-                  class="upcoming-item p-3 border-bottom">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div class="flex-grow-1">
-                      <h6 class="mb-2 fw-bold">{{ classItem.title }}</h6>
-                      <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-geo-alt me-2 text-primary"></i>
-                        <span>{{
-                          classItem.location === "N.A."
-                          ? "Online"
-                          : classItem.location
-                        }}</span>
-                      </div>
-                      <div class="d-flex align-items-center mb-2">
-                        <i class="bi bi-calendar3 me-2 text-primary"></i>
-                        <span>{{
-                          formatDate(calculateNextLessonDate(classItem))
-                        }}</span>
-                      </div>
-                      <div class="d-flex align-items-center">
-                        <i class="bi bi-clock me-2 text-primary"></i>
-                        <span>{{ formatTime(classItem.start_time) }} -
-                          {{ formatTime(classItem.end_time) }}</span>
-                      </div>
-                      <div class="mt-2 d-flex gap-2">
-                        <span class="badge bg-primary">
-                          <i class="bi bi-book me-1"></i>
-                          Lesson {{ getCurrentLessonNumber(classItem) }} of
-                          {{ classItem.number_of_lessons }}
-                        </span>
-                        <span class="badge bg-secondary">
-                          <i class="bi bi-people-fill me-1"></i>
-                          {{ classItem.current_enrollment }}/{{
-                            classItem.max_capacity
-                          }}
-                          Students
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top Rated Classes Section -->
-      <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
-      <div class="row mb-5">
-        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
-                  </span>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
-                </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <h2 class="h3 mb-4 fw-bold">Nearby Classes</h2>
-      <div v-if="loadingNearby" class="text-center">
+    <div class="home">
+      <div v-if="loading" class="container mt-4 text-center">
         <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading nearby classes...</span>
+          <span class="visually-hidden">Loading...</span>
         </div>
       </div>
-      <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
-        No classes found within 5km of your location.
+      <div v-else-if="error" class="container mt-4">
+        <div class="alert alert-danger" role="alert">
+          {{ error }}
+        </div>
       </div>
-      <div v-else class="row mb-5">
-        <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-6 col-sm-6 mb-4">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
+      <div v-else class="container-fluid px-4 mt-4">
+        <!-- Upcoming Classes Sections -->
+        <div class="row mb-5">
+          <!-- Student Classes -->
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm student-border">
+              <div class="card-header bg-white border-0 shadow-sm py-3">
+                <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
+                  <i class="bi bi-journal-text me-2 text-danger"></i>
+                  My Upcoming Classes as Student
+                  <span class="badge bg-danger ms-2 rounded-pill">
+                    {{ upcomingClassesAsStudent.length }}
+                  </span>
+                </h2>
+              </div>
+              <div class="card-body p-0">
+                <div v-if="upcomingClassesAsStudent.length === 0"
+                  class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
+                  No upcoming classes as student
+                </div>
+                <div v-else class="upcoming-list">
+                  <div v-for="classItem in upcomingClassesAsStudent" :key="classItem.id"
+                    class="upcoming-item p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-2 fw-bold">{{ classItem.title }}</h6>
+                        <div class="d-flex align-items-center mb-2">
+                          <i class="bi bi-geo-alt me-2 text-danger"></i>
+                          <span>{{
+                            classItem.location === "N.A."
+                            ? "Online"
+                            : classItem.location
+                          }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                          <i class="bi bi-calendar3 me-2 text-danger"></i>
+                          <span>{{
+                            formatDate(calculateNextLessonDate(classItem))
+                          }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-clock me-2 text-danger"></i>
+                          <span>{{ formatTime(classItem.start_time) }} -
+                            {{ formatTime(classItem.end_time) }}</span>
+                        </div>
+                        <div class="mt-2">
+                          <span class="badge bg-danger">
+                            <i class="bi bi-book me-1"></i>
+                            Lesson {{ getCurrentLessonNumber(classItem) }} of
+                            {{ classItem.number_of_lessons }}
+                          </span>
+                        </div>
+                      </div>
+                      <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }"
+                        class="btn btn-outline-danger btn-sm ms-3">
+                        Details
+                      </router-link>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+          </div>
+  
+  
+          <!-- Teacher Classes -->
+          <div class="col-md-6 mb-4">
+            <div class="card shadow-sm gradient-border">
+              <div class="card-header bg-white border-0 shadow-sm py-3">
+                <h2 class="h5 mb-0 fw-bold d-flex align-items-center">
+                  <i class="bi bi-easel me-2 text-primary"></i>
+                  My Upcoming Classes as Teacher
+                  <span class="badge bg-primary ms-2 rounded-pill">
+                    {{ upcomingClassesAsTeacher.length }}
                   </span>
+                </h2>
+              </div>
+              <div class="card-body p-0">
+                <div v-if="upcomingClassesAsTeacher.length === 0"
+                  class="p-4 upcoming-list d-flex align-items-center justify-content-center text-muted">
+                  No upcoming classes as teacher
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                <div v-else class="upcoming-list">
+                  <div v-for="classItem in upcomingClassesAsTeacher" :key="classItem.id"
+                    class="upcoming-item p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                      <div class="flex-grow-1">
+                        <h6 class="mb-2 fw-bold">{{ classItem.title }}</h6>
+                        <div class="d-flex align-items-center mb-2">
+                          <i class="bi bi-geo-alt me-2 text-primary"></i>
+                          <span>{{
+                            classItem.location === "N.A."
+                            ? "Online"
+                            : classItem.location
+                          }}</span>
+                        </div>
+                        <div class="d-flex align-items-center mb-2">
+                          <i class="bi bi-calendar3 me-2 text-primary"></i>
+                          <span>{{
+                            formatDate(calculateNextLessonDate(classItem))
+                          }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                          <i class="bi bi-clock me-2 text-primary"></i>
+                          <span>{{ formatTime(classItem.start_time) }} -
+                            {{ formatTime(classItem.end_time) }}</span>
+                        </div>
+                        <div class="mt-2 d-flex gap-2">
+                          <span class="badge bg-primary">
+                            <i class="bi bi-book me-1"></i>
+                            Lesson {{ getCurrentLessonNumber(classItem) }} of
+                            {{ classItem.number_of_lessons }}
+                          </span>
+                          <span class="badge bg-secondary">
+                            <i class="bi bi-people-fill me-1"></i>
+                            {{ classItem.current_enrollment }}/{{
+                              classItem.max_capacity
+                            }}
+                            Students
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
               </div>
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Available Classes Section -->
-      <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
-
-      <!-- Categories Section -->
-      <div class="categories-section mb-4">
-        <div class="categories-btn-group">
-          <button class="category-btn" :class="{ active: selectedCategory === null }" @click="selectCategory(null)">
-            All
-          </button>
-          <button v-for="category in categories" :key="category.category_name" class="category-btn"
-            :class="{ active: selectedCategory === category.category_name }"
-            @click="selectCategory(category.category_name)">
-            {{ category.category_name }}
-          </button>
-        </div>
-      </div>
-
-
-      <div class="scroll-container row mb-5 position-relative">
-      <!-- Left Scroll Button -->
-      <button @click="scrollLeft" class="scroll-btn scroll-left">
-        <i class="bi bi-arrow-left"></i>
-      </button>
-
-      <!-- Class Cards -->
-      <div ref="cardRow" class="card-row d-flex">
-        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+  
+        <!-- Top Rated Classes Section -->
+        <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
+        <div class="row mb-5">
+          <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+            <div class="card shadow-sm h-100 hover-card">
+              <div class="card-img-wrapper">
+                <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+                <div class="card-img-overlay-top">
+                  <span class="badge bg-primary">
+                    {{ classItem.category }}
                   </span>
                 </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
                 </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
+                <p class="card-text text-muted small flex-grow-1">
+                  {{ truncateText(classItem.description, 100) }}
+                </p>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="card-text h5 text-primary mb-0">
+                      ${{ classItem.price.toFixed(2) }}
+                    </p>
+                    <span class="badge bg-light text-dark">
+                      <i class="bi bi-people-fill me-1"></i>
+                      {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                    <StarRating :rating="classItem.ratings_average" />
+                    <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                  </div>
+                  <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                    View Details
+                  </router-link>
+                </div>
               </div>
             </div>
           </div>
         </div>
+  
+        <h2 class="h3 mb-4 fw-bold">Nearby Classes</h2>
+        <div v-if="loadingNearby" class="text-center">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading nearby classes...</span>
+          </div>
+        </div>
+        <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
+          No classes found within 5km of your location.
+        </div>
+        <div v-else class="row mb-5">
+          <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-6 col-sm-6 mb-4">
+            <div class="card shadow-sm h-100 hover-card">
+              <div class="card-img-wrapper">
+                <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+                <div class="card-img-overlay-top">
+                  <span class="badge bg-primary">
+                    {{ classItem.category }}
+                  </span>
+                </div>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                  <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+                </div>
+                <p class="card-text text-muted small flex-grow-1">
+                  {{ truncateText(classItem.description, 100) }}
+                </p>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="card-text h5 text-primary mb-0">
+                      ${{ classItem.price.toFixed(2) }}
+                    </p>
+                    <span class="badge bg-light text-dark">
+                      <i class="bi bi-people-fill me-1"></i>
+                      {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                    <StarRating :rating="classItem.ratings_average" />
+                    <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                  </div>
+                  <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                    View Details
+                  </router-link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Available Classes Section -->
+        <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
+  
+        <!-- Categories Section -->
+        <div class="categories-section mb-4">
+          <div class="categories-btn-group">
+            <button class="category-btn" :class="{ active: selectedCategory === null }" @click="selectCategory(null)">
+              All
+            </button>
+            <button v-for="category in categories" :key="category.category_name" class="category-btn"
+              :class="{ active: selectedCategory === category.category_name }"
+              @click="selectCategory(category.category_name)">
+              {{ category.category_name }}
+            </button>
+          </div>
+        </div>
+  
+  
+        <div class="scroll-container row mb-5 position-relative">
+        <!-- Left Scroll Button -->
+        <button @click="scrollLeft" class="scroll-btn scroll-left">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+  
+        <!-- Class Cards -->
+        <div ref="cardRow" class="card-row d-flex">
+          <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
+            <div class="card shadow-sm h-100 hover-card">
+              <div class="card-img-wrapper">
+                <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+                <div class="card-img-overlay-top">
+                  <span class="badge bg-primary">
+                    {{ classItem.category }}
+                  </span>
+                </div>
+              </div>
+              <div class="card-body d-flex flex-column">
+                <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
+                <p class="card-text text-muted small flex-grow-1">
+                  {{ truncateText(classItem.description, 100) }}
+                </p>
+                <div class="mt-auto">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <p class="card-text h5 text-primary mb-0">
+                      ${{ classItem.price.toFixed(2) }}
+                    </p>
+                    <span class="badge bg-light text-dark">
+                      <i class="bi bi-people-fill me-1"></i>
+                      {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                    </span>
+                  </div>
+                  <div class="d-flex align-items-center mb-2">
+                    <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                    <StarRating :rating="classItem.ratings_average" />
+                    <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                  </div>
+                  <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                    View Details
+                  </router-link>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+  
+        <!-- Right Scroll Button -->
+        <button @click="scrollRight" class="scroll-btn scroll-right">
+          <i class="bi bi-arrow-right"></i>
+        </button>
+        </div>
+  
+  
       </div>
-
-      <!-- Right Scroll Button -->
-      <button @click="scrollRight" class="scroll-btn scroll-right">
-        <i class="bi bi-arrow-right"></i>
-      </button>
-      </div>
-
-
     </div>
-  </div>
-</template>
-   
-   
-<script>
-import { ref, computed, onMounted, watch } from "vue";
-import {
-  collection,
-  getDocs,
-  query,
-  where,
-  doc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  orderBy,
-  limit,
-} from "firebase/firestore";
-import { db } from "../firebase/firebase_config";
-import FBInstanceAuth from "../firebase/firebase_auth";
-import StarRating from "../components/StarRating.vue";
-
-export default {
-  name: "HomePage",
-  components: {
-    StarRating,
-  },
-  props: {
-    searchQuery: {
-      type: String,
-      default: "",
+  </template>
+     
+     
+  <script>
+  import { ref, computed, onMounted, watch } from "vue";
+  import {
+    collection,
+    getDocs,
+    query,
+    where,
+    doc,
+    getDoc,
+    updateDoc,
+    arrayUnion,
+    arrayRemove,
+    orderBy,
+    limit,
+  } from "firebase/firestore";
+  import { db } from "../firebase/firebase_config";
+  import FBInstanceAuth from "../firebase/firebase_auth";
+  import StarRating from "../components/StarRating.vue";
+  
+  export default {
+    name: "HomePage",
+    components: {
+      StarRating,
     },
-  },
-  methods: {
-    scrollLeft() {
-      if (this.$refs.cardRow) {
-        this.$refs.cardRow.scrollBy({ left: -800, behavior: 'smooth' });
+    props: {
+      searchQuery: {
+        type: String,
+        default: "",
+      },
+    },
+    methods: {
+      scrollLeft() {
+        if (this.$refs.cardRow) {
+          this.$refs.cardRow.scrollBy({ left: -800, behavior: 'smooth' });
+        }
+      },
+      scrollRight() {
+        if (this.$refs.cardRow) {
+          this.$refs.cardRow.scrollBy({ left: 800, behavior: 'smooth' });
+        }
       }
     },
-    scrollRight() {
-      if (this.$refs.cardRow) {
-        this.$refs.cardRow.scrollBy({ left: 800, behavior: 'smooth' });
-      }
-    }
-  },
-  setup(props) {
-    const classes = ref([]);
-    const categories = ref([]);
-    const loading = ref(true);
-    const error = ref(null);
-    const currentUser = ref(null);
-    const selectedCategory = ref(null);
-    const nearbyClasses = ref([]);
-    const userLocation = ref(null);
-    const loadingNearby = ref(false);
-    const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-
-    const topRatedClasses = computed(() => {
-      const currentDate = new Date();
-      return classes.value
-        .filter(classItem => {
-          const startDate = classItem.start_date.toDate();
-          const startTime = classItem.start_time.toDate();
-          const classStartDateTime = new Date(
-            startDate.getFullYear(),
-            startDate.getMonth(),
-            startDate.getDate(),
-            startTime.getHours(),
-            startTime.getMinutes(),
-            startTime.getSeconds()
+    setup(props) {
+      const classes = ref([]);
+      const categories = ref([]);
+      const loading = ref(true);
+      const error = ref(null);
+      const currentUser = ref(null);
+      const selectedCategory = ref(null);
+      const nearbyClasses = ref([]);
+      const userLocation = ref(null);
+      const loadingNearby = ref(false);
+      const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+  
+      const topRatedClasses = computed(() => {
+        const currentDate = new Date();
+        return classes.value
+          .filter(classItem => {
+            const startDate = classItem.start_date.toDate();
+            const startTime = classItem.start_time.toDate();
+            const classStartDateTime = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth(),
+              startDate.getDate(),
+              startTime.getHours(),
+              startTime.getMinutes(),
+              startTime.getSeconds()
+            );
+            return (
+              !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+              classStartDateTime > currentDate &&
+              classItem.max_capacity > classItem.current_enrollment
+            );
+          })
+          .sort((a, b) => b.ratings_average - a.ratings_average)
+          .slice(0, 4);
+      });
+  
+  
+  
+      const fetchData = async () => {
+        try {
+          const user = FBInstanceAuth.getCurrentUser();
+          if (user) {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnapshot = await getDoc(userDocRef);
+  
+            if (userDocSnapshot.exists()) {
+              currentUser.value = {
+                id: userDocSnapshot.id,
+                ...userDocSnapshot.data(),
+              };
+            }
+          }
+  
+          const classCollection = collection(db, "classes");
+          const classQuery = query(classCollection, orderBy("ratings_average", "desc"), limit(50));
+          const classSnapshot = await getDocs(classQuery);
+          classes.value = classSnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          }));
+  
+          await fetchCategories();
+          await checkCompletedClasses();
+          await findNearbyClasses();
+        } catch (err) {
+          console.error("Error fetching data:", err);
+          error.value = "Error loading data";
+        } finally {
+          loading.value = false;
+        }
+      };
+  
+  
+  
+  
+      const checkCompletedClasses = async () => {
+        if (!currentUser.value) return;
+  
+        const currentDate = new Date();
+        const completedClasses = classes.value.filter((classItem) => {
+          // Check if completion_date exists, otherwise fall back to end_time
+          const completionDate = classItem.completion_date ? classItem.completion_date.toDate() : classItem.end_time.toDate();
+          return completionDate < currentDate;
+        });
+        if (completedClasses.length > 0) {
+          const userRef = doc(db, "users", currentUser.value.id);
+  
+          // Separate completed classes for student and teacher
+          const completedAsStudent = completedClasses.filter((classItem) =>
+            currentUser.value.upcoming_classes_as_student?.includes(classItem.id)
           );
-          return (
-            !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
-            classStartDateTime > currentDate &&
-            classItem.max_capacity > classItem.current_enrollment
+          const completedAsTeacher = completedClasses.filter((classItem) =>
+            currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id)
           );
-        })
-        .sort((a, b) => b.ratings_average - a.ratings_average)
-        .slice(0, 4);
-    });
-
-
-
-    const fetchData = async () => {
-      try {
-        const user = FBInstanceAuth.getCurrentUser();
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnapshot = await getDoc(userDocRef);
-
-          if (userDocSnapshot.exists()) {
+  
+          // Update pending_reviews only for classes completed as a student
+          const pendingReviewsUpdate = completedAsStudent.map((classItem) => classItem.id);
+  
+          // Prepare the update object
+          const updateObject = {
+            upcoming_classes_as_student: arrayRemove(...completedAsStudent.map(c => c.id)),
+            upcoming_classes_as_teacher: arrayRemove(...completedAsTeacher.map(c => c.id)),
+          };
+  
+          // Only add to pending_reviews if there are completed classes as a student
+          if (pendingReviewsUpdate.length > 0) {
+            updateObject.pending_reviews = arrayUnion(...pendingReviewsUpdate);
+          }
+  
+          // Perform the update
+          await updateDoc(userRef, updateObject);
+  
+          // Refresh user data after updates
+          const updatedUserDoc = await getDoc(userRef);
+          if (updatedUserDoc.exists()) {
             currentUser.value = {
-              id: userDocSnapshot.id,
-              ...userDocSnapshot.data(),
+              id: updatedUserDoc.id,
+              ...updatedUserDoc.data(),
             };
           }
         }
-
-        const classCollection = collection(db, "classes");
-        const classQuery = query(classCollection, orderBy("ratings_average", "desc"), limit(50));
-        const classSnapshot = await getDocs(classQuery);
-        classes.value = classSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-        await fetchCategories();
-        await checkCompletedClasses();
-        await findNearbyClasses();
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        error.value = "Error loading data";
-      } finally {
-        loading.value = false;
-      }
-    };
-
-
-
-
-    const checkCompletedClasses = async () => {
-      if (!currentUser.value) return;
-
-      const currentDate = new Date();
-      const completedClasses = classes.value.filter((classItem) => {
-        // Check if completion_date exists, otherwise fall back to end_time
-        const completionDate = classItem.completion_date ? classItem.completion_date.toDate() : classItem.end_time.toDate();
-        return completionDate < currentDate;
-      });
-      if (completedClasses.length > 0) {
-        const userRef = doc(db, "users", currentUser.value.id);
-
-        // Separate completed classes for student and teacher
-        const completedAsStudent = completedClasses.filter((classItem) =>
-          currentUser.value.upcoming_classes_as_student?.includes(classItem.id)
-        );
-        const completedAsTeacher = completedClasses.filter((classItem) =>
-          currentUser.value.upcoming_classes_as_teacher?.includes(classItem.id)
-        );
-
-        // Update pending_reviews only for classes completed as a student
-        const pendingReviewsUpdate = completedAsStudent.map((classItem) => classItem.id);
-
-        // Prepare the update object
-        const updateObject = {
-          upcoming_classes_as_student: arrayRemove(...completedAsStudent.map(c => c.id)),
-          upcoming_classes_as_teacher: arrayRemove(...completedAsTeacher.map(c => c.id)),
-        };
-
-        // Only add to pending_reviews if there are completed classes as a student
-        if (pendingReviewsUpdate.length > 0) {
-          updateObject.pending_reviews = arrayUnion(...pendingReviewsUpdate);
-        }
-
-        // Perform the update
-        await updateDoc(userRef, updateObject);
-
-        // Refresh user data after updates
-        const updatedUserDoc = await getDoc(userRef);
-        if (updatedUserDoc.exists()) {
-          currentUser.value = {
-            id: updatedUserDoc.id,
-            ...updatedUserDoc.data(),
-          };
-        }
-      }
-    };
-
-    // Computed property for filtered classes
-    const filteredClasses = computed(() => {
-      let filtered = classes.value;
-
-      if (selectedCategory.value) {
-        filtered = filtered.filter(
-          (classItem) => classItem.category === selectedCategory.value
-        );
-      }
-      return filtered;
-    });
-
-
-
-    const availableClasses = computed(() => {
-      const currentDate = new Date();
-      return filteredClasses.value
-        .filter((classItem) => {
-          const startDate = classItem.start_date.toDate();
-          const startTime = classItem.start_time.toDate();
-          const hasAvailability =
-            classItem.max_capacity > classItem.current_enrollment;
-          const isNotUserClass =
-            !currentUser.value?.upcoming_classes_as_teacher?.includes(
-              classItem.id
-            );
-
-          // Combine date and time for accurate comparison
-          const classStartDateTime = new Date(
-            startDate.getFullYear(),
-            startDate.getMonth(),
-            startDate.getDate(),
-            startTime.getHours(),
-            startTime.getMinutes(),
-            startTime.getSeconds()
-          );
-
-          classItem.ratings_average = classItem.ratings_average || 0;
-          classItem.reviews = classItem.reviews || [];
-
-          return hasAvailability && classStartDateTime > currentDate && isNotUserClass;
-        })
-        .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
-    });
-
-    const selectCategory = (category) => {
-      selectedCategory.value = category;
-    };
-
-    const calculateLessonDate = (classItem, lessonNumber) => {
-      const startDate = classItem.start_date.toDate();
-      const lessonDate = new Date(startDate);
-      lessonDate.setDate(startDate.getDate() + ((lessonNumber - 1) * 7));
-      return lessonDate;
-    };
-
-    const getCurrentLessonInfo = (classItem) => {
-      const currentDate = new Date();
-      const startDate = classItem.start_date.toDate();
-      const weeksPassed = Math.floor(
-        (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
-      );
-      const currentLessonNumber = weeksPassed + 1;
-      
-      // Get the date for the current lesson
-      const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
-      
-      // Set the time for comparison
-      const startTime = classItem.start_time.toDate();
-      const endTime = classItem.end_time.toDate();
-      
-      const lessonStartDateTime = new Date(currentLessonDate);
-      lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
-      
-      const lessonEndDateTime = new Date(currentLessonDate);
-      lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
-
-      return {
-        lessonNumber: currentLessonNumber,
-        lessonDate: currentLessonDate,
-        startDateTime: lessonStartDateTime,
-        endDateTime: lessonEndDateTime
       };
-    };
+  
+      // Computed property for filtered classes
+      const filteredClasses = computed(() => {
+        let filtered = classes.value;
+  
+        if (selectedCategory.value) {
+          filtered = filtered.filter(
+            (classItem) => classItem.category === selectedCategory.value
+          );
+        }
+        return filtered;
+      });
+  
+  
+  
+      const availableClasses = computed(() => {
+        const currentDate = new Date();
+        return filteredClasses.value
+          .filter((classItem) => {
+            const startDate = classItem.start_date.toDate();
+            const startTime = classItem.start_time.toDate();
+            const hasAvailability =
+              classItem.max_capacity > classItem.current_enrollment;
+            const isNotUserClass =
+              !currentUser.value?.upcoming_classes_as_teacher?.includes(
+                classItem.id
+              );
+  
+            // Combine date and time for accurate comparison
+            const classStartDateTime = new Date(
+              startDate.getFullYear(),
+              startDate.getMonth(),
+              startDate.getDate(),
+              startTime.getHours(),
+              startTime.getMinutes(),
+              startTime.getSeconds()
+            );
+  
+            classItem.ratings_average = classItem.ratings_average || 0;
+            classItem.reviews = classItem.reviews || [];
+  
+            return hasAvailability && classStartDateTime > currentDate && isNotUserClass;
+          })
+          .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
+      });
+  
+      const selectCategory = (category) => {
+        selectedCategory.value = category;
+      };
+  
+      const calculateLessonDate = (classItem, lessonNumber) => {
+        const startDate = classItem.start_date.toDate();
+        const lessonDate = new Date(startDate);
+        lessonDate.setDate(startDate.getDate() + ((lessonNumber - 1) * 7));
+        return lessonDate;
+      };
+  
+      const getCurrentLessonInfo = (classItem) => {
+        const currentDate = new Date();
+        const startDate = classItem.start_date.toDate();
+        const weeksPassed = Math.floor(
+          (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
+        );
+        const currentLessonNumber = weeksPassed + 1;
+        
+        // Get the date for the current lesson
+        const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
+        
+        // Set the time for comparison
+        const startTime = classItem.start_time.toDate();
+        const endTime = classItem.end_time.toDate();
+        
+        const lessonStartDateTime = new Date(currentLessonDate);
+        lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
+        
+        const lessonEndDateTime = new Date(currentLessonDate);
+        lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
+  
+        return {
+          lessonNumber: currentLessonNumber,
+          lessonDate: currentLessonDate,
+          startDateTime: lessonStartDateTime,
+          endDateTime: lessonEndDateTime
+        };
+      };
+  
+      const upcomingClassesAsStudent = computed(() => {
+      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student) {
+        return [];
+      }
+    
+      return classes.value
+        .filter((classItem) => {
+          if (!currentUser.value.upcoming_classes_as_student.includes(classItem.id)) {
+            return false;
+          }
+        
+          const currentDate = new Date();
+          const startDate = classItem.start_date.toDate();
+          const weeksPassed = Math.floor(
+            (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
+          );
+          const currentLessonNumber = weeksPassed + 1;
+        
+          // Get the date for the current lesson
+          const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
+        
+          // Set the time for comparison
+          const startTime = classItem.start_time.toDate();
+          const endTime = classItem.end_time.toDate();
+        
+          const lessonStartDateTime = new Date(currentLessonDate);
+          lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
+        
+          const lessonEndDateTime = new Date(currentLessonDate);
+          lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
+        
+          return (
+            lessonEndDateTime >= currentDate &&
+            currentLessonNumber <= classItem.number_of_lessons
+          );
+        })
+        .map((classItem) => ({
+          lessonNumber: currentLessonNumber,
+          lessonDate: currentLessonDate,
+          startDateTime: lessonStartDateTime,
+          endDateTime: lessonEndDateTime,
+          ...classItem,
+        }));
+    });
+
 
     const upcomingClassesAsStudent = computed(() => {
       if (!currentUser.value?.upcoming_classes_as_student) return [];
