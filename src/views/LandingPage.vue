@@ -11,49 +11,6 @@
       </div>
     </div>
     <div v-else class="container-fluid px-4 mt-4">
-      <!-- Top Rated Classes Section -->
-      <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
-      <div class="row mb-5">
-        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-          <div class="card shadow-sm h-100 hover-card">
-            <div class="card-img-wrapper">
-              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-              <div class="card-img-overlay-top">
-                <span class="badge bg-primary">
-                  {{ classItem.category }}
-                </span>
-              </div>
-            </div>
-            <div class="card-body d-flex flex-column">
-              <div class="d-flex justify-content-between align-items-start mb-2">
-                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-              </div>
-              <p class="card-text text-muted small flex-grow-1">
-                {{ truncateText(classItem.description, 100) }}
-              </p>
-              <div class="mt-auto">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                  <p class="card-text h5 text-primary mb-0">
-                    ${{ classItem.price.toFixed(2) }}
-                  </p>
-                  <span class="badge bg-light text-dark">
-                    <i class="bi bi-people-fill me-1"></i>
-                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
-                  </span>
-                </div>
-                <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-                  <StarRating :rating="classItem.ratings_average" />
-                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
-                </div>
-                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-                  View Details
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <!-- Nearby Classes Section -->
       <h2 class="h3 mb-4 fw-bold">Nearby Classes</h2>
