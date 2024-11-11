@@ -261,7 +261,7 @@
 
       <!-- Class Cards -->
       <div ref="cardRow" class="card-row d-flex">
-        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
+        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-img-wrapper">
               <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
@@ -371,17 +371,25 @@ export default {
       return classes.value
         .filter(classItem => {
           const startDate = classItem.start_date.toDate();
-          const endDate = classItem.end_time.toDate();
+          const startTime = classItem.start_time.toDate();
+          const classStartDateTime = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            startTime.getHours(),
+            startTime.getMinutes(),
+            startTime.getSeconds()
+          );
           return (
             !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
-            startDate <= currentDate &&
-            endDate > currentDate &&
+            classStartDateTime > currentDate &&
             classItem.max_capacity > classItem.current_enrollment
           );
         })
         .sort((a, b) => b.ratings_average - a.ratings_average)
         .slice(0, 4);
     });
+
 
 
     const fetchData = async () => {

@@ -123,6 +123,7 @@
                             <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
                           </div>
                           <div class="d-flex align-items-center mb-2">
+                            <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
                             <StarRating :rating="classItem.ratings_average" readOnly />
                             <span class="ms-2">({{ classItem.reviews ? classItem.reviews.length : 0 }})</span>
                           </div>
