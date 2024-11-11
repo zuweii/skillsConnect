@@ -344,13 +344,11 @@ export default {
   },
   methods: {
     scrollLeft() {
-      // Ensure the reference exists
       if (this.$refs.cardRow) {
         this.$refs.cardRow.scrollBy({ left: -800, behavior: 'smooth' });
       }
     },
     scrollRight() {
-      // Ensure the reference exists
       if (this.$refs.cardRow) {
         this.$refs.cardRow.scrollBy({ left: 800, behavior: 'smooth' });
       }
@@ -370,9 +368,11 @@ export default {
 
     const topRatedClasses = computed(() => {
       return classes.value
+        .filter(classItem => !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id))
         .sort((a, b) => b.ratings_average - a.ratings_average)
         .slice(0, 4);
     });
+
 
     const fetchData = async () => {
       try {
@@ -526,11 +526,9 @@ export default {
         );
     });
 
-
     const upcomingClassesAsTeacher = computed(() => {
       if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
         return [];
-
 
       const currentDate = new Date();
       return classes.value

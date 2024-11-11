@@ -422,22 +422,41 @@ export default {
         completionDate.setHours(23, 59, 59, 999); // Set time to 23:59:59.999
         classData.completion_date = completionDate;
 
+        let updatedClassId;
+
         if (isEditMode.value) {
           const classRef = doc(db, 'classes', classId);
           await updateDoc(classRef, classData);
+          updatedClassId = classId;
         } else {
           const classRef = await addDoc(collection(db, 'classes'), classData);
-          classId = classRef.id;
+          updatedClassId = classRef.id;
         }
 
-        // Update user and category data
+        // Update user data
         const userRef = doc(db, 'users', auth.currentUser.uid);
+        const userDoc = await getDoc(userRef);
+        const userData = userDoc.data();
+
+        let updatedPostedClasses = userData.posted_classes || [];
+        let updatedUpcomingClassesAsTeacher = userData.upcoming_classes_as_teacher || [];
+
+        if (isEditMode.value) {
+          // Remove the old class data
+          updatedPostedClasses = updatedPostedClasses.filter(c => c.class_id !== classId);
+          updatedUpcomingClassesAsTeacher = updatedUpcomingClassesAsTeacher.filter(id => id !== classId);
+        }
+
+        // Add the new/updated class data
+        updatedPostedClasses.push({
+          class_id: updatedClassId,
+          ...classData
+        });
+        updatedUpcomingClassesAsTeacher.push(updatedClassId);
+
         await updateDoc(userRef, {
-          posted_classes: arrayUnion({
-            class_id: classId,
-            ...classData
-          }),
-          upcoming_classes_as_teacher: arrayUnion(classId)
+          posted_classes: updatedPostedClasses,
+          upcoming_classes_as_teacher: updatedUpcomingClassesAsTeacher
         });
 
         // Update categories
@@ -448,14 +467,14 @@ export default {
         if (!categoryQuerySnapshot.empty) {
           const categoryDoc = categoryQuerySnapshot.docs[0];
           await updateDoc(doc(db, 'categories', categoryDoc.id), {
-            class_ids: arrayUnion(classId),
+            class_ids: arrayUnion(updatedClassId),
             sub_categories: arrayUnion(classData.subcategory)
           });
         } else {
           await addDoc(categoriesRef, {
             category_name: classData.category,
             sub_categories: [classData.subcategory],
-            class_ids: [classId]
+            class_ids: [updatedClassId]
           });
         }
 
@@ -465,6 +484,7 @@ export default {
         error.value = 'An error occurred while listing the class. Please try again.';
       }
     };
+
 
     const goToDashboard = () => {
       router.push('/dashboard');
