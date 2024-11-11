@@ -835,48 +835,71 @@ export default {
       try {
         const userId = auth.currentUser.uid;
         const classRef = doc(db, 'classes', relistData.value.classId);
-
+      
+        // Format new start and end dates for the class
         const startDate = new Date(`${relistData.value.newStartDate}T${relistData.value.newStartTime}`);
         const endTime = new Date(`${relistData.value.newStartDate}T${relistData.value.newEndTime}`);
         const completionDate = new Date(startDate);
         const classData = await getDoc(classRef);
         const numberOfLessons = classData.exists() ? classData.data().number_of_lessons : 1;
         completionDate.setDate(completionDate.getDate() + ((numberOfLessons - 1) * 7));
-
+      
+        // Update the class document with new dates
         await updateDoc(classRef, {
           start_date: startDate,
           start_time: startDate,
           end_time: endTime,
           completion_date: completionDate,
-          current_enrollment: 0
         });
-
+      
+        // Update the user's posted classes and upcoming_classes_as_teacher fields
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
-
+      
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const postedClasses = userData.posted_classes || [];
-
+          const upcomingClasses = userData.upcoming_classes_as_teacher || [];
+        
+          // Update the posted_classes array
           const classIndex = postedClasses.findIndex(postedClass => postedClass.class_id === relistData.value.classId);
-
           if (classIndex !== -1) {
             postedClasses[classIndex].start_date = startDate;
             postedClasses[classIndex].start_time = startDate;
             postedClasses[classIndex].end_time = endTime;
             postedClasses[classIndex].completion_date = completionDate;
-
-            await updateDoc(userRef, { posted_classes: postedClasses });
           }
+        
+          // Update the upcoming_classes_as_teacher array
+          const upcomingClassIndex = upcomingClasses.findIndex(cls => cls.class_id === relistData.value.classId);
+          if (upcomingClassIndex !== -1) {
+            upcomingClasses[upcomingClassIndex] = { ...upcomingClasses[upcomingClassIndex], start_date: startDate };
+          } else {
+            upcomingClasses.push({
+              class_id: relistData.value.classId,
+              start_date: startDate,
+              end_date: endTime,
+            });
+          }
+        
+          await updateDoc(userRef, {
+            posted_classes: postedClasses,
+            upcoming_classes_as_teacher: upcomingClasses,
+          });
         }
-
-        const modal = Modal.getInstance(document.getElementById('relistModal'));
-        modal.hide();
+      
+        // Close the relist modal
+        const modalElement = document.getElementById('relistModal');
+        const modal = Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+      
+        // Refresh user profile data
         await fetchUserProfile(auth.currentUser.uid);
       } catch (err) {
         console.error('Error relisting class:', err);
       }
     };
+
 
     const formatDate = (date) => {
       return date instanceof Date ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
