@@ -11,12 +11,5 @@
  npm run dev
 
  # Login Credentials
- (used for demo)
  Email: joseph@gmail.com
  PW: joseph123
-
- Email: jennie@gmail.com
- PW: jennie123
-
- Email: jennifer@gmail.com
- PW: jennifer123
