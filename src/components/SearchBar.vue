@@ -103,15 +103,41 @@ export default {
 
     const matchingClasses = computed(() => {
       if (!searchQuery.value || searchQuery.value.length <= 2) return [];
-      
+
       const query = searchQuery.value.toLowerCase();
+      const currentDate = new Date();
+
       return props.classes
-        .filter(item => {
+        .filter((item) => {
           if (!item) return false;
-          const titleMatch = item.title && typeof item.title === 'string' && item.title.toLowerCase().includes(query);
-          const descriptionMatch = item.description && typeof item.description === 'string' && item.description.toLowerCase().includes(query);
+
+          // Check if the class start date and time are in the future
+          const startDate = item.start_date.toDate();
+          const startTime = item.start_time.toDate();
+          const classStartDateTime = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            startTime.getHours(),
+            startTime.getMinutes(),
+            startTime.getSeconds()
+          );
+
+          const isFutureClass = classStartDateTime > currentDate;
+
+          // Match by title or description
+          const titleMatch =
+            item.title &&
+            typeof item.title === "string" &&
+            item.title.toLowerCase().includes(query);
+          const descriptionMatch =
+            item.description &&
+            typeof item.description === "string" &&
+            item.description.toLowerCase().includes(query);
+
           if (descriptionMatch) item.matchedByDescription = true;
-          return titleMatch || descriptionMatch;
+
+          return (titleMatch || descriptionMatch) && isFutureClass;
         })
         .slice(0, 5);
     });
