@@ -124,7 +124,7 @@
                           </div>
                           <div class="d-flex align-items-center mb-2">
                             <StarRating :rating="classItem.ratings_average" readOnly />
-                            <span class="ms-2">({{ classItem.reviews ? classItem.reviews.length : 0 }} reviews)</span>
+                            <span class="ms-2">({{ classItem.reviews ? classItem.reviews.length : 0 }})</span>
                           </div>
                           <p class="card-text text-muted small flex-grow-1">
                             {{ truncateText(classItem.description, 100) }}
