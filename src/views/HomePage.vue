@@ -143,7 +143,7 @@
       <!-- Top Rated Classes Section -->
       <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
       <div class="row mb-5">
-        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-6 col-sm-6 mb-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-img-wrapper">
               <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
