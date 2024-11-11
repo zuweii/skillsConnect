@@ -261,7 +261,7 @@
 
       <!-- Class Cards -->
       <div ref="cardRow" class="card-row d-flex">
-        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-img-wrapper">
               <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
@@ -375,7 +375,6 @@ export default {
           return (
             !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
             startDate <= currentDate &&
-            endDate > currentDate &&
             classItem.max_capacity > classItem.current_enrollment
           );
         })
