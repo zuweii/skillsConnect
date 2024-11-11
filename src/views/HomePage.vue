@@ -375,7 +375,6 @@ export default {
           return (
             !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
             startDate <= currentDate &&
-            endDate > currentDate &&
             classItem.max_capacity > classItem.current_enrollment
           );
         })
