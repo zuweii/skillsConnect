@@ -879,6 +879,7 @@ export default {
               start_date: startDate,
               end_time: endTime,
               completion_date: completionDate,
+              current_enrollment: 0
             });
           }
           await updateDoc(userRef, { 
