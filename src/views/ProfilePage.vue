@@ -791,6 +791,7 @@ export default {
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const postedClasses = userData.posted_classes || [];
+          const upcomingClasses = userData.upcoming_classes_as_teacher || [];
 
           const classIndex = postedClasses.findIndex(postedClass => postedClass.class_id === relistData.value.classId);
 
@@ -799,13 +800,31 @@ export default {
             postedClasses[classIndex].start_time = startDate;
             postedClasses[classIndex].end_time = endTime;
             postedClasses[classIndex].completion_date = completionDate;
-
-            await updateDoc(userRef, { posted_classes: postedClasses });
           }
+
+          const upcomingClassIndex = upcomingClasses.findIndex(cls => cls.class_id === relistData.value.classId);
+          if (upcomingClassIndex !== -1) {
+            upcomingClasses[upcomingClassIndex].start_date = startDate;
+            upcomingClasses[upcomingClassIndex].end_time = endTime;
+            upcomingClasses[upcomingClassIndex].completion_date = completionDate;
+          } else {
+            upcomingClasses.push({
+              class_id: relistData.value.classId,
+              start_date: startDate,
+              end_time: endTime,
+              completion_date: completionDate,
+            });
+          }
+          await updateDoc(userRef, { 
+            posted_classes: postedClasses,
+            upcoming_classes_as_teacher: upcomingClasses,
+          });
         }
 
         const modal = Modal.getInstance(document.getElementById('relistModal'));
-        modal.hide();
+        if (modal) modal.hide();
+          
+        // Refresh user profile data
         await fetchUserProfile(auth.currentUser.uid);
       } catch (err) {
         console.error('Error relisting class:', err);
