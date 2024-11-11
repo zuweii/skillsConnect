@@ -473,6 +473,7 @@ import StarRating from '../components/StarRating.vue';
 import EditProfileModal from './EditProfileModal.vue';
 
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { arrayUnion } from 'firebase/firestore';
 
 
 
@@ -835,48 +836,72 @@ export default {
       try {
         const userId = auth.currentUser.uid;
         const classRef = doc(db, 'classes', relistData.value.classId);
-
+      
+        // Parse new dates for start, end, and completion
         const startDate = new Date(`${relistData.value.newStartDate}T${relistData.value.newStartTime}`);
         const endTime = new Date(`${relistData.value.newStartDate}T${relistData.value.newEndTime}`);
         const completionDate = new Date(startDate);
         const classData = await getDoc(classRef);
         const numberOfLessons = classData.exists() ? classData.data().number_of_lessons : 1;
         completionDate.setDate(completionDate.getDate() + ((numberOfLessons - 1) * 7));
-
+      
+        // Update the class document with new dates
         await updateDoc(classRef, {
           start_date: startDate,
           start_time: startDate,
           end_time: endTime,
           completion_date: completionDate,
-          current_enrollment: 0
         });
-
+      
+        // Update the user's posted_classes and upcoming_classes_as_teacher fields
         const userRef = doc(db, 'users', userId);
         const userDoc = await getDoc(userRef);
-
+      
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const postedClasses = userData.posted_classes || [];
-
+          const upcomingClasses = userData.upcoming_classes_as_teacher || [];
+        
+          // Update posted_classes entry
           const classIndex = postedClasses.findIndex(postedClass => postedClass.class_id === relistData.value.classId);
-
           if (classIndex !== -1) {
             postedClasses[classIndex].start_date = startDate;
             postedClasses[classIndex].start_time = startDate;
             postedClasses[classIndex].end_time = endTime;
             postedClasses[classIndex].completion_date = completionDate;
-
-            await updateDoc(userRef, { posted_classes: postedClasses });
+            postedClasses[classIndex].current_enrollment = 0;
           }
+        
+          // // Update or add the class in upcoming_classes_as_teacher
+          // const upcomingClassIndex = upcomingClasses.findIndex(cls => cls.class_id === relistData.value.classId);
+          // if (upcomingClassIndex !== -1) {
+          //   upcomingClasses[upcomingClassIndex].start_date = startDate;
+          //   upcomingClasses[upcomingClassIndex].end_time = endTime;
+          //   upcomingClasses[upcomingClassIndex].completion_date = completionDate;
+          // } else {
+          //   upcomingClasses.push(relistData.value.classId);
+          // }
+        
+          // Update the user document with the modified arrays
+          await updateDoc(userRef, { 
+            posted_classes: postedClasses,
+            upcoming_classes_as_teacher: arrayUnion(relistData.value.classId),
+          });
         }
-
-        const modal = Modal.getInstance(document.getElementById('relistModal'));
-        modal.hide();
+      
+        // Close the relist modal
+        const modalElement = document.getElementById('relistModal');
+        const modal = Modal.getInstance(modalElement);
+        if (modal) modal.hide();
+      
+        // Refresh user profile data
         await fetchUserProfile(auth.currentUser.uid);
       } catch (err) {
         console.error('Error relisting class:', err);
       }
     };
+
+
 
     const formatDate = (date) => {
       return date instanceof Date ? date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'Invalid Date';
