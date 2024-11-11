@@ -60,7 +60,7 @@
                 class="suggestion-avatar"
               />
               <div class="suggestion-content">
-                <span class="suggestion-title">{{ teacher.username.toUpperCase() }}</span>
+                <span class="suggestion-title">{{ teacher.username }}</span>
                 <span class="suggestion-subtitle">
                   Average Rating: {{ teacher.teacher_average ? teacher.teacher_average.toFixed(1) : 'N/A' }}
                 </span>

@@ -214,85 +214,111 @@ export default {
     };
 
     const submitReview = async () => {
-      if (!isValidReview.value) {
-        error.value = 'Please provide both a rating and review text.';
-        return;
-      }
-    
-      try {
-        const classRef = doc(db, 'classes', props.classId);
-      
-        const instructorId = classData.value.teacher_username;
-        if (!instructorId) {
-          throw new Error('Instructor ID is missing from class data.');
-        }
-      
-        const teacherRef = doc(db, 'users', instructorId);
-        const currentUserRef = doc(db, 'users', currentUser.value.id);
-      
-        await runTransaction(db, async (transaction) => {
-          const classDoc = await transaction.get(classRef);
-          if (!classDoc.exists()) {
-            throw new Error('Class does not exist!');
-          }
-        
-          const teacherDoc = await transaction.get(teacherRef);
-          if (!teacherDoc.exists()) {
-            throw new Error('Teacher does not exist!');
-          }
-        
-          const classData = classDoc.data();
-          const currentRatingsAverage = classData.ratings_average || 0;
-          const currentReviewCount = Array.isArray(classData.reviews) ? classData.reviews.length : 0;
-        
-          const newClassAverage = calculateNewAverage(
-            currentRatingsAverage,
-            currentReviewCount,
-            selectedRating.value
-          );
-        
-          const review = {
-            text: reviewText.value,
-            rating: selectedRating.value,
-            timestamp: new Date(),
-            userId: currentUser.value.id,
-            username: currentUser.value.username,
-            userPhoto: currentUser.value.profile_photo || null
-          };
-        
-          transaction.update(classRef, {
-            reviews: arrayUnion(review),
-            ratings_average: newClassAverage
-          });
-        
-          const teacherData = teacherDoc.data();
-          const currentTeacherAverage = teacherData.teacher_average || 0;
-          const teacherReviewCount = teacherData.total_reviews || 0;
-        
-          const newTeacherAverage = calculateNewAverage(
-            currentTeacherAverage,
-            teacherReviewCount,
-            selectedRating.value
-          );
-        
-          transaction.update(teacherRef, {
-            teacher_average: newTeacherAverage,
-            total_reviews: teacherReviewCount + 1
-          });
+  if (!isValidReview.value) {
+    error.value = 'Please provide both a rating and review text.';
+    return;
+  }
 
-          // Remove the class ID from the user's pending_reviews
-          transaction.update(currentUserRef, {
-            pending_reviews: arrayRemove(props.classId)
-          });
-        });
+  try {
+    const classRef = doc(db, 'classes', props.classId);
+    const instructorId = classData.value.teacher_username;
+    
+    if (!instructorId) {
+      throw new Error('Instructor ID is missing from class data.');
+    }
+    
+    const teacherRef = doc(db, 'users', instructorId);
+    const currentUserRef = doc(db, 'users', currentUser.value.id);
+    
+    await runTransaction(db, async (transaction) => {
+      // Get all necessary documents
+      const classDoc = await transaction.get(classRef);
+      const teacherDoc = await transaction.get(teacherRef);
       
-        // Show success modal
-        const successModal = new Modal(document.getElementById('successModal'));
-        successModal.show();
-      } catch (err) {
-        error.value = `Error submitting review: ${err.message}`;
+      if (!classDoc.exists()) {
+        throw new Error('Class does not exist!');
       }
-    };
+      if (!teacherDoc.exists()) {
+        throw new Error('Teacher does not exist!');
+      }
+      
+      // Calculate new ratings for the class
+      const classData = classDoc.data();
+      const currentRatingsAverage = classData.ratings_average || 0;
+      const currentReviewCount = Array.isArray(classData.reviews) ? classData.reviews.length : 0;
+      
+      const newClassAverage = calculateNewAverage(
+        currentRatingsAverage,
+        currentReviewCount,
+        selectedRating.value
+      );
+      
+      // Create review object
+      const review = {
+        text: reviewText.value,
+        rating: selectedRating.value,
+        timestamp: new Date(),
+        userId: currentUser.value.id,
+        username: currentUser.value.username,
+        userPhoto: currentUser.value.profile_photo || null
+      };
+      
+      // Calculate new teacher ratings
+      const teacherData = teacherDoc.data();
+      const currentTeacherAverage = teacherData.teacher_average || 0;
+      const teacherReviewCount = teacherData.total_reviews || 0;
+      
+      const newTeacherAverage = calculateNewAverage(
+        currentTeacherAverage,
+        teacherReviewCount,
+        selectedRating.value
+      );
+
+      // Update class document
+      transaction.update(classRef, {
+        reviews: arrayUnion(review),
+        ratings_average: newClassAverage
+      });
+      
+      // Update teacher document
+      transaction.update(teacherRef, {
+        teacher_average: newTeacherAverage,
+        total_reviews: teacherReviewCount + 1
+      });
+
+     // Get the current posted_classes array
+     const postedClasses = teacherData.posted_classes || [];
+      
+      // Create a new array with the updated class
+      const updatedPostedClasses = postedClasses.map(postedClass => {
+        if (postedClass.class_id === props.classId) {
+          return {
+            ...postedClass, // Preserve all existing fields
+            reviews: [...(postedClass.reviews || []), review], // Add new review to existing reviews
+            ratings_average: newClassAverage // Update ratings average
+          };
+        }
+        return postedClass; // Return unchanged for other classes
+      });
+
+      // Update the entire posted_classes array
+      transaction.update(teacherRef, {
+        posted_classes: updatedPostedClasses
+      });
+
+      // Remove the class ID from the current user's pending_reviews
+      transaction.update(currentUserRef, {
+        pending_reviews: arrayRemove(props.classId)
+      });
+    });
+    
+    // Show success modal
+    const successModal = new Modal(document.getElementById('successModal'));
+    successModal.show();
+  } catch (err) {
+    error.value = `Error submitting review: ${err.message}`;
+  }
+};
 
     const formatDate = (date) => {
       if (!date || !date.seconds) return 'Date not available';

@@ -383,40 +383,44 @@
       </div>
     </div>
 
-    <!-- Edit Portfolio Modal -->
-    <div class="modal fade" id="editPortfolioModal" tabindex="-1" aria-labelledby="editPortfolioModalLabel"
-      aria-hidden="true">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h5 class="modal-title" id="editPortfolioModalLabel">Edit Portfolio Project</h5>
-            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <form @submit.prevent="submitEditProject">
-              <div class="mb-3">
-                <label for="editProjectTitle" class="form-label">Project Title</label>
-                <input type="text" v-model="editProject.title" id="editProjectTitle" class="form-control" required>
+  <!-- Edit Portfolio Modal -->
+  <div class="modal fade" id="editPortfolioModal" tabindex="-1" aria-labelledby="editPortfolioModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="editPortfolioModalLabel">Edit Portfolio Project</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="submitEditProject">
+            <div class="mb-3">
+              <label for="editProjectTitle" class="form-label">Project Title</label>
+              <input type="text" v-model="editProject.title" id="editProjectTitle" class="form-control" required>
+            </div>
+            <div class="mb-3">
+              <label for="editProjectDescription" class="form-label">Description</label>
+              <textarea v-model="editProject.description" id="editProjectDescription" class="form-control" rows="3"
+                required></textarea>
+            </div>
+            <div class="mb-3">
+              <label for="editYouTubeLink" class="form-label">YouTube Link</label>
+              <input type="url" v-model="editProject.youtubeLink" id="editYouTubeLink" class="form-control">
+            </div>
+            <div class="mb-3">
+              <label for="editProjectImage" class="form-label">Project Image</label>
+              <input type="file" @change="handleEditImageUpload" id="editProjectImage" class="form-control">
+              <div v-if="editProject.imageUrl" class="mt-2">
+                <img :src="editProject.imageUrl" alt="Current project image" class="img-thumbnail" style="max-height: 100px;">
+                <button @click.prevent="removeEditImage" class="btn btn-danger btn-sm ms-2">Remove Image</button>
               </div>
-              <div class="mb-3">
-                <label for="editProjectDescription" class="form-label">Description</label>
-                <textarea v-model="editProject.description" id="editProjectDescription" class="form-control" rows="3"
-                  required></textarea>
-              </div>
-              <div class="mb-3">
-                <label for="editYouTubeLink" class="form-label">YouTube Link</label>
-                <input type="url" v-model="editProject.youtubeLink" id="editYouTubeLink" class="form-control">
-              </div>
-              <div class="mb-3">
-                <label for="editProjectImage" class="form-label">Project Image</label>
-                <input type="file" @change="handleEditImageUpload" id="editProjectImage" class="form-control">
-              </div>
-              <button type="submit" class="btn btn-primary w-100">Save Changes</button>
-            </form>
-          </div>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Save Changes</button>
+          </form>
         </div>
       </div>
     </div>
+  </div>
 
     <!-- Delete Confirmation Modal -->
     <div v-if="showDeleteModal" class="modal fade show" tabindex="-1" style="display: block;" role="dialog">
@@ -461,12 +465,16 @@
 <script>
 import { ref, onMounted, computed, watch, nextTick } from 'vue';
 import { doc, getDoc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../firebase/firebase_config';
+import { db, storage } from '../firebase/firebase_config';
 import { getAuth } from 'firebase/auth';
 import { Modal, Carousel } from 'bootstrap';
 import { useRouter } from 'vue-router';
 import StarRating from '../components/StarRating.vue';
 import EditProfileModal from './EditProfileModal.vue';
+
+import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+
+
 
 export default {
   components: {
@@ -495,9 +503,6 @@ export default {
     const teachingFilterType = ref('day');
     const teachingFilterValue = ref('');
 
-    const editProject = ref({});
-    const editIndex = ref(null);
-
     const relistData = ref({
       classId: null,
       newStartDate: '',
@@ -511,6 +516,81 @@ export default {
       youtubeLink: '',
       imageUrl: '',
     });
+
+    const editProject = ref({});
+    const editIndex = ref(null);
+    const editImageFile = ref(null);
+
+    const openEditModal = (project, index) => {
+      editProject.value = { ...project };
+      editIndex.value = index;
+      editImageFile.value = null;
+      const modal = new Modal(document.getElementById('editPortfolioModal'));
+      modal.show();
+    };
+
+    const handleEditImageUpload = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        editImageFile.value = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          editProject.value.imageUrl = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+
+    const removeEditImage = () => {
+      editProject.value.imageUrl = '';
+      editImageFile.value = null;
+    };
+
+    const submitEditProject = async () => {
+      if (editIndex.value === null) return;
+
+      try {
+        const userId = auth.currentUser.uid;
+        const userRef = doc(db, 'users', userId);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          const updatedPortfolio = [...userData.portfolio];
+
+          // Handle image upload if a new image was selected
+          if (editImageFile.value) {
+            const imageRef = storageRef(storage, `portfolio/${userId}/${Date.now()}_${editImageFile.value.name}`);
+            await uploadBytes(imageRef, editImageFile.value);
+            const imageUrl = await getDownloadURL(imageRef);
+            editProject.value.imageUrl = imageUrl;
+          }
+
+          updatedPortfolio[editIndex.value] = { ...editProject.value };
+
+          await updateDoc(userRef, { portfolio: updatedPortfolio });
+
+          // Update the local userProfile
+          userProfile.value.portfolio = updatedPortfolio;
+
+          // Close the modal
+          const modalElement = document.getElementById('editPortfolioModal');
+          const modalInstance = Modal.getInstance(modalElement);
+          if (modalInstance) {
+            modalInstance.hide();
+          } else {
+            console.error('Modal instance not found');
+          }
+
+          // Reset the edit state
+          editProject.value = {};
+          editIndex.value = null;
+          editImageFile.value = null;
+        }
+      } catch (err) {
+        console.error('Error updating portfolio:', err);
+      }
+    };
 
     const editClass = (classId) => {
       router.push({ name: 'ListClass', params: { classId: classId } });
@@ -591,50 +671,6 @@ export default {
       return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
     };
 
-    const openEditModal = (project, index) => {
-      editProject.value = { ...project };
-      editIndex.value = index;
-      const modal = new Modal(document.getElementById('editPortfolioModal'));
-      modal.show();
-    };
-
-    const handleEditImageUpload = (event) => {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          editProject.value.imageUrl = reader.result;
-        };
-        reader.readAsDataURL(file);
-      }
-    };
-
-    const submitEditProject = async () => {
-    if (editIndex.value === null) return;
-
-    userProfile.value.portfolio[editIndex.value] = { ...editProject.value };
-
-    try {
-      const auth = getAuth();
-      const userRef = doc(db, 'users', auth.currentUser.uid);
-      await updateDoc(userRef, { portfolio: userProfile.value.portfolio });
-
-      const modalElement = document.getElementById('editPortfolioModal');
-      const modal = Modal.getInstance(modalElement);
-      if (modal) {
-        modal.hide();
-      } else {
-        console.error('Modal instance not found');
-      }
-
-      // Reset edit state
-      editProject.value = {};
-      editIndex.value = null;
-    } catch (err) {
-      console.error('Error updating portfolio:', err);
-    }
-  };
-
     const confirmDeleteProject = (project, index) => {
       showDeleteModal.value = true;
       editProject.value = project;
@@ -708,6 +744,32 @@ export default {
         if (userDoc.exists()) {
           userProfile.value = { id: userDoc.id, ...userDoc.data() };
 
+          // Fetch classes to review
+          if (userProfile.value.pending_reviews && userProfile.value.pending_reviews.length > 0) {
+            const classPromises = userProfile.value.pending_reviews.map(classId =>
+              getDoc(doc(db, 'classes', classId))
+            );
+
+            const classSnapshots = await Promise.all(classPromises);
+
+            classesToReview.value = classSnapshots
+              .filter(snapshot => snapshot.exists())
+              .map(snapshot => {
+                const data = snapshot.data();
+                return {
+                  id: snapshot.id,
+                  ...data,
+                  start_date: data.start_date ? new Date(data.start_date.seconds * 1000) : null,
+                  end_time: data.end_time ? new Date(data.end_time.seconds * 1000) : null,
+                };
+              });
+
+            console.log('Classes to review:', classesToReview.value);
+          } else {
+            console.log('No pending reviews found for the user');
+            classesToReview.value = [];
+          }
+
           // Fetch upcoming classes as student
           if (userProfile.value.upcoming_classes_as_student && userProfile.value.upcoming_classes_as_student.length > 0) {
             const upcomingClassesPromises = userProfile.value.upcoming_classes_as_student.map(classId =>
@@ -728,6 +790,9 @@ export default {
                 };
               })
               .filter(cls => cls.end_time && cls.end_time > new Date());
+          } else {
+            console.log('No upcoming classes as student found for the user');
+            upcomingClassesAsStudent.value = [];
           }
 
           // Fetch teaching classes
@@ -783,6 +848,7 @@ export default {
           start_time: startDate,
           end_time: endTime,
           completion_date: completionDate,
+          current_enrollment: 0
         });
 
         const userRef = doc(db, 'users', userId);
@@ -906,7 +972,8 @@ export default {
       closeEditProfileModal,
       updateUserProfile,
       editClass,
-    editIndex,
+      editIndex,
+      removeEditImage,
     };
   },
 };
@@ -1078,7 +1145,8 @@ h5 {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 1; /* Changed from 0 to 1 */
+  opacity: 1;
+  /* Changed from 0 to 1 */
   transition: background-color 0.3s ease;
 }
 
@@ -1119,7 +1187,6 @@ h5 {
 
 .btn-group .btn {
   flex: 1;
-  border-radius: 25px;
 }
 
 .custom-button {

@@ -126,7 +126,7 @@
                 <div class="instructor-image-container mb-3">
                   <img :src="instructorData.profile_photo" :alt="instructorData.username" class="instructor-image">
                 </div>
-                <h4 class="h5 mb-1 text-colour fw-bold text-center">{{ instructorData.username.toUpperCase() }}</h4>
+                <h4 class="h5 mb-1 text-colour fw-bold text-center">{{ instructorData.username }}</h4>
                 <p class="mb-0 text-muted text-center">Average Rating: {{ instructorData.teacher_average.toFixed(1) }}</p>
               </router-link>
             </div>

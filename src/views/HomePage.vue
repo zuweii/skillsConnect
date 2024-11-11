@@ -140,17 +140,10 @@
         </div>
       </div>
 
-      <h1 class="h3 mb-4 fw-bold">Nearby Classes</h1>
-      <div v-if="loadingNearby" class="text-center">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading nearby classes...</span>
-        </div>
-      </div>
-      <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
-        No classes found within 5km of your location.
-      </div>
-      <div v-else class="row mb-5">
-        <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
+      <!-- Top Rated Classes Section -->
+      <h2 class="h3 mb-4 fw-bold">Top Rated Classes</h2>
+      <div class="row mb-5">
+        <div v-for="classItem in topRatedClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
           <div class="card shadow-sm h-100 hover-card">
             <div class="card-img-wrapper">
               <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
@@ -178,9 +171,7 @@
                   </span>
                 </div>
                 <div class="d-flex align-items-center mb-2">
-                  <span class="me-2">{{
-                    classItem.ratings_average.toFixed(1)
-                  }}</span>
+                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
                   <StarRating :rating="classItem.ratings_average" />
                   <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
                 </div>
@@ -193,72 +184,127 @@
         </div>
       </div>
 
- <!-- Available Classes Section -->
- <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
-
-<!-- Categories Section -->
-<div class="categories-section mb-4">
-  <div class="categories-btn-group">
-    <button 
-      class="category-btn" 
-      :class="{ active: selectedCategory === null }" 
-      @click="selectCategory(null)"
-    >
-      All
-    </button>
-    <button 
-      v-for="category in categories" 
-      :key="category.category_name" 
-      class="category-btn"
-      :class="{ active: selectedCategory === category.category_name }"
-      @click="selectCategory(category.category_name)"
-    >
-      {{ category.category_name }}
-    </button>
-  </div>
-</div>
-
-<div class="row mb-5">
-  <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4">
-    <div class="card shadow-sm h-100 hover-card">
-      <div class="card-img-wrapper">
-        <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
-        <div class="card-img-overlay-top">
-          <span class="badge bg-primary">
-            {{ classItem.category }}
-          </span>
+      <h2 class="h3 mb-4 fw-bold">Nearby Classes</h2>
+      <div v-if="loadingNearby" class="text-center">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Loading nearby classes...</span>
         </div>
       </div>
-      <div class="card-body d-flex flex-column">
-        <div class="d-flex justify-content-between align-items-start mb-2">
-          <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
-        </div>
-        <p class="card-text text-muted small flex-grow-1">
-          {{ truncateText(classItem.description, 100) }}
-        </p>
-        <div class="mt-auto">
-          <div class="d-flex justify-content-between align-items-center mb-3">
-            <p class="card-text h5 text-primary mb-0">
-              ${{ classItem.price.toFixed(2) }}
-            </p>
-            <span class="badge bg-light text-dark">
-              <i class="bi bi-people-fill me-1"></i>
-              {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
-            </span>
+      <div v-else-if="nearbyClasses.length === 0" class="alert alert-info">
+        No classes found within 5km of your location.
+      </div>
+      <div v-else class="row mb-5">
+        <div v-for="classItem in nearbyClasses" :key="classItem.id" class="col-lg-3 col-md-6 col-sm-6 mb-4">
+          <div class="card shadow-sm h-100 hover-card">
+            <div class="card-img-wrapper">
+              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+              <div class="card-img-overlay-top">
+                <span class="badge bg-primary">
+                  {{ classItem.category }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <h5 class="card-title fw-bold mb-0">{{ classItem.title }}</h5>
+              </div>
+              <p class="card-text text-muted small flex-grow-1">
+                {{ truncateText(classItem.description, 100) }}
+              </p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <p class="card-text h5 text-primary mb-0">
+                    ${{ classItem.price.toFixed(2) }}
+                  </p>
+                  <span class="badge bg-light text-dark">
+                    <i class="bi bi-people-fill me-1"></i>
+                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                  </span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                  <StarRating :rating="classItem.ratings_average" />
+                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                </div>
+                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                  View Details
+                </router-link>
+              </div>
+            </div>
           </div>
-          <div class="d-flex align-items-center mb-2">
-            <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
-            <StarRating :rating="classItem.ratings_average" />
-            <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
-          </div>
-          <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
-            View Details
-          </router-link>
         </div>
       </div>
-    </div>
-  </div>
-</div>
+
+      <!-- Available Classes Section -->
+      <h2 class="h3 mb-4 fw-bold">Available Classes</h2>
+
+      <!-- Categories Section -->
+      <div class="categories-section mb-4">
+        <div class="categories-btn-group">
+          <button class="category-btn" :class="{ active: selectedCategory === null }" @click="selectCategory(null)">
+            All
+          </button>
+          <button v-for="category in categories" :key="category.category_name" class="category-btn"
+            :class="{ active: selectedCategory === category.category_name }"
+            @click="selectCategory(category.category_name)">
+            {{ category.category_name }}
+          </button>
+        </div>
+      </div>
+
+
+      <div class="scroll-container row mb-5 position-relative">
+      <!-- Left Scroll Button -->
+      <button @click="scrollLeft" class="scroll-btn scroll-left">
+        <i class="bi bi-arrow-left"></i>
+      </button>
+
+      <!-- Class Cards -->
+      <div ref="cardRow" class="card-row d-flex">
+        <div v-for="classItem in availableClasses" :key="classItem.id" class="col-lg-3 col-md-4 col-sm-6 mb-4 p-3">
+          <div class="card shadow-sm h-100 hover-card">
+            <div class="card-img-wrapper">
+              <img :src="classItem.image" :alt="classItem.title" class="card-img-top class-image" />
+              <div class="card-img-overlay-top">
+                <span class="badge bg-primary">
+                  {{ classItem.category }}
+                </span>
+              </div>
+            </div>
+            <div class="card-body d-flex flex-column">
+              <h5 class="card-title fw-bold mb-2">{{ classItem.title }}</h5>
+              <p class="card-text text-muted small flex-grow-1">
+                {{ truncateText(classItem.description, 100) }}
+              </p>
+              <div class="mt-auto">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <p class="card-text h5 text-primary mb-0">
+                    ${{ classItem.price.toFixed(2) }}
+                  </p>
+                  <span class="badge bg-light text-dark">
+                    <i class="bi bi-people-fill me-1"></i>
+                    {{ classItem.current_enrollment }} / {{ classItem.max_capacity }} enrolled
+                  </span>
+                </div>
+                <div class="d-flex align-items-center mb-2">
+                  <span class="me-2">{{ classItem.ratings_average.toFixed(1) }}</span>
+                  <StarRating :rating="classItem.ratings_average" />
+                  <span class="text-muted ms-2 fs-6">({{ classItem.reviews.length }})</span>
+                </div>
+                <router-link :to="{ name: 'ClassDetails', params: { id: classItem.id } }" class="custom-button w-100">
+                  View Details
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Scroll Button -->
+      <button @click="scrollRight" class="scroll-btn scroll-right">
+        <i class="bi bi-arrow-right"></i>
+      </button>
+      </div>
 
 
     </div>
@@ -278,6 +324,8 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { db } from "../firebase/firebase_config";
 import FBInstanceAuth from "../firebase/firebase_auth";
@@ -294,6 +342,18 @@ export default {
       default: "",
     },
   },
+  methods: {
+    scrollLeft() {
+      if (this.$refs.cardRow) {
+        this.$refs.cardRow.scrollBy({ left: -800, behavior: 'smooth' });
+      }
+    },
+    scrollRight() {
+      if (this.$refs.cardRow) {
+        this.$refs.cardRow.scrollBy({ left: 800, behavior: 'smooth' });
+      }
+    }
+  },
   setup(props) {
     const classes = ref([]);
     const categories = ref([]);
@@ -305,6 +365,66 @@ export default {
     const userLocation = ref(null);
     const loadingNearby = ref(false);
     const GOOGLE_MAPS_API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+    const topRatedClasses = computed(() => {
+      const currentDate = new Date();
+      return classes.value
+        .filter(classItem => {
+          const startDate = classItem.start_date.toDate();
+          const startTime = classItem.start_time.toDate();
+          const classStartDateTime = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            startTime.getHours(),
+            startTime.getMinutes(),
+            startTime.getSeconds()
+          );
+          return (
+            !currentUser.value?.upcoming_classes_as_teacher?.includes(classItem.id) &&
+            classStartDateTime > currentDate &&
+            classItem.max_capacity > classItem.current_enrollment
+          );
+        })
+        .sort((a, b) => b.ratings_average - a.ratings_average)
+        .slice(0, 4);
+    });
+
+
+
+    const fetchData = async () => {
+      try {
+        const user = FBInstanceAuth.getCurrentUser();
+        if (user) {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnapshot = await getDoc(userDocRef);
+
+          if (userDocSnapshot.exists()) {
+            currentUser.value = {
+              id: userDocSnapshot.id,
+              ...userDocSnapshot.data(),
+            };
+          }
+        }
+
+        const classCollection = collection(db, "classes");
+        const classQuery = query(classCollection, orderBy("ratings_average", "desc"), limit(50));
+        const classSnapshot = await getDocs(classQuery);
+        classes.value = classSnapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        await fetchCategories();
+        await checkCompletedClasses();
+        await findNearbyClasses();
+      } catch (err) {
+        console.error("Error fetching data:", err);
+        error.value = "Error loading data";
+      } finally {
+        loading.value = false;
+      }
+    };
 
 
 
@@ -366,16 +486,6 @@ export default {
           (classItem) => classItem.category === selectedCategory.value
         );
       }
-
-      if (props.searchQuery) {
-        const query = props.searchQuery.toLowerCase();
-        filtered = filtered.filter(
-          (classItem) =>
-            classItem.title.toLowerCase().includes(query) ||
-            classItem.description.toLowerCase().includes(query)
-        );
-      }
-
       return filtered;
     });
 
@@ -386,6 +496,7 @@ export default {
       return filteredClasses.value
         .filter((classItem) => {
           const startDate = classItem.start_date.toDate();
+          const startTime = classItem.start_time.toDate();
           const hasAvailability =
             classItem.max_capacity > classItem.current_enrollment;
           const isNotUserClass =
@@ -393,10 +504,20 @@ export default {
               classItem.id
             );
 
+          // Combine date and time for accurate comparison
+          const classStartDateTime = new Date(
+            startDate.getFullYear(),
+            startDate.getMonth(),
+            startDate.getDate(),
+            startTime.getHours(),
+            startTime.getMinutes(),
+            startTime.getSeconds()
+          );
+
           classItem.ratings_average = classItem.ratings_average || 0;
           classItem.reviews = classItem.reviews || [];
 
-          return hasAvailability && startDate > currentDate && isNotUserClass;
+          return hasAvailability && classStartDateTime > currentDate && isNotUserClass;
         })
         .sort((a, b) => a.start_date.toDate() - b.start_date.toDate());
     });
@@ -405,84 +526,88 @@ export default {
       selectedCategory.value = category;
     };
 
-    const upcomingClassesAsStudent = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_student)
-        return [];
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_student.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-
-
-    const upcomingClassesAsTeacher = computed(() => {
-      if (!currentUser.value || !currentUser.value.upcoming_classes_as_teacher)
-        return [];
-
-
-      const currentDate = new Date();
-      return classes.value
-        .filter((classItem) => {
-          const endTime = classItem.end_time.toDate();
-          return (
-            endTime > currentDate &&
-            currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)
-          );
-        })
-        .sort(
-          (a, b) => calculateNextLessonDate(a) - calculateNextLessonDate(b)
-        );
-    });
-
-
-    const calculateNextLessonDate = (classItem) => {
-      const currentDate = new Date();
+    const calculateLessonDate = (classItem, lessonNumber) => {
       const startDate = classItem.start_date.toDate();
-      const numberOfLessons = classItem.number_of_lessons;
-
-
-      for (let i = 0; i < numberOfLessons; i++) {
-        const lessonDate = new Date(startDate);
-        lessonDate.setDate(lessonDate.getDate() + i * 7);
-        if (lessonDate > currentDate) {
-          return lessonDate;
-        }
-      }
-      return startDate;
+      const lessonDate = new Date(startDate);
+      lessonDate.setDate(startDate.getDate() + ((lessonNumber - 1) * 7));
+      return lessonDate;
     };
 
-
-    const getCurrentLessonNumber = (classItem) => {
+    const getCurrentLessonInfo = (classItem) => {
       const currentDate = new Date();
       const startDate = classItem.start_date.toDate();
-
-
-      // If the class hasn't started yet, return 1
-      if (currentDate < startDate) {
-        return 1;
-      }
-
-
-      // Calculate weeks passed since start date
       const weeksPassed = Math.floor(
         (currentDate - startDate) / (7 * 24 * 60 * 60 * 1000)
       );
+      const currentLessonNumber = weeksPassed + 1;
+      
+      // Get the date for the current lesson
+      const currentLessonDate = calculateLessonDate(classItem, currentLessonNumber);
+      
+      // Set the time for comparison
+      const startTime = classItem.start_time.toDate();
+      const endTime = classItem.end_time.toDate();
+      
+      const lessonStartDateTime = new Date(currentLessonDate);
+      lessonStartDateTime.setHours(startTime.getHours(), startTime.getMinutes());
+      
+      const lessonEndDateTime = new Date(currentLessonDate);
+      lessonEndDateTime.setHours(endTime.getHours(), endTime.getMinutes());
 
+      return {
+        lessonNumber: currentLessonNumber,
+        lessonDate: currentLessonDate,
+        startDateTime: lessonStartDateTime,
+        endDateTime: lessonEndDateTime
+      };
+    };
 
-      // Return current lesson number (minimum 1, maximum number_of_lessons)
-      return Math.min(
-        Math.max(weeksPassed + 2, 1),
-        classItem.number_of_lessons
-      );
+    const upcomingClassesAsStudent = computed(() => {
+      if (!currentUser.value?.upcoming_classes_as_student) return [];
+
+      const currentDateTime = new Date();
+      return classes.value
+        .filter((classItem) => {
+          if (!currentUser.value.upcoming_classes_as_student.includes(classItem.id)) return false;
+          
+          const lessonInfo = getCurrentLessonInfo(classItem);
+          return lessonInfo.endDateTime >= currentDateTime && 
+                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+        })
+        .sort((a, b) => {
+          const aInfo = getCurrentLessonInfo(a);
+          const bInfo = getCurrentLessonInfo(b);
+          return aInfo.startDateTime - bInfo.startDateTime;
+        });
+    });
+
+    const upcomingClassesAsTeacher = computed(() => {
+      if (!currentUser.value?.upcoming_classes_as_teacher) return [];
+
+      const currentDateTime = new Date();
+      return classes.value
+        .filter((classItem) => {
+          if (!currentUser.value.upcoming_classes_as_teacher.includes(classItem.id)) return false;
+          
+          const lessonInfo = getCurrentLessonInfo(classItem);
+          return lessonInfo.endDateTime >= currentDateTime && 
+                 lessonInfo.lessonNumber <= classItem.number_of_lessons;
+        })
+        .sort((a, b) => {
+          const aInfo = getCurrentLessonInfo(a);
+          const bInfo = getCurrentLessonInfo(b);
+          return aInfo.startDateTime - bInfo.startDateTime;
+        });
+    });
+
+    const calculateNextLessonDate = (classItem) => {
+      const lessonInfo = getCurrentLessonInfo(classItem);
+      return lessonInfo.lessonDate;
+    };
+
+    const getCurrentLessonNumber = (classItem) => {
+      const lessonInfo = getCurrentLessonInfo(classItem);
+      return Math.min(lessonInfo.lessonNumber, classItem.number_of_lessons);
     };
 
 
@@ -509,43 +634,6 @@ export default {
     };
 
 
-    const fetchData = async () => {
-      try {
-        const user = FBInstanceAuth.getCurrentUser();
-        if (user) {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnapshot = await getDoc(userDocRef);
-
-
-          if (userDocSnapshot.exists()) {
-            currentUser.value = {
-              id: userDocSnapshot.id,
-              ...userDocSnapshot.data(),
-            };
-          }
-        }
-
-
-        const classCollection = collection(db, "classes");
-        const classSnapshot = await getDocs(classCollection);
-        classes.value = classSnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        }));
-
-
-        await fetchCategories();
-        await checkCompletedClasses();
-        await findNearbyClasses();
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        error.value = "Error loading data";
-      } finally {
-        loading.value = false;
-      }
-    };
-
-
     const fetchCategories = async () => {
       try {
         const categoryCollection = collection(db, "categories"); // Ensure the correct path to your categories collection
@@ -559,10 +647,6 @@ export default {
         error.value = "Error loading categories";
       }
     };
-
-
-
-
 
     const getUserLocation = () => {
       return new Promise((resolve, reject) => {
@@ -640,8 +724,7 @@ export default {
           })
         );
 
-
-        nearbyClasses.value = classesWithCoordinates.filter((classItem) => {
+        const nearbyClassesAll = classesWithCoordinates.filter((classItem) => {
           if (classItem.latitude && classItem.longitude) {
             const distance = calculateDistance(
               location.latitude,
@@ -653,6 +736,25 @@ export default {
           }
           return false;
         });
+
+        // Sort nearby classes by distance and limit to 4
+        nearbyClasses.value = nearbyClassesAll
+          .sort((a, b) => {
+            const distanceA = calculateDistance(
+              location.latitude,
+              location.longitude,
+              a.latitude,
+              a.longitude
+            );
+            const distanceB = calculateDistance(
+              location.latitude,
+              location.longitude,
+              b.latitude,
+              b.longitude
+            );
+            return distanceA - distanceB;
+          })
+          .slice(0, 4);
       } catch (error) {
         console.error("Error finding nearby classes:", error);
       } finally {
@@ -688,6 +790,7 @@ export default {
       loadingNearby,
       selectedCategory,
       selectCategory,
+      topRatedClasses,
     };
   },
   //SEARCH BAR (START)
@@ -851,17 +954,19 @@ export default {
 }
 
 
-/* Category Button Styles (new) */
 .categories-section {
   margin-bottom: 2rem;
+  overflow-x: auto;
+  /* Allow horizontal scrolling on very small screens */
 }
 
 .categories-btn-group {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  border-radius: 50px;
   padding: 5px;
+  min-width: min-content;
+  /* Ensure buttons don't shrink below their content width */
 }
 
 .category-btn {
@@ -873,6 +978,10 @@ export default {
   transition: all 0.3s ease;
   border-radius: 25px;
   font-weight: 500;
+  white-space: nowrap;
+  /* Prevent text wrapping inside buttons */
+  flex: 0 0 auto;
+  /* Don't allow buttons to grow or shrink */
 }
 
 .category-btn:hover {
@@ -882,19 +991,6 @@ export default {
 .category-btn.active {
   background-color: #5a7dee;
   color: white;
-}
-
-@media (max-width: 768px) {
-  .categories-btn-group {
-    flex-direction: column;
-    border-radius: 15px;
-  }
-
-  .category-btn {
-    width: 100%;
-    border-radius: 10px;
-    margin: 5px 0;
-  }
 }
 
 /* Optional - Adjust the spacing in the category container */
@@ -914,6 +1010,45 @@ export default {
 .rating-text {
   font-size: 0.5rem;
   color: #6c757d;
+}
+
+.scroll-container {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.card-row {
+  display: flex;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding-right: 40px; /* Space for scroll button */
+}
+
+.scroll-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background-color: #ffffff;
+  border: none;
+  border-radius: 50%;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  width: 40px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.scroll-left {
+  left: 10px;
+}
+
+.scroll-right {
+  right: 10px;
+}
+
+.scroll-btn i {
+  font-size: 1.5rem;
+  color: #007bff;
 }
 </style>
    
