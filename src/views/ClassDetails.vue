@@ -44,8 +44,8 @@
         <h2 class="h3 mb-3 text-colour">${{ classData.price.toFixed(2) }}</h2>
         <p class="mb-4">{{ classData.description }}</p>
         <button @click="handleEnrolClick" class="enrol btn btn-primary btn-lg w-100 text-white align-bottom"
-          :disabled="isEnrolled">
-          {{ isEnrolled ? 'Already Enrolled' : 'Enrol Now' }}
+          :disabled="isEnrolled || hasConflict">
+          {{ isEnrolled ? 'Already Enrolled' : (hasConflict ? 'Schedule Conflict' : 'Enrol Now') }}
         </button>
         <p v-if="isEnrolled" class="text-success mt-2 text-center">You have already enrolled in this class!</p>
         <p v-if="hasConflict && !isEnrolled" class="text-danger mt-2 text-center">This class conflicts with your existing
@@ -98,7 +98,8 @@
               <i class="bi bi-geo-alt text-colour me-2 fs-4"></i>
               <div>
                 <p class="mb-0 fw-bold">Location</p>
-                <p class="mb-0">{{ classData.location }} <span class="location-link text-decoration-none" @click="showMap">(View on Map)</span> </p> 
+                <p class="mb-0">{{ classData.location }} <span class="location-link text-decoration-none"
+                    @click="showMap">(View on Map)</span> </p>
               </div>
             </div>
           </div>
